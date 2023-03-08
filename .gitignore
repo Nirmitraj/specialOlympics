@@ -1,0 +1,4 @@
+.DS_Store
+specialolympics/__pycache__
+analytics/__pycache__
+analytics/migrations

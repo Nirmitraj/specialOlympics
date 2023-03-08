@@ -1,0 +1,17 @@
+{%  extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <!-- {% load plotly_dash %}
+    <div class="{% plotly_class name='surveys_taken' %} card" style="height: 50%; width: 50%">
+    {% plotly_app name='surveys_taken' ratio=0.70 %}
+    </div>
+<br>
+    <div class="{% plotly_class name='surveys_dup' %} card" style="height: 50%; width: 50%">
+        {% plotly_app name='surveys_dup' ratio=0.70 %}
+        </div> -->
+<!-- 
+{{plot2|safe}} 
+<br> -->
+{{plot1|safe}}
+<br>
+{% endblock %}
