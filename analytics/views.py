@@ -3,6 +3,8 @@ from plotly.offline import plot
 import plotly.graph_objects as go
 from django.db.models import Sum,Count
 from analytics.models import SchoolDetails
+from sklearn import preprocessing
+import numpy as np
 #print(SchoolDetails.objects.values('school_state','survey_taken').annotate(total = Count('survey_taken')))
 
 def surveys(request):
@@ -59,3 +61,72 @@ def surveys(request):
 
     return render(request, 'analytics/welcome.html', context)
     
+def tables(request):
+    def school_locale_data(state_abv=None):
+        if not state_abv:
+            return  SchoolDetails.objects.values_list('locale')
+        if state_abv:
+            return SchoolDetails.objects.filter(state_abv='MA').values_list('locale')
+
+    def normalize_values(total_values): #general function to normalize given values of list or dict 
+        if type(total_values) == list:
+            values = total_values
+            x_array = np.array(values)
+            normalized_arr = list(preprocessing.normalize([x_array]))
+            return normalized_arr
+        
+        elif type(total_values) == dict:
+            values = list(total_values.values())
+            x_array = np.array(values)
+            normalized_arr = preprocessing.normalize([x_array])[0].round(2)*100
+            res = {key:{'value':total_values[key],'norm_val':normalized_arr[i]} for i,key in enumerate(total_values.keys()) }
+            return res #zip(dict(total_values.keys(),normalized_arr))
+        
+        else:
+            return None
+            
+
+    def school_locale():
+        locale_data = school_locale_data(state_abv='MA')
+        locale_statecount={}
+        for val in locale_data:
+            sub_text = val[0].split(':')[0]
+            if sub_text not in locale_statecount.keys():
+                locale_statecount[sub_text] = 0
+            locale_statecount[sub_text] +=1
+        print(locale_statecount)
+        locale_state = normalize_values(locale_statecount)
+        total_locale_data=school_locale_data()
+        locale_nationcount={}
+
+        for val in total_locale_data:
+            sub_text = val[0].split(':')[0]
+            if sub_text not in locale_nationcount.keys():
+                locale_nationcount[sub_text] = 0
+            locale_nationcount[sub_text] +=1
+        print(locale_nationcount)
+        locale_nation = normalize_values(locale_nationcount)
+        print(locale_state,locale_nation)
+
+        fig1 = go.Figure(data=[go.Table(
+            header=dict(values=['School locale', 'State 2014 year %','National 2014 year %'],
+                        line_color='darkslategray',
+                        fill_color='lightskyblue',
+                        align='left'),
+            cells=dict(values=[['Rural', 'Town','Suburban','Urban'],
+                            [locale_state['Rural']['norm_val'], locale_state['Town']['norm_val'], locale_state['Suburb']['norm_val'], locale_state['City']['norm_val']],
+                            [locale_nation['Rural']['norm_val'], locale_nation['Town']['norm_val'], locale_nation['Suburb']['norm_val'], locale_nation['City']['norm_val']]], 
+                    line_color='darkslategray',
+                    fill_color='lightcyan',
+                    align='left'))
+        ])
+
+        fig1.update_layout(width=900, height=450,title='Characteristics of schools in 2022, as reported by NCES',)
+        plot_div = plot(fig1, output_type='div', include_plotlyjs=False)
+        return plot_div
+    
+
+    context ={
+        'table_plot_1':school_locale(),
+    }
+    return render(request,'analytics/tables.html',context)
