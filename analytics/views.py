@@ -74,7 +74,14 @@ def tables(request):
         if state_abv:
             data = SchoolDetails.objects.values_list('gradeLevel_WithPreschool').filter(state_abv='MA').annotate(total = Count('implementation_level'))
         return {str(key):val for key,val in data}
-     
+    
+    def school_student_enrollment_range(state_abv=None):
+        if not state_abv:
+            data= SchoolDetails.objects.values_list('student_enrollment_range').annotate(total = Count('student_enrollment_range'))
+        if state_abv:
+            data = SchoolDetails.objects.values_list('student_enrollment_range').filter(state_abv='MA').annotate(total = Count('student_enrollment_range'))
+        return {str(key):val for key,val in data}
+    
     def percentage_values(total_values):
         if type(total_values) == list:
             values = total_values
@@ -109,7 +116,7 @@ def tables(request):
         print(locale_state,locale_nation)
 
         fig1 = go.Figure(data=[go.Table(
-            header=dict(values=['School locale', 'State 2014 year %','National 2014 year %'],
+            header=dict(values=['School locale', 'State 2022 year %','National 2022 year %'],
                         line_color='darkslategray',
                         fill_color='lightskyblue',
                         align='left'),
@@ -131,7 +138,7 @@ def tables(request):
         school_level=percentage_values(school_level)
         national_level=percentage_values(national_level)
         print(school_level,national_level)
-        fig2 = go.Figure(data=[go.Table(header=dict(values=['School level', 'State 2014 year %','National 2014 year %']),
+        fig2 = go.Figure(data=[go.Table(header=dict(values=['School level', 'State 2022 year %','National 2022 year %']),
                         cells=dict(values=[['Elementary','Middle','High','Other','Preschool'], 
                                             [school_level['Elementary']['percent_val'], school_level['Middle']['percent_val'], school_level['High']['percent_val'], school_level['Other']['percent_val'],school_level['Preschool']['percent_val']],
                                             [national_level['Elementary']['percent_val'],national_level['Middle']['percent_val'],national_level['High']['percent_val'],national_level['Other']['percent_val'],national_level['Preschool']['percent_val']]]))
@@ -141,12 +148,32 @@ def tables(request):
         plot_div = plot(fig2, output_type='div', include_plotlyjs=False)
         return plot_div
     
-    def student_enrollment():
-        
-        return None
+    def school_student_enrollment():
+        student_enroll_state = school_student_enrollment_range(state_abv='MA')
+        student_enroll_nation = school_student_enrollment_range()
+        student_enroll_state=percentage_values(student_enroll_state)
+        student_enroll_nation=percentage_values(student_enroll_nation)
+        print(student_enroll_state,student_enroll_nation)
+        fig3 = go.Figure(data=[go.Table(header=dict(values=['Student enrollment', 'State 2022 year %','National 2022 year %']),
+                        cells=dict(values=[['< 500','501-1000','1001-1500','More than 1500'], 
+                                           [student_enroll_state['<500']['percent_val'], student_enroll_state['501-1000']['percent_val'], student_enroll_state['1001-1500']['percent_val'], student_enroll_state['>1500']['percent_val']],
+                                           [student_enroll_nation['<500']['percent_val'], student_enroll_nation['501-1000']['percent_val'], student_enroll_nation['1001-1500']['percent_val'], student_enroll_nation['>1500']['percent_val']],
+]))
+                            ])
+#{'None': {'value': 0, 
+# 'percent_val': 0.0}, 
+# '777.00': {'value': 4, 'percent_val': 2.7}, 
+# '501-1000': {'value': 59, 'percent_val': 39.9}, 
+# '<500': {'value': 42, 'percent_val': 28.4}, 
+# '>1500': {'value': 16, 'percent_val': 10.8}, 
+# '1001-1500': {'value': 27, 'percent_val': 18.2}}
+        fig3.update_layout(width=900, height=450,title='Characteristics of school_student_enrollment in 2022, as reported by NCES',)
+        plot_div = plot(fig3, output_type='div', include_plotlyjs=False)
+        return plot_div
 
     context ={
         'table_plot_1':school_locale_graph(),
-        'table_plot_2':school_level_graph()
+        'table_plot_2':school_level_graph(),
+        'table_plot_3':school_student_enrollment()
     }
     return render(request,'analytics/tables.html',context)
