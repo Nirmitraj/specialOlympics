@@ -75,12 +75,26 @@ def tables(request):
             data = SchoolDetails.objects.values_list('gradeLevel_WithPreschool').filter(state_abv='MA').annotate(total = Count('implementation_level'))
         return {str(key):val for key,val in data}
     
-    def school_student_enrollment_range(state_abv=None):
+    def school_enrollment_data(state_abv=None):
         if not state_abv:
             data= SchoolDetails.objects.values_list('student_enrollment_range').annotate(total = Count('student_enrollment_range'))
         if state_abv:
             data = SchoolDetails.objects.values_list('student_enrollment_range').filter(state_abv='MA').annotate(total = Count('student_enrollment_range'))
         return {str(key):val for key,val in data}
+    
+    def school_lunch_data(state_abv=None):
+        if not state_abv:
+            data= SchoolDetails.objects.values_list('student_free_reduced_lunch').annotate(total = Count('student_free_reduced_lunch'))
+        if state_abv:
+            data = SchoolDetails.objects.values_list('student_free_reduced_lunch').filter(state_abv='MA').annotate(total = Count('student_free_reduced_lunch'))
+        return {str(key):val for key,val in data}
+    
+    def school_minority_data(state_abv=None):
+        if not state_abv:
+            data= SchoolDetails.objects.values_list('student_nonwhite_population').annotate(total = Count('student_nonwhite_population'))
+        if state_abv:
+            data = SchoolDetails.objects.values_list('student_nonwhite_population').filter(state_abv='MA').annotate(total = Count('student_nonwhite_population'))
+        return {str(key):val for key,val in data} 
     
     def percentage_values(total_values):
         if type(total_values) == list:
@@ -128,7 +142,7 @@ def tables(request):
                     align='left'))
         ])
 
-        fig1.update_layout(width=900, height=450,title='Characteristics of schoolslocale in 2022, as reported by NCES',)
+        fig1.update_layout(width=700, height=350,title='Characteristics of schoolslocale in 2022, as reported by NCES',)
         plot_div = plot(fig1, output_type='div', include_plotlyjs=False)
         return plot_div
     
@@ -137,43 +151,68 @@ def tables(request):
         national_level = school_level_data()
         school_level=percentage_values(school_level)
         national_level=percentage_values(national_level)
-        print(school_level,national_level)
+        print('School level',school_level,national_level)
         fig2 = go.Figure(data=[go.Table(header=dict(values=['School level', 'State 2022 year %','National 2022 year %']),
                         cells=dict(values=[['Elementary','Middle','High','Other','Preschool'], 
                                             [school_level['Elementary']['percent_val'], school_level['Middle']['percent_val'], school_level['High']['percent_val'], school_level['Other']['percent_val'],school_level['Preschool']['percent_val']],
                                             [national_level['Elementary']['percent_val'],national_level['Middle']['percent_val'],national_level['High']['percent_val'],national_level['Other']['percent_val'],national_level['Preschool']['percent_val']]]))
                             ])
 
-        fig2.update_layout(width=900, height=450,title='Characteristics of schools level in 2022, as reported by NCES',)
+        fig2.update_layout(width=700, height=350,title='Characteristics of schools level in 2022, as reported by NCES',)
         plot_div = plot(fig2, output_type='div', include_plotlyjs=False)
         return plot_div
     
     def school_student_enrollment():
-        student_enroll_state = school_student_enrollment_range(state_abv='MA')
-        student_enroll_nation = school_student_enrollment_range()
-        student_enroll_state=percentage_values(student_enroll_state)
-        student_enroll_nation=percentage_values(student_enroll_nation)
+        student_enroll_state = school_enrollment_data(state_abv='MA')
+        student_enroll_nation = school_enrollment_data()
+        student_enroll_state = percentage_values(student_enroll_state)
+        student_enroll_nation = percentage_values(student_enroll_nation)
         print(student_enroll_state,student_enroll_nation)
         fig3 = go.Figure(data=[go.Table(header=dict(values=['Student enrollment', 'State 2022 year %','National 2022 year %']),
                         cells=dict(values=[['< 500','501-1000','1001-1500','More than 1500'], 
                                            [student_enroll_state['<500']['percent_val'], student_enroll_state['501-1000']['percent_val'], student_enroll_state['1001-1500']['percent_val'], student_enroll_state['>1500']['percent_val']],
                                            [student_enroll_nation['<500']['percent_val'], student_enroll_nation['501-1000']['percent_val'], student_enroll_nation['1001-1500']['percent_val'], student_enroll_nation['>1500']['percent_val']],
-]))
-                            ])
-#{'None': {'value': 0, 
-# 'percent_val': 0.0}, 
-# '777.00': {'value': 4, 'percent_val': 2.7}, 
-# '501-1000': {'value': 59, 'percent_val': 39.9}, 
-# '<500': {'value': 42, 'percent_val': 28.4}, 
-# '>1500': {'value': 16, 'percent_val': 10.8}, 
-# '1001-1500': {'value': 27, 'percent_val': 18.2}}
-        fig3.update_layout(width=900, height=450,title='Characteristics of school_student_enrollment in 2022, as reported by NCES',)
+]))])
+
+        fig3.update_layout(width=700, height=350,title='Characteristics of school_student_enrollment in 2022, as reported by NCES',)
         plot_div = plot(fig3, output_type='div', include_plotlyjs=False)
         return plot_div
 
+    def school_free_reduce_lunch():
+        student_lunch_state = school_lunch_data(state_abv='MA')
+        student_lunch_nation = school_lunch_data()
+        student_lunch_state=percentage_values(student_lunch_state)
+        student_lunch_nation=percentage_values(student_lunch_nation)
+        print('school_free_reduce_lunch:',student_lunch_state,student_lunch_nation)
+        fig4 = go.Figure(data=[go.Table(header=dict(values=['Student Receiving free or reduced lunch%', 'State 2022 year %','National 2022 year %']),
+                        cells=dict(values=[['0-25','26-50','51-75','76-100'], 
+                                           [student_lunch_state.get("0%-25%",{}).get('percent_val','Nill'),student_lunch_state.get("26%-50%",{}).get('percent_val','Nill'), student_lunch_state.get("51%-75%",{}).get('percent_val','Nill'), student_lunch_state.get("76%-100%",{}).get('percent_val','Nill')],
+                                           [student_lunch_nation.get("0%-25%",{}).get('percent_val','Nill'),student_lunch_nation.get("26%-50%",{}).get('percent_val','Nill'), student_lunch_nation.get("51%-75%",{}).get('percent_val','Nill'), student_lunch_nation.get("76%-100%",{}).get('percent_val','Nill')]]))
+                            ])
+        fig4.update_layout(width=700, height=350,title='Characteristics of school free reduced lunch in 2022, as reported by NCES',)
+        plot_div = plot(fig4, output_type='div', include_plotlyjs=False)
+        return plot_div
+    
+    def school_minority():
+        minority_state = school_minority_data(state_abv='MA')
+        minority_nation = school_minority_data()
+        minority_state=percentage_values(minority_state)
+        minority_nation=percentage_values(minority_nation)
+        print('student_minority:',minority_state,minority_nation)
+        fig5 = go.Figure(data=[go.Table(header=dict(values=['Students of racial/ethnic minority %', 'State 2022 year %','National 2022 year %']),
+                 cells=dict(values=[['< 10','11-25','26-50','51-75','76-90','> 90'], 
+                                    [minority_state.get('10% or less',{}).get('percent_val','Nill'), minority_state.get('11%-25%',{}).get('percent_val','Nill'), minority_state.get('26%-50%',{}).get('percent_val','Nill'), minority_state.get('51%-75%',{}).get('percent_val','Nill'), minority_state.get('76%-90%',{}).get('percent_val','Nill'),minority_state.get('More than 90%',{}).get('percent_val','Nill')],
+                                    [minority_nation.get('10% or less',{}).get('percent_val','Nill'), minority_state.get('11%-25%',{}).get('percent_val','Nill'),minority_nation.get('26%-50%',{}).get('percent_val','Nill'),minority_nation.get('51%-75%',{}).get('percent_val','Nill'),minority_nation.get('76%-90%',{}).get('percent_val','Nill'),minority_nation.get('More than 90%',{}).get('percent_val','Nill')]]))
+                     ])
+        fig5.update_layout(width=700, height=370,title='Characteristics of Students of racial/ethnic minority in 2022, as reported by NCES',)
+        plot_div = plot(fig5, output_type='div', include_plotlyjs=False)
+        return plot_div
+    
     context ={
         'table_plot_1':school_locale_graph(),
         'table_plot_2':school_level_graph(),
-        'table_plot_3':school_student_enrollment()
+        'table_plot_3':school_student_enrollment(),
+        'table_plot_4':school_free_reduce_lunch(),
+        'table_plot_5':school_minority()
     }
     return render(request,'analytics/tables.html',context)
