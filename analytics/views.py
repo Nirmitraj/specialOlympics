@@ -67,26 +67,26 @@ def tables(request):
             return  SchoolDetails.objects.values_list('locale')
         if state_abv:
             return SchoolDetails.objects.filter(state_abv='MA').values_list('locale')
-
-    def normalize_values(total_values): #general function to normalize given values of list or dict 
+ 
+    def school_level_data(state_abv=None):
+        if not state_abv:
+            data= SchoolDetails.objects.values_list('gradeLevel_WithPreschool').annotate(total = Count('implementation_level'))
+        if state_abv:
+            data = SchoolDetails.objects.values_list('gradeLevel_WithPreschool').filter(state_abv='MA').annotate(total = Count('implementation_level'))
+        return {str(key):val for key,val in data}
+     
+    def percentage_values(total_values):
         if type(total_values) == list:
             values = total_values
-            x_array = np.array(values)
-            normalized_arr = list(preprocessing.normalize([x_array]))
-            return normalized_arr
+            return [round(((i/sum(values))*100),2) for i in values]
         
         elif type(total_values) == dict:
-            values = list(total_values.values())
-            x_array = np.array(values)
-            normalized_arr = preprocessing.normalize([x_array])[0].round(2)*100
-            res = {key:{'value':total_values[key],'norm_val':normalized_arr[i]} for i,key in enumerate(total_values.keys()) }
-            return res #zip(dict(total_values.keys(),normalized_arr))
-        
-        else:
-            return None
-            
+            data = list(total_values.values())
+            percent_arr=[round(((i/sum(data))*100),1) for i in data ] 
+            res = {key:{'value':total_values[key],'percent_val':percent_arr[i]} for i,key in enumerate(total_values.keys()) }
+            return res
 
-    def school_locale():
+    def school_locale_graph():
         locale_data = school_locale_data(state_abv='MA')
         locale_statecount={}
         for val in locale_data:
@@ -95,7 +95,7 @@ def tables(request):
                 locale_statecount[sub_text] = 0
             locale_statecount[sub_text] +=1
         print(locale_statecount)
-        locale_state = normalize_values(locale_statecount)
+        locale_state = percentage_values(locale_statecount)
         total_locale_data=school_locale_data()
         locale_nationcount={}
 
@@ -105,7 +105,7 @@ def tables(request):
                 locale_nationcount[sub_text] = 0
             locale_nationcount[sub_text] +=1
         print(locale_nationcount)
-        locale_nation = normalize_values(locale_nationcount)
+        locale_nation = percentage_values(locale_nationcount)
         print(locale_state,locale_nation)
 
         fig1 = go.Figure(data=[go.Table(
@@ -114,19 +114,39 @@ def tables(request):
                         fill_color='lightskyblue',
                         align='left'),
             cells=dict(values=[['Rural', 'Town','Suburban','Urban'],
-                            [locale_state['Rural']['norm_val'], locale_state['Town']['norm_val'], locale_state['Suburb']['norm_val'], locale_state['City']['norm_val']],
-                            [locale_nation['Rural']['norm_val'], locale_nation['Town']['norm_val'], locale_nation['Suburb']['norm_val'], locale_nation['City']['norm_val']]], 
+                            [locale_state['Rural']['percent_val'], locale_state['Town']['percent_val'], locale_state['Suburb']['percent_val'], locale_state['City']['percent_val']],
+                            [locale_nation['Rural']['percent_val'], locale_nation['Town']['percent_val'], locale_nation['Suburb']['percent_val'], locale_nation['City']['percent_val']]], 
                     line_color='darkslategray',
                     fill_color='lightcyan',
                     align='left'))
         ])
 
-        fig1.update_layout(width=900, height=450,title='Characteristics of schools in 2022, as reported by NCES',)
+        fig1.update_layout(width=900, height=450,title='Characteristics of schoolslocale in 2022, as reported by NCES',)
         plot_div = plot(fig1, output_type='div', include_plotlyjs=False)
         return plot_div
     
+    def school_level_graph():
+        school_level = school_level_data(state_abv='MA')
+        national_level = school_level_data()
+        school_level=percentage_values(school_level)
+        national_level=percentage_values(national_level)
+        print(school_level,national_level)
+        fig2 = go.Figure(data=[go.Table(header=dict(values=['School level', 'State 2014 year %','National 2014 year %']),
+                        cells=dict(values=[['Elementary','Middle','High','Other','Preschool'], 
+                                            [school_level['Elementary']['percent_val'], school_level['Middle']['percent_val'], school_level['High']['percent_val'], school_level['Other']['percent_val'],school_level['Preschool']['percent_val']],
+                                            [national_level['Elementary']['percent_val'],national_level['Middle']['percent_val'],national_level['High']['percent_val'],national_level['Other']['percent_val'],national_level['Preschool']['percent_val']]]))
+                            ])
+
+        fig2.update_layout(width=900, height=450,title='Characteristics of schools level in 2022, as reported by NCES',)
+        plot_div = plot(fig2, output_type='div', include_plotlyjs=False)
+        return plot_div
+    
+    def student_enrollment():
+        
+        return None
 
     context ={
-        'table_plot_1':school_locale(),
+        'table_plot_1':school_locale_graph(),
+        'table_plot_2':school_level_graph()
     }
     return render(request,'analytics/tables.html',context)
