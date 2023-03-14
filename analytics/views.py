@@ -1,13 +1,25 @@
 from django.shortcuts import render
 from plotly.offline import plot
 import plotly.graph_objects as go
+import plotly.express as px
 from django.db.models import Sum,Count
 from analytics.models import SchoolDetails
-from sklearn import preprocessing
-import numpy as np
+import pandas as pd
+
 #print(SchoolDetails.objects.values('school_state','survey_taken').annotate(total = Count('survey_taken')))
 
 def surveys(request):
+    def core_experience_data(key,state_abv=None):
+        select_names = {'sports':'unified_sports_component',
+                        'leadership':'youth_leadership_component',
+                        'whole_school':'whole_school_component'}
+        if key:
+            data = dict(SchoolDetails.objects.values_list(select_names[key]).annotate(total = Count(select_names[key])))
+            data = data.get(True,0)
+            return data
+        else:
+            return 0
+        
     def bar():
         school_surveys=SchoolDetails.objects.values('school_state','survey_taken').annotate(total = Count('survey_taken')).order_by('school_state')
         data_json={}
@@ -16,8 +28,6 @@ def surveys(request):
                 data_json[val['school_state']] = {}
                 #data_json[val['school_state']][val['survey_taken']] = 0
             data_json[val['school_state']][str(val['survey_taken'])]=val['total']
-
-            
 
         school_state = list(data_json.keys())
         survey_true = [data_json[i].get('True',0) for i in school_state]
@@ -36,27 +46,23 @@ def surveys(request):
         plot_div = plot(fig, output_type='div', include_plotlyjs=False)
         return plot_div
     
-    def scatter_2():
-        x1 = [1,2,3,4]
-        y1 = [30, 35, 25, 80]
+    def pie():
+        sports=core_experience_data('sports')
+        leadership = core_experience_data('leadership')
+        wholeschool = core_experience_data('whole_school')
 
-        trace = go.Scatter(
-            x=x1,
-            y = y1
-        )
-        layout = dict(
-            title='Simple Graph',
-            xaxis=dict(range=[min(x1), max(x1)]),
-            yaxis = dict(range=[min(y1), max(y1)])
-        )
+        print(sports,leadership,wholeschool)
+        core_exp_df = pd.DataFrame(dict(
+            lables = ['sports','leadership','wholeschool'],
+            values = [sports,leadership,wholeschool]
+        ))
 
-        fig = go.Figure(data=[trace], layout=layout)
+        fig = px.pie(core_exp_df, values='values', names='lables',title='Core experience implementation in 2022  MA. ')
         plot_div = plot(fig, output_type='div', include_plotlyjs=False)
         return plot_div
-
     context ={
         'plot1': bar(),
-        #'plot2': scatter_2()
+        'plot2': pie()
     }
 
     return render(request, 'analytics/welcome.html', context)
@@ -96,6 +102,7 @@ def tables(request):
             data = SchoolDetails.objects.values_list('student_nonwhite_population').filter(state_abv='MA').annotate(total = Count('student_nonwhite_population'))
         return {str(key):val for key,val in data} 
     
+
     def percentage_values(total_values):
         if type(total_values) == list:
             values = total_values
@@ -204,7 +211,7 @@ def tables(request):
                                     [minority_state.get('10% or less',{}).get('percent_val','Nill'), minority_state.get('11%-25%',{}).get('percent_val','Nill'), minority_state.get('26%-50%',{}).get('percent_val','Nill'), minority_state.get('51%-75%',{}).get('percent_val','Nill'), minority_state.get('76%-90%',{}).get('percent_val','Nill'),minority_state.get('More than 90%',{}).get('percent_val','Nill')],
                                     [minority_nation.get('10% or less',{}).get('percent_val','Nill'), minority_state.get('11%-25%',{}).get('percent_val','Nill'),minority_nation.get('26%-50%',{}).get('percent_val','Nill'),minority_nation.get('51%-75%',{}).get('percent_val','Nill'),minority_nation.get('76%-90%',{}).get('percent_val','Nill'),minority_nation.get('More than 90%',{}).get('percent_val','Nill')]]))
                      ])
-        fig5.update_layout(width=700, height=370,title='Characteristics of Students of racial/ethnic minority in 2022, as reported by NCES',)
+        fig5.update_layout(width=800, height=370,title='Characteristics of Students of racial/ethnic minority in 2022, as reported by NCES',)
         plot_div = plot(fig5, output_type='div', include_plotlyjs=False)
         return plot_div
     
