@@ -6,4 +6,5 @@ urlpatterns=[
     path('',views.surveys,name='surveys_taken'),
     path('tables.html',views.tables,name='tables data'),
     path('index.html',views.surveys,name='surveys_taken'),
+    path('state_dropdown/',views.dropdown,name='dropdown'),
 ]
