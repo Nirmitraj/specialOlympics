@@ -12,8 +12,15 @@
 <!-- 
 {{plot2|safe}} 
 <br> -->
+
 {{plot1|safe}}
 <br>
 {{plot2|safe}}
+<br>
+<form class="state_abv" action="filter_welcome/" method="post">
+    {%csrf_token%}
+    {{form.as_p}}
+    <input type="submit" value="Submit">
+</form>
 <br>
 {% endblock %}

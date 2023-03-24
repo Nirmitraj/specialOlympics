@@ -2,11 +2,11 @@
 {% load static %}
 {% block content %}
 
-<select name="state" class="filter-selectbox">
+<!-- <select name="state" class="filter-selectbox">
     {% for state in states %}
         <option value="{{ state }}">{{ state }}</option>
     {% endfor %} 
-</select>
+</select> -->
 
 <br>
 {{table_plot_1|safe}}   
@@ -19,11 +19,12 @@
 <br>
 {{table_plot_5|safe}} 
 <br>
-<!-- <form class="state_abv" action="state_dropdown/" method="post">
+
+<form class="state_abv" action="filter_tables/" method="post">
     {%csrf_token%}
-    {{form}}
+    {{form.as_p}}
     <input type="submit" value="Submit">
-</form> -->
+</form>
 
 <!-- <img src={{table_plot_1|safe}} 
         alt="GeeksforGeeks logo"
