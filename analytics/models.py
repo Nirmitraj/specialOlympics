@@ -3,7 +3,7 @@ from django.db import models
 
 # Create your models here.
 class SchoolDetails(models.Model):
-    school_ID=models.CharField(max_length=100,unique=True,null=False)
+    school_ID=models.CharField(max_length=90,null=False)
     school_name=models.CharField(max_length=255,null=True,default=None)
     school_state=models.CharField(max_length=55,null=True,default=None)
     school_county=models.CharField(max_length=120,null=True,default=None)
