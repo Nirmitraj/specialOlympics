@@ -1,6 +1,7 @@
 .DS_Store
 specialolympics/__pycache__
 analytics/__pycache__
-analytics/migrations
 analytics/dash_apps/finished_apps/__pycache__/surveys_dup.cpython-311.pyc
 analytics/dash_apps/finished_apps/__pycache__/surveys_taken.cpython-311.pyc
+/testapp
+migrations

@@ -243,7 +243,11 @@ def tables(request):
         
         elif type(total_values) == dict:
             data = list(total_values.values())
-            percent_arr=[round(((i/sum(data))*100),1) for i in data ] 
+
+            try:
+                percent_arr=[round(((i/sum(data))*100),1) for i in data ] 
+            except ZeroDivisionError:
+                percent_arr = [0]*len(data)
             res = {key:{'value':total_values[key],'percent_val':percent_arr[i]} for i,key in enumerate(total_values.keys()) }
             return res
 
@@ -302,16 +306,16 @@ def tables(request):
         plot_div = plot(fig2, output_type='div', include_plotlyjs=False)
         return plot_div
     
-    def school_student_enrollment():
-        student_enroll_state = school_enrollment_data(state_abv_='MA')
+    def school_student_enrollment(state_abv_):
+        student_enroll_state = school_enrollment_data(state_abv_)
         student_enroll_nation = school_enrollment_data()
         student_enroll_state = percentage_values(student_enroll_state)
         student_enroll_nation = percentage_values(student_enroll_nation)
         print(student_enroll_state,student_enroll_nation)
         fig3 = go.Figure(data=[go.Table(header=dict(values=['Student enrollment', 'State 2022 year %','National 2022 year %']),
                         cells=dict(values=[['< 500','501-1000','1001-1500','More than 1500'], 
-                                           [student_enroll_state['<500']['percent_val'], student_enroll_state['501-1000']['percent_val'], student_enroll_state['1001-1500']['percent_val'], student_enroll_state['>1500']['percent_val']],
-                                           [student_enroll_nation['<500']['percent_val'], student_enroll_nation['501-1000']['percent_val'], student_enroll_nation['1001-1500']['percent_val'], student_enroll_nation['>1500']['percent_val']],]))])
+                                           [student_enroll_state.get('<500',{}).get('percent_val',0), student_enroll_state.get('501-1000',{}).get('percent_val',0), student_enroll_state.get('1001-1500',{}).get('percent_val',0), student_enroll_state.get('>1500',{}).get('percent_val',0)],
+                                           [student_enroll_nation.get('<500',{}).get('percent_val',0), student_enroll_nation.get('501-1000',{}).get('percent_val',0), student_enroll_nation.get('1001-1500',{}).get('percent_val',0), student_enroll_nation.get('>1500',{}).get('percent_val',0)],]))])
 
         fig3.update_layout(width=700, height=350,title='Characteristics of school_student_enrollment in 2022, for the state {state_abv}'.format(state_abv=state_abv_))
         plot_div = plot(fig3, output_type='div', include_plotlyjs=False)
@@ -351,7 +355,7 @@ def tables(request):
     context ={
         'table_plot_1':school_locale_graph(),
         'table_plot_2':school_level_graph(),
-        'table_plot_3':school_student_enrollment(),
+        'table_plot_3':school_student_enrollment(state_abv_),
         'table_plot_4':school_free_reduce_lunch(),
         'table_plot_5':school_minority(),
         "form":StateForm()
