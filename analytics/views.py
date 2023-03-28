@@ -62,8 +62,8 @@ def index(request):
     def implementation_level_data():
         national_data = SchoolDetails.objects.values('implementation_level','survey_taken_year').annotate(total = Count('implementation_level')).order_by('implementation_level')
         state_data = SchoolDetails.objects.values('implementation_level','survey_taken_year').filter(state_abv=state_abv_).annotate(total = Count('implementation_level')).order_by('implementation_level')
-        response = {"emerging":[1000,3000],"developing":[1110,3330],"full_implement":[4440,5000],"survey_year":[2019,2020],
-                    "state_emerging":[1233,4533],"state_developing":[3467,4532],"state_full_implement":[7899,5674]}
+        response = {"emerging":[1000,3000],"developing":[1110,3330],"full_implement":[4440,5000],"survey_year":[2020,2021],
+                    "state_emerging":[1233,4533],"state_developing":[3467,4532],"state_full_implement":[4000,5674]}
 
 
         for val in national_data:
@@ -201,6 +201,7 @@ def tables(request):
             return  SchoolDetails.objects.values_list('locale')
         if state_abv_:
             return SchoolDetails.objects.filter(state_abv=state_abv_).values_list('locale')
+        
  
     def school_level_data(state_abv_=None):
         keys = ['Elementary','Middle','High','Other','Preschool']
@@ -253,25 +254,24 @@ def tables(request):
 
     def school_locale_graph():
         locale_data = school_locale_data(state_abv_)
-        locale_statecount={}
+        locale_statecount={'Rural':0,'Town':0,'Suburb':0,'City':0}
         for val in locale_data:
-            sub_text = val[0].split(':')[0]
-            if sub_text not in locale_statecount.keys():
-                locale_statecount[sub_text] = 0
-            locale_statecount[sub_text] +=1
-        print(locale_statecount)
-        locale_state = percentage_values(locale_statecount)
-        total_locale_data=school_locale_data()
-        locale_nationcount={}
+            key  = val[0].split(':')[0]
+            if key in locale_statecount.keys(): 
+                locale_statecount[key] +=1
 
+
+        locale_state = percentage_values(locale_statecount)
+        
+        total_locale_data=school_locale_data()
+        locale_nationcount={'Rural':0,'Town':0,'Suburb':0,'City':0}
         for val in total_locale_data:
-            sub_text = val[0].split(':')[0]
-            if sub_text not in locale_nationcount.keys():
-                locale_nationcount[sub_text] = 0
-            locale_nationcount[sub_text] +=1
-        print(locale_nationcount)
+            key = val[0].split(':')[0]
+            if key in locale_statecount.keys(): 
+                locale_nationcount[key] +=1
+
         locale_nation = percentage_values(locale_nationcount)
-        print(locale_state,locale_nation)
+
 
         fig1 = go.Figure(data=[go.Table(
             header=dict(values=['School locale', 'State 2022 year %','National 2022 year %'],
