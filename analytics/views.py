@@ -4,18 +4,20 @@ import plotly.graph_objects as go
 import plotly.express as px
 from django.http import HttpResponseRedirect
 from django.db.models import Sum,Count,Max
-from .forms import StateForm
+from .forms import Filters
 from analytics.models import SchoolDetails
 import pandas as pd
 
 
 
-state_abv_='ma' 
+state_abv_ ='ma'
+dashboard_filters={'state_abv':'sca','survey_taken_year':2022}
 
 def dropdown(request):
     global state_abv_
+    global dashboard_filters
     if request.method=='POST':
-        f = StateForm(request.POST)
+        f = Filters(request.POST)
 
         if f.is_valid():
             if request.path=='/filter_welcome/':
@@ -24,15 +26,23 @@ def dropdown(request):
                 page='/tables.html'
             print("CLEANED DATA:",f.cleaned_data)
             state_abv_ = f.cleaned_data['state_abv']
-
+            dashboard_filters = f.cleaned_data
             return HttpResponseRedirect(page)
     
     if request.method=='GET':
-        f=StateForm()
+        f=Filters()
     return render(request, 'analytics'+page, {'form':f})
 
 
 def index(request):
+    def filter_set():
+        filters = []
+        for key,val in dashboard_filters.items():
+            if val != 'all':
+                filters.append((key,val))
+        filters = dict(filters)
+        return filters
+    
     def core_experience_data(key,state_abv_,survey_year=None):
         select_names = {'sports':'unified_sports_component',
                         'leadership':'youth_leadership_component',
@@ -88,9 +98,13 @@ def index(request):
         return response
 
 
+    def school_suvery_data():
+        filters= filter_set()
+        filters.pop('state_abv') # as this graph is for all states we remove state filter for this
+        return SchoolDetails.objects.values('school_state','survey_taken').filter(**filters).annotate(total = Count('survey_taken')).order_by('school_state')
 
     def school_survey():
-        school_surveys=SchoolDetails.objects.values('school_state','survey_taken').annotate(total = Count('survey_taken')).order_by('school_state')
+        school_surveys = school_suvery_data()
         data_json={}
         for val in school_surveys:
             if val['school_state'] not in data_json.keys():
@@ -115,9 +129,9 @@ def index(request):
         plot_div = plot(fig, output_type='div', include_plotlyjs=False)
         return plot_div
     
-    def core_experience(state_abv_):
-        survey_year=SchoolDetails.objects.aggregate(Max('survey_taken_year'))
-        survey_year = survey_year['survey_taken_year__max']
+    def core_experience(state_abv_,survey_year=None):
+        # survey_year=SchoolDetails.objects.aggregate(Max('survey_taken_year'))
+        # survey_year = survey_year['survey_taken_year__max']
         sports=core_experience_data('sports',state_abv_,survey_year)
         leadership = core_experience_data('leadership',state_abv_,survey_year)
         wholeschool = core_experience_data('whole_school',state_abv_,survey_year)
@@ -188,7 +202,7 @@ def index(request):
         'plot2': core_experience(state_abv_),
         'plot3':implementation_level(),
         'plot4':core_experience_yearly(state_abv_),
-        'form':StateForm()
+        'form':Filters()
     }
 
     return render(request, 'analytics/welcome.html', context)
@@ -196,19 +210,24 @@ def index(request):
         
 def tables(request):
 
-    def school_locale_data(state_abv_=None):
-        if not state_abv_:
-            return  SchoolDetails.objects.values_list('locale')
-        if state_abv_:
-            return SchoolDetails.objects.filter(state_abv=state_abv_).values_list('locale')
-        
- 
+    def filter_set():
+        filters = []
+        for key,val in dashboard_filters.items():
+            if val != 'all':
+                filters.append((key,val))
+        filters = dict(filters)
+        return filters
+            
+    def school_locale_data():
+        #headline__startswith="Rural"
+        filters = filter_set()
+        print('Filters:',filters)
+        return SchoolDetails.objects.filter(**filters).values_list('locale')
+
     def school_level_data(state_abv_=None):
         keys = ['Elementary','Middle','High','Other','Preschool']
-        if not state_abv_:
-            data= dict(SchoolDetails.objects.values_list('gradeLevel_WithPreschool').annotate(total = Count('implementation_level')))
-        if state_abv_:
-            data = dict(SchoolDetails.objects.values_list('gradeLevel_WithPreschool').filter(state_abv=state_abv_).annotate(total = Count('implementation_level')))
+        filters = filter_set()
+        data = dict(SchoolDetails.objects.values_list('gradeLevel_WithPreschool').filter(**filters).annotate(total = Count('implementation_level')))
         for val in keys:
             if val not in data.keys():
                 data[val]=0
@@ -216,27 +235,20 @@ def tables(request):
         return data #{str(key):val for key,val in data}
     
     def school_enrollment_data(state_abv_=None):
-        if not state_abv_:
-            data= SchoolDetails.objects.values_list('student_enrollment_range').annotate(total = Count('student_enrollment_range'))
-        if state_abv_:
-            data = SchoolDetails.objects.values_list('student_enrollment_range').filter(state_abv=state_abv_).annotate(total = Count('student_enrollment_range'))
+        filters = filter_set()
+        data = SchoolDetails.objects.values_list('student_enrollment_range').filter(**filters).annotate(total = Count('student_enrollment_range'))
         return {str(key):val for key,val in data}
     
     def school_lunch_data(state_abv_=None):
-        if not state_abv_:
-            data= SchoolDetails.objects.values_list('student_free_reduced_lunch').annotate(total = Count('student_free_reduced_lunch'))
-        if state_abv_:
-            data = SchoolDetails.objects.values_list('student_free_reduced_lunch').filter(state_abv=state_abv_).annotate(total = Count('student_free_reduced_lunch'))
+        filters = filter_set()
+        data = SchoolDetails.objects.values_list('student_free_reduced_lunch').filter(**filters).annotate(total = Count('student_free_reduced_lunch'))
         return {str(key):val for key,val in data}
     
     def school_minority_data(state_abv_=None):
-        if not state_abv_:
-            data= SchoolDetails.objects.values_list('student_nonwhite_population').annotate(total = Count('student_nonwhite_population'))
-        if state_abv_:
-            data = SchoolDetails.objects.values_list('student_nonwhite_population').filter(state_abv=state_abv_).annotate(total = Count('student_nonwhite_population'))
+        filters = filter_set()
+        data = SchoolDetails.objects.values_list('student_nonwhite_population').filter(**filters).annotate(total = Count('student_nonwhite_population'))
         return {str(key):val for key,val in data} 
     
-
     def percentage_values(total_values):
         if type(total_values) == list:
             values = total_values
@@ -253,7 +265,7 @@ def tables(request):
             return res
 
     def school_locale_graph():
-        locale_data = school_locale_data(state_abv_)
+        locale_data = school_locale_data()
         locale_statecount={'Rural':0,'Town':0,'Suburb':0,'City':0}
         for val in locale_data:
             key  = val[0].split(':')[0]
@@ -267,7 +279,7 @@ def tables(request):
         locale_nationcount={'Rural':0,'Town':0,'Suburb':0,'City':0}
         for val in total_locale_data:
             key = val[0].split(':')[0]
-            if key in locale_statecount.keys(): 
+            if key in locale_statecount.keys():
                 locale_nationcount[key] +=1
 
         locale_nation = percentage_values(locale_nationcount)
@@ -281,17 +293,17 @@ def tables(request):
             cells=dict(values=[['Rural', 'Town','Suburban','Urban'],
                             [locale_state['Rural']['percent_val'], locale_state['Town']['percent_val'], locale_state['Suburb']['percent_val'], locale_state['City']['percent_val']],
                             [locale_nation['Rural']['percent_val'], locale_nation['Town']['percent_val'], locale_nation['Suburb']['percent_val'], locale_nation['City']['percent_val']]], 
-                    line_color='darkslategray',
-                    fill_color='lightcyan',
-                    align='left'))
+                        line_color='darkslategray',
+                        fill_color='lightcyan',
+                        align='left'))
         ])
 
-        fig1.update_layout(width=700, height=350,title='Characteristics of schoolslocale in 2022, for the state {state_abv}'.format(state_abv=state_abv_))
+        fig1.update_layout(width=700, height=350,title='Characteristics of schoolslocale in {year}, for the state {state_abv}'.format(year=dashboard_filters['survey_taken_year'],state_abv=dashboard_filters['state_abv']))
         plot_div = plot(fig1, output_type='div', include_plotlyjs=False)
         return plot_div
     
     def school_level_graph():
-        school_level = school_level_data(state_abv_='MA')
+        school_level = school_level_data(state_abv_=dashboard_filters['state_abv'])
         national_level = school_level_data()
         school_level=percentage_values(school_level)
         national_level=percentage_values(national_level)
@@ -302,12 +314,12 @@ def tables(request):
                                             [national_level['Elementary']['percent_val'],national_level['Middle']['percent_val'],national_level['High']['percent_val'],national_level['Other']['percent_val'],national_level['Preschool']['percent_val']]]))
                             ])
 
-        fig2.update_layout(width=700, height=350,title='Characteristics of schools level in 2022, for the state {state_abv}'.format(state_abv=state_abv_))
+        fig2.update_layout(width=700, height=350,title='Characteristics of schools level in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']))
         plot_div = plot(fig2, output_type='div', include_plotlyjs=False)
         return plot_div
     
     def school_student_enrollment(state_abv_):
-        student_enroll_state = school_enrollment_data(state_abv_)
+        student_enroll_state = school_enrollment_data(dashboard_filters['state_abv'])
         student_enroll_nation = school_enrollment_data()
         student_enroll_state = percentage_values(student_enroll_state)
         student_enroll_nation = percentage_values(student_enroll_nation)
@@ -317,12 +329,12 @@ def tables(request):
                                            [student_enroll_state.get('<500',{}).get('percent_val',0), student_enroll_state.get('501-1000',{}).get('percent_val',0), student_enroll_state.get('1001-1500',{}).get('percent_val',0), student_enroll_state.get('>1500',{}).get('percent_val',0)],
                                            [student_enroll_nation.get('<500',{}).get('percent_val',0), student_enroll_nation.get('501-1000',{}).get('percent_val',0), student_enroll_nation.get('1001-1500',{}).get('percent_val',0), student_enroll_nation.get('>1500',{}).get('percent_val',0)],]))])
 
-        fig3.update_layout(width=700, height=350,title='Characteristics of school_student_enrollment in 2022, for the state {state_abv}'.format(state_abv=state_abv_))
+        fig3.update_layout(width=700, height=350,title='Characteristics of school_student_enrollment in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']))
         plot_div = plot(fig3, output_type='div', include_plotlyjs=False)
         return plot_div
 
     def school_free_reduce_lunch():
-        student_lunch_state = school_lunch_data(state_abv_)
+        student_lunch_state = school_lunch_data(dashboard_filters['state_abv'])
         student_lunch_nation = school_lunch_data()
         student_lunch_state=percentage_values(student_lunch_state)
         student_lunch_nation=percentage_values(student_lunch_nation)
@@ -332,12 +344,12 @@ def tables(request):
                                            [student_lunch_state.get("0%-25%",{}).get('percent_val','Nill'),student_lunch_state.get("26%-50%",{}).get('percent_val','Nill'), student_lunch_state.get("51%-75%",{}).get('percent_val','Nill'), student_lunch_state.get("76%-100%",{}).get('percent_val','Nill')],
                                            [student_lunch_nation.get("0%-25%",{}).get('percent_val','Nill'),student_lunch_nation.get("26%-50%",{}).get('percent_val','Nill'), student_lunch_nation.get("51%-75%",{}).get('percent_val','Nill'), student_lunch_nation.get("76%-100%",{}).get('percent_val','Nill')]]))
                             ])
-        fig4.update_layout(width=700, height=350,title='Characteristics of school free reduced lunch in 2022, for the state {state_abv}'.format(state_abv=state_abv_))
+        fig4.update_layout(width=700, height=350,title='Characteristics of school free reduced lunch in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']))
         plot_div = plot(fig4, output_type='div', include_plotlyjs=False)
         return plot_div
     
     def school_minority():
-        minority_state = school_minority_data(state_abv_)
+        minority_state = school_minority_data(dashboard_filters['state_abv'])
         minority_nation = school_minority_data()
         minority_state=percentage_values(minority_state)
         minority_nation=percentage_values(minority_nation)
@@ -347,7 +359,7 @@ def tables(request):
                                     [minority_state.get('10% or less',{}).get('percent_val','Nill'), minority_state.get('11%-25%',{}).get('percent_val','Nill'), minority_state.get('26%-50%',{}).get('percent_val','Nill'), minority_state.get('51%-75%',{}).get('percent_val','Nill'), minority_state.get('76%-90%',{}).get('percent_val','Nill'),minority_state.get('More than 90%',{}).get('percent_val','Nill')],
                                     [minority_nation.get('10% or less',{}).get('percent_val','Nill'), minority_state.get('11%-25%',{}).get('percent_val','Nill'),minority_nation.get('26%-50%',{}).get('percent_val','Nill'),minority_nation.get('51%-75%',{}).get('percent_val','Nill'),minority_nation.get('76%-90%',{}).get('percent_val','Nill'),minority_nation.get('More than 90%',{}).get('percent_val','Nill')]]))
                      ])
-        fig5.update_layout(width=800, height=370,title='Characteristics of Students of racial/ethnic minority in 2022, for the state {state_abv}'.format(state_abv=state_abv_))
+        fig5.update_layout(width=800, height=370,title='Characteristics of Students of racial/ethnic minority in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']))
         plot_div = plot(fig5, output_type='div', include_plotlyjs=False)
         return plot_div
     
@@ -358,6 +370,73 @@ def tables(request):
         'table_plot_3':school_student_enrollment(state_abv_),
         'table_plot_4':school_free_reduce_lunch(),
         'table_plot_5':school_minority(),
-        "form":StateForm()
+        "form":Filters()
     }
     return render(request,'analytics/tables.html',context)
+
+
+
+#class test_index():
+
+    def __init__(self) -> None:
+        super().__init__()
+    
+    def core_experience_data(self,key,state_abv_,survey_year=None):
+        select_names = {'sports':'unified_sports_component',
+                        'leadership':'youth_leadership_component',
+                        'whole_school':'whole_school_component'}
+        if key:
+            data = dict(SchoolDetails.objects.values_list(select_names[key]).filter(state_abv=state_abv_,survey_taken_year=survey_year).annotate(total = Count(select_names[key])))
+            data = data.get(True,0) #considering only partipated people
+            return data
+        else:
+            return 0
+        
+    def survey_years(self):
+        survey_years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct().order_by('survey_taken_year')
+        
+        return list(survey_years)
+
+    def core_experience_year_data(self,state_abv_):
+        survey_year= self.survey_years()
+        response = {'sports':[],'leadership':[],'whole_school':[],'survey_year':self.survey_year}
+        for year in survey_year:
+            response['sports'].append(self.core_experience_data('sports',state_abv_,survey_year=year))
+            response['leadership'].append(self.core_experience_data('leadership',state_abv_,survey_year=year))
+            response['whole_school'].append(self.core_experience_data('whole_school',state_abv_,survey_year=year))
+
+        return response
+        
+    def core_experience_yearly(self,state_abv_):
+        data = self.core_experience_year_data(state_abv_)
+
+        print("CORE_EXP_YEAR:",data)
+        df = pd.DataFrame(data)
+        fig = px.line(df, x=df['survey_year'], y=df['sports'], labels={"survey_year":"year","sports":"core experience"})
+        fig.add_scatter(x=df['survey_year'],y=df['sports'], name="Unified sports")
+        fig.add_scatter(x=df['survey_year'],y=df['leadership'], name="Inclusive youth leadership")
+        fig.add_scatter(x=df['survey_year'],y=df['whole_school'], name="Whole school engagement")
+        title_name = "Core experience implementation over time in {0}".format(state_abv_)
+
+        fig.update_layout( 
+        legend=dict(
+            title=title_name, orientation="h", y=1, yanchor="bottom", x=0.5, xanchor="center"
+        ),
+        xaxis = dict (
+            tickmode='linear',
+            tick0 = min(df['survey_year']),
+            dtick=1
+        ) )
+        plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+
+        return plot_div     
+
+
+#def return_plot(request):
+    test = test_index(request)
+    context ={
+        'plot4':test.core_experience_yearly(self,state_abv_),
+        'form':Filters()
+    }
+
+    return render(request, 'analytics/welcome.html', context)
