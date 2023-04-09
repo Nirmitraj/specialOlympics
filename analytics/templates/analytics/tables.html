@@ -2,12 +2,16 @@
 {% load static %}
 {% block content %}
 
-<!-- <select name="state" class="filter-selectbox">
-    {% for state in states %}
-        <option value="{{ state }}">{{ state }}</option>
-    {% endfor %} 
-</select> -->
-
+<form class="form-inline"action="filter_tables/" method="post">
+    {% for field in form %}
+    {%csrf_token%}
+    <div>
+    <div class="field-label">{{field.label }}</div>
+    <div class="field-select">{{ field }}</div>
+    </div>
+    {% endfor %}
+    <input type="submit" value="Submit" >
+</form>
 <br>
 {{table_plot_1|safe}}   
 <br>

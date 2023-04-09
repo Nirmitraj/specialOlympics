@@ -11,7 +11,7 @@ import pandas as pd
 
 
 state_abv_ ='ma'
-dashboard_filters={'state_abv':'sca','survey_taken_year':2022}
+dashboard_filters={'state_abv':'sca','survey_taken_year':2021}
 
 def dropdown(request):
     global state_abv_
@@ -43,12 +43,15 @@ def index(request):
         filters = dict(filters)
         return filters
     
-    def core_experience_data(key,state_abv_,survey_year=None):
+    def core_experience_data(key,survey_year=None):
         select_names = {'sports':'unified_sports_component',
                         'leadership':'youth_leadership_component',
                         'whole_school':'whole_school_component'}
+        filters = filter_set()
+        if survey_year:
+            filters["survey_taken_year"] = survey_year
         if key:
-            data = dict(SchoolDetails.objects.values_list(select_names[key]).filter(state_abv=state_abv_,survey_taken_year=survey_year).annotate(total = Count(select_names[key])))
+            data = dict(SchoolDetails.objects.values_list(select_names[key]).filter(**filters).annotate(total = Count(select_names[key])))
             data = data.get(True,0) #considering only partipated people
             return data
         else:
@@ -56,45 +59,60 @@ def index(request):
 
     def survey_years():
         survey_years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct().order_by('survey_taken_year')
-        
         return list(survey_years)
     
     def core_experience_year_data(state_abv_):
         survey_year= survey_years()
         response = {'sports':[],'leadership':[],'whole_school':[],'survey_year':survey_year}
         for year in survey_year:
-            response['sports'].append(core_experience_data('sports',state_abv_,survey_year=year))
-            response['leadership'].append(core_experience_data('leadership',state_abv_,survey_year=year))
-            response['whole_school'].append(core_experience_data('whole_school',state_abv_,survey_year=year))
+            response['sports'].append(core_experience_data('sports',survey_year=year))
+            response['leadership'].append(core_experience_data('leadership',survey_year=year))
+            response['whole_school'].append(core_experience_data('whole_school',survey_year=year))
 
         return response
     
     def implementation_level_data():
-        national_data = SchoolDetails.objects.values('implementation_level','survey_taken_year').annotate(total = Count('implementation_level')).order_by('implementation_level')
-        state_data = SchoolDetails.objects.values('implementation_level','survey_taken_year').filter(state_abv=state_abv_).annotate(total = Count('implementation_level')).order_by('implementation_level')
-        response = {"emerging":[1000,3000],"developing":[1110,3330],"full_implement":[4440,5000],"survey_year":[2020,2021],
-                    "state_emerging":[1233,4533],"state_developing":[3467,4532],"state_full_implement":[4000,5674]}
+        filters = filter_set()
+        survey_year = survey_years()
 
+        response = {"emerging":[0]*len(survey_year),"developing":[0]*len(survey_year),"full_implement":[0]*len(survey_year),"survey_year":[0]*len(survey_year),
+                    "state_emerging":[0]*len(survey_year),"state_developing":[0]*len(survey_year),"state_full_implement":[0]*len(survey_year)}
+        
 
-        for val in national_data:
-            print(val)
-            if val['implementation_level'] == 'Emerging':
-                response["emerging"].append(val.get('total',0))
-            elif val['implementation_level'] == 'Developing':
-                response["developing"].append(val.get('total',0))
-            elif val['implementation_level'] == 'Full-implementation':
-                response["full_implement"].append(val.get('total',0))
-                response["survey_year"].append(val.get('survey_taken_year',0))
+        index = 0
+        filters = filter_set()
+        filters.pop('state_abv')
 
-        for val in state_data:
-            print(val)
-            if val['implementation_level'] == 'Emerging':
-                response["state_emerging"].append(val.get('total',0))
-            elif val['implementation_level'] == 'Developing':
-                response["state_developing"].append(val.get('total',0))
-            elif val['implementation_level'] == 'Full-implementation':
-                response["state_full_implement"].append(val.get('total',0))
+        for year in survey_year:
+            filters['survey_taken_year'] = year
+            national_data = SchoolDetails.objects.values('implementation_level','survey_taken_year').filter(**filters).annotate(total = Count('implementation_level')).order_by('implementation_level')
+            print(national_data,filters)
+            for val in national_data:
+                if val['implementation_level'] == 'Emerging':
+                    response["emerging"][index] = val.get('total',0)
+                elif val['implementation_level'] == 'Developing':
+                    response["developing"][index] = val.get('total',0)
+                elif val['implementation_level'] == 'Full-implementation':
+                    response["full_implement"][index] = val.get('total',0)
+                    response["survey_year"][index] = val.get('survey_taken_year',0)
+            index+=1
 
+        index = 0
+        filters_state = filter_set()
+        for year in survey_year:
+            filters_state['survey_taken_year'] = year
+            state_data = SchoolDetails.objects.values('implementation_level','survey_taken_year').filter(**filters_state).annotate(total = Count('implementation_level')).order_by('implementation_level')
+            
+            for val in state_data:
+                if val['implementation_level'] == 'Emerging':
+                    response["state_emerging"][index] = val.get('total',0)
+                elif val['implementation_level'] == 'Developing':
+                    response["state_developing"][index] = val.get('total',0)
+                elif val['implementation_level'] == 'Full-implementation':
+                    response["state_full_implement"][index] = val.get('total',0)
+            index+=1
+
+        print('implementation_level_data',response)
         return response
 
 
@@ -129,12 +147,13 @@ def index(request):
         plot_div = plot(fig, output_type='div', include_plotlyjs=False)
         return plot_div
     
-    def core_experience(state_abv_,survey_year=None):
+    def core_experience():
         # survey_year=SchoolDetails.objects.aggregate(Max('survey_taken_year'))
         # survey_year = survey_year['survey_taken_year__max']
-        sports=core_experience_data('sports',state_abv_,survey_year)
-        leadership = core_experience_data('leadership',state_abv_,survey_year)
-        wholeschool = core_experience_data('whole_school',state_abv_,survey_year)
+        filters = filter_set()
+        sports=core_experience_data('sports')
+        leadership = core_experience_data('leadership')
+        wholeschool = core_experience_data('whole_school')
 
         print(sports,leadership,wholeschool)
         core_exp_df = pd.DataFrame(dict(
@@ -142,7 +161,7 @@ def index(request):
             values = [sports,leadership,wholeschool]
         ))
 
-        fig = px.pie(core_exp_df, values='values', names='lables',title='Core experience implementation in 2022 {state_abv}'.format(state_abv=state_abv_))
+        fig = px.pie(core_exp_df, values='values', names='lables',title='Core experience implementation in {year} {state_abv}'.format(state_abv=filters['state_abv'],year=filters['survey_taken_year']))
         plot_div = plot(fig, output_type='div', include_plotlyjs=False)
         return plot_div
     
@@ -173,8 +192,9 @@ def index(request):
 
         return plot_div
     
-    def core_experience_yearly(state_abv_):
-        data = core_experience_year_data(state_abv_)
+    def core_experience_yearly():
+        filters = filter_set()
+        data = core_experience_year_data(filters['state_abv'])
 
         print("CORE_EXP_YEAR:",data)
         df = pd.DataFrame(data)
@@ -182,7 +202,7 @@ def index(request):
         fig.add_scatter(x=df['survey_year'],y=df['sports'], name="Unified sports")
         fig.add_scatter(x=df['survey_year'],y=df['leadership'], name="Inclusive youth leadership")
         fig.add_scatter(x=df['survey_year'],y=df['whole_school'], name="Whole school engagement")
-        title_name = "Core experience implementation over time in {0}".format(state_abv_)
+        title_name = "Core experience implementation over time in {0}".format(filters['state_abv'])
 
         fig.update_layout( 
         legend=dict(
@@ -199,9 +219,9 @@ def index(request):
     
     context ={
         'plot1': school_survey(),
-        'plot2': core_experience(state_abv_),
+        'plot2': core_experience(),
         'plot3':implementation_level(),
-        'plot4':core_experience_yearly(state_abv_),
+        'plot4':core_experience_yearly(),
         'form':Filters()
     }
 
