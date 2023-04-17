@@ -21,5 +21,6 @@ import analytics
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('analytics.urls')),
+    path('auth/',include('authenticate.urls')),
     path('django_plotly_dash/', include('django_plotly_dash.urls')),
 ]
