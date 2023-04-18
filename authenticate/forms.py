@@ -1,6 +1,9 @@
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.models import User
+from authenticate.models import Userprofile
+from analytics.models import SchoolDetails
 from django import forms
+
 
 class EditProfileForm(UserChangeForm):
     password = forms.CharField(label="", widget=forms.TextInput(attrs={'type':'hidden'}))
@@ -37,3 +40,20 @@ class SignUpForm(UserCreationForm):
         self.fields['password2'].widget.attrs['placeholder'] = 'Confirm Password'
         self.fields['password2'].label = ''
         self.fields['password2'].help_text = '<span class="form-text text-muted"><small>Enter the same password as before, for verification.</small></span>'
+
+
+STATE_CHOICES_RAW= list(
+SchoolDetails.objects.values_list('state_abv','school_state').distinct())
+STATE_CHOICES = []
+
+for val in STATE_CHOICES_RAW:
+    if val[0]!='-99':
+        STATE_CHOICES.append(val)
+
+
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model=Userprofile
+        fields = ('state',)
+   
+    state = forms.CharField(label='State', widget=forms.Select(choices=STATE_CHOICES,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
