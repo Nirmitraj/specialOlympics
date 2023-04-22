@@ -43,11 +43,17 @@ def index(request):
         filters = dict(filters)
         return filters
     
-    def core_experience_data(key,survey_year=None):
+    def core_experience_data(key,range,survey_year=None):
         select_names = {'sports':'unified_sports_component',
                         'leadership':'youth_leadership_component',
                         'whole_school':'whole_school_component'}
+        
         filters = filter_set()
+        filters_national=filter_set()
+        if range == 'national':
+            filters_national.pop('state_abv')
+            filters = filters_national
+
         if survey_year:
             filters["survey_taken_year"] = survey_year
         if key:
@@ -56,19 +62,21 @@ def index(request):
             return data
         else:
             return 0
-
+    
     def survey_years():
         survey_years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct().order_by('survey_taken_year')
         return list(survey_years)
     
-    def core_experience_year_data(state_abv_):
+    def core_experience_year_data():
         survey_year= survey_years()
-        response = {'sports':[],'leadership':[],'whole_school':[],'survey_year':survey_year}
+        response = {'sports':[],'leadership':[],'whole_school':[],'survey_year':survey_year,'state_sports':[],'state_leadership':[],'state_whole_school':[]}
         for year in survey_year:
-            response['sports'].append(core_experience_data('sports',survey_year=year))
-            response['leadership'].append(core_experience_data('leadership',survey_year=year))
-            response['whole_school'].append(core_experience_data('whole_school',survey_year=year))
-
+            response['sports'].append(core_experience_data('sports',survey_year=year,range='national'))
+            response['leadership'].append(core_experience_data('leadership',survey_year=year,range='national'))
+            response['whole_school'].append(core_experience_data('whole_school',survey_year=year,range='national'))
+            response['state_sports'].append(core_experience_data('sports',survey_year=year,range='state'))
+            response['state_leadership'].append(core_experience_data('leadership',survey_year=year,range='state'))
+            response['state_whole_school'].append(core_experience_data('whole_school',survey_year=year,range='state'))            
         return response
     
     def implementation_level_data():
@@ -77,8 +85,6 @@ def index(request):
 
         response = {"emerging":[0]*len(survey_year),"developing":[0]*len(survey_year),"full_implement":[0]*len(survey_year),"survey_year":[0]*len(survey_year),
                     "state_emerging":[0]*len(survey_year),"state_developing":[0]*len(survey_year),"state_full_implement":[0]*len(survey_year)}
-        
-
         index = 0
         filters = filter_set()
         filters.pop('state_abv')
@@ -151,9 +157,9 @@ def index(request):
         # survey_year=SchoolDetails.objects.aggregate(Max('survey_taken_year'))
         # survey_year = survey_year['survey_taken_year__max']
         filters = filter_set()
-        sports=core_experience_data('sports')
-        leadership = core_experience_data('leadership')
-        wholeschool = core_experience_data('whole_school')
+        sports=core_experience_data('sports',range='state')
+        leadership = core_experience_data('leadership',range='state')
+        wholeschool = core_experience_data('whole_school',range='state')
 
         print(sports,leadership,wholeschool)
         core_exp_df = pd.DataFrame(dict(
@@ -194,14 +200,17 @@ def index(request):
     
     def core_experience_yearly():
         filters = filter_set()
-        data = core_experience_year_data(filters['state_abv'])
+        data = core_experience_year_data()
 
         print("CORE_EXP_YEAR:",data)
         df = pd.DataFrame(data)
-        fig = px.line(df, x=df['survey_year'], y=df['sports'], labels={"survey_year":"year","sports":"core experience"})
+        fig = px.line(df, x=df['survey_year'], y=df['state_sports'], labels={"survey_year":"year","sports":"core experience"})
         fig.add_scatter(x=df['survey_year'],y=df['sports'], name="Unified sports")
         fig.add_scatter(x=df['survey_year'],y=df['leadership'], name="Inclusive youth leadership")
         fig.add_scatter(x=df['survey_year'],y=df['whole_school'], name="Whole school engagement")
+        fig.add_scatter(x=df['survey_year'],y=df['state_sports'], name="{state} Unified sports".format(state=filters['state_abv']))
+        fig.add_scatter(x=df['survey_year'],y=df['state_leadership'], name="{state} Inclusive youth leadership".format(state=filters['state_abv']))
+        fig.add_scatter(x=df['survey_year'],y=df['state_whole_school'], name="{state} school engagement".format(state=filters['state_abv']))
         title_name = "Core experience implementation over time in {0}".format(filters['state_abv'])
 
         fig.update_layout( 
