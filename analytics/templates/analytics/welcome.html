@@ -2,22 +2,6 @@
 {%  extends 'base.html' %}
 {% load static %}
 {% block content %}
-    <!-- {% load plotly_dash %}
-    <div class="{% plotly_class name='surveys_taken' %} card" style="height: 50%; width: 50%">
-    {% plotly_app name='surveys_taken' ratio=0.70 %}
-    </div>
-<br>
-    <div class="{% plotly_class name='surveys_dup' %} card" style="height: 50%; width: 50%">
-        {% plotly_app name='surveys_dup' ratio=0.70 %}
-        </div> -->
-<!-- 
-{{plot2|safe}} 
-<br> -->
-<!-- <form class="state_abv" action="filter_welcome/" method="post">
-    {%csrf_token%}
-    {{form}}
-    <input type="submit" value="Submit">
-</form> -->
 
 <form class="form-inline"action="filter_welcome/" method="post">
     {% for field in form %}
@@ -44,6 +28,15 @@
     </div>
     <div class="column">
         {{plot4|safe}}
+    </div>
+    <div class="column">
+        {{plot5|safe}}
+    </div>
+    <div class="column">
+        {{plot6|safe}}
+    </div>
+    <div class="column">
+        {{plot7|safe}}
     </div>
 </div>
 <!-- {{plot1|safe}}
