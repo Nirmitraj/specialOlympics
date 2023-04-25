@@ -150,6 +150,7 @@ def index(request):
         )
 
         fig = go.Figure(data=trace, layout=layout)
+        fig.update_layout(width=1400, height=500)
         plot_div = plot(fig, output_type='div', include_plotlyjs=False)
         return plot_div
     
@@ -234,6 +235,7 @@ def index(request):
         'plot5':implement_unified_sport_activity(),
         'plot6':implement_youth_leadership_activity(),
         'plot7':implement_school_engagement_activity(),
+        'plot8':sona_resources_useful(),
         'form':Filters()
     }
 
@@ -330,7 +332,7 @@ def tables(request):
                         align='left'))
         ])
 
-        fig1.update_layout(width=700, height=350,title='Characteristics of schoolslocale in {year}, for the state {state_abv}'.format(year=dashboard_filters['survey_taken_year'],state_abv=dashboard_filters['state_abv']))
+        fig1.update_layout(width=700, height=300,title='Characteristics of schoolslocale in {year}, for the state {state_abv}'.format(year=dashboard_filters['survey_taken_year'],state_abv=dashboard_filters['state_abv']))
         plot_div = plot(fig1, output_type='div', include_plotlyjs=False)
         return plot_div
     
@@ -402,6 +404,7 @@ def tables(request):
         'table_plot_3':school_student_enrollment(state_abv_),
         'table_plot_4':school_free_reduce_lunch(),
         'table_plot_5':school_minority(),
+        'table_plot_6':frequency_of_leadership(),
         "form":Filters()
     }
     return render(request,'analytics/tables.html',context)
@@ -420,10 +423,8 @@ def percentage_values(total_values):
     if type(total_values) == list:
         values = total_values
         return [round(((i/sum(values))*100),2) for i in values]
-    
     elif type(total_values) == dict:
         data = list(total_values.values())
-
         try:
             percent_arr=[round(((i/sum(data))*100),1) for i in data ] 
         except ZeroDivisionError:
@@ -498,8 +499,75 @@ def implement_school_engagement_activity():
     return horizontal_bar_graph(response,y_axis,title)
 
 def frequency_of_leadership():
-    return None
-'''
+    response = {'special_education_teachers':{},'general_education_teachers':{},'physical_education_teachers':{},'adapted_pe_teachers':{},'athletic_director':{},'students_with_idd':{},
+                'students_without_idd':{},'school_administrators':{},'parents_of_students_with_idd':{},'parents_of_students_without_idd':{},'school_psychologist':{},'special_olympics_state_program_staff':{}}
+    filters=filter_set()
+    for column_name in response.keys():
+        response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all')) 
+        response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state'))
+
+    #finding what is considering as yes in the tables the below dict is a what varible in column is equal to yes
+    yes_response = {'special_education_teachers':'Special Education teachers','general_education_teachers':'General Education teachers','physical_education_teachers':'Physical Education teachers',
+                           'adapted_pe_teachers':'Adapted PE teachers','athletic_director':'Athletic director','students_with_idd':'Students with IDD',
+                'students_without_idd':'Students without IDD','school_administrators':'School Administrators','parents_of_students_with_idd':'Parents of students with IDD',
+                'parents_of_students_without_idd':'Parents of students without IDD','school_psychologist':'School Psychologist/Counselor/Social Worker','special_olympics_state_program_staff':'SO state staff'}
+    state_values= [] 
+    national_values=[]
+    y_axis=['Special Education Teachers','Students without IDD','Student with IDD','School Administrators','General Education Teachers','Physical Education (PE) Teachers ',
+            'Athletic Director','Adapted PE teachers','Parents of Students with IDD','Parents of Students without IDD','School Psychologist/Counselor/Social Worker','Special Olympics State Program Staff']
+    for key,yes_val in yes_response.items():
+        state_values.append(response[key]['state'].get(yes_val,{}).get('percent_val',0))
+        national_values.append(response[key]['national'].get(yes_val,{}).get('percent_val',0))
+    new_response = {'state_values':state_values,'national_values':national_values,'lables':y_axis} #Main response to go out of this functions
+    title='Frequency of Leadership Team membership among common types of participants'
+    headers=['Participant','state_name','National'] 
+
+    return table_graph(new_response,title,headers,y_axis)
+
+def sona_resources_useful():
+    response={'elementary_school_playbook':{},'middle_level_playbook':{},'high_school_playbook':{},'special_olympics_state_playbook':{},'special_olympics_fitness_guide_for_schools':{},'unified_physical_education_resource':{},
+              'special_olympics_young_athletes_activity_guide':{},'inclusive_youth_leadership_training_faciliatator_guide':{},'planning_and_hosting_a_youth_leadership_experience':{},'unified_classoom_lessons_and_activities':{},'generation_unified_youtube_channel_or_videos':{},'inclusion_tiles_game_or_facilitator_guide':{}}
+    column_names=response.keys()
+    filters=filter_set()
+    for column_name in response.keys():
+        response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all')) 
+        response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state'))
+
+    ##seperating yes and no keys from each parent key
+    state_no=[]
+    nation_no=[]
+    state_yes=[]
+    nation_yes=[]
+    for val in column_names:
+        n_keys=response[val]['national'].keys()
+        s_keys=response[val]['state'].keys()
+        for key in n_keys:
+            if key=='0':
+                nation_no.append(response[val]['national'].get(key,{}).get('percent_val',0))
+            elif key!=None and key!='0': 
+                #logic here is the response has only three keys for all columns so if its not these two then it should be the column name
+                #saves time to avoid writing down all column yes names and then verifying
+                nation_yes.append(response[val]['national'].get(key,{}).get('percent_val',0))
+
+        for key in s_keys:
+            if key=='0':
+                state_no.append(response[val]['state'].get(key,{}).get('percent_val',0))
+            elif key!=None and key!='0':
+                #logic here is the response has only three keys for all columns so if its not these two then it should be the column name
+                #saves time to avoid writing down all column yes names and then verifying
+                state_yes.append(response[val]['state'].get(key,{}).get('percent_val',0))
+    
+    new_response = {'state_yes':state_yes,'state_no':state_no,'nation_yes':nation_yes,'nation_no':nation_no}
+    
+    y_axis=['Elementary School Playbook: A Guide for Grades K-5','Middle Level Playbook: A Guide for Grades 5-8','High School Playbook','Special Olympics State Playbook','Special Olympics Fitness Guide for Schools','Unified Physical Education Resource',
+            'Special Olympics Young Athletes Activity Guide','Inclusive Youth Leadership Training: Faciliatator Guide','Planning and Hosting a Youth Leadership Experience','Unified Classoom lessons and activities','Generation Unified Youtube channel or videos',
+            'Inclusion Tiles game or facilitator guide']
+    
+    title='Percentage of liaisons who found SONA resources useful'
+    return horizontal_stacked_bar(new_response,y_axis,title)
+
+
+'''   
 CHARTS
 '''
 def horizontal_bar_graph(response,y_axis,heading):
@@ -512,7 +580,7 @@ def horizontal_bar_graph(response,y_axis,heading):
         orientation='h',
         marker=dict(
             color='rgba(246, 78, 139, 0.6)',
-            line=dict(color='rgba(246, 78, 139, 1.0)', width=3)
+            line=dict(color='rgba(246, 78, 139, 1.0)', width=0)
         )
     ))
     fig.add_trace(go.Bar(
@@ -522,7 +590,7 @@ def horizontal_bar_graph(response,y_axis,heading):
         orientation='h',
         marker=dict(
             color='rgba(58, 71, 80, 0.6)',
-            line=dict(color='rgba(58, 71, 80, 1.0)', width=3)
+            line=dict(color='rgba(58, 71, 80, 1.0)', width=0)
         )
     ))
 
@@ -530,3 +598,66 @@ def horizontal_bar_graph(response,y_axis,heading):
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     return plot_div
     
+def table_graph(new_response,heading,headers,y_column):
+    headerColor = 'grey'
+    rowEvenColor = 'lightgrey'
+    rowOddColor = 'white'
+
+    fig = go.Figure(data=[go.Table(
+    header=dict(
+        values=headers,
+        line_color='darkslategray',
+        fill_color=headerColor,
+        align=['left','center'],
+        font=dict(color='white', size=12)
+    ),
+    cells=dict(
+        values=[
+        y_column,
+        new_response['state_values'],
+        new_response['national_values']],
+        line_color='darkslategray',
+        # 2-D list of colors for alternating rows
+        fill_color = [[rowOddColor,rowEvenColor,rowOddColor, rowEvenColor,rowOddColor]*5],
+        align = ['left', 'center'],
+        font = dict(color = 'darkslategray', size = 11)
+        ))
+    ])
+
+    fig.update_layout(title=heading, width=700, height=600)
+    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+    return plot_div
+
+def horizontal_stacked_bar(response,y_axis,heading):
+    print(response)
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        y=y_axis,
+        x=response['nation_yes'],
+        name='National',
+        orientation='h',
+        marker=dict(
+            color='rgba(99, 110, 250, 0.8)',
+            line=dict(color='rgba(99, 110, 250, 1.0)', width=0)
+        )
+    ))
+    fig.add_trace(go.Bar(
+        y=y_axis,
+        x=response['state_yes'],
+        name='state',
+        orientation='h',
+        marker=dict(
+            color='rgba(139, 144, 209, 0.8)',
+            line=dict(color='rgba(139, 144, 209, 1)', width=0)
+        )
+    ))
+
+    fig.update_layout(title=heading,barmode='group',xaxis_range=[0,100], width=1400, height=500)
+
+    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+    return plot_div
+
+
+
+
+# {'elementary_school_playbook': {'national': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 905, 'percent_val': 66.7}, 'Elementary School Playbook: A Guide for Grades K-5': {'value': 452, 'percent_val': 33.3}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 21, 'percent_val': 75.0}, 'Elementary School Playbook: A Guide for Grades K-5': {'value': 7, 'percent_val': 25.0}}}, 'middle_level_playbook': {'national': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 874, 'percent_val': 74.6}, 'Middle Level Playbook: A Guide for Grades 5-8': {'value': 298, 'percent_val': 25.4}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 17, 'percent_val': 81.0}, 'Middle Level Playbook: A Guide for Grades 5-8': {'value': 4, 'percent_val': 19.0}}}, 'high_school_playbook': {'national': {None: {'value': 0, 'percent_val': 0.0}, 'High School Playbook': {'value': 504, 'percent_val': 37.8}, '0': {'value': 829, 'percent_val': 62.2}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, 'High School Playbook': {'value': 17, 'percent_val': 58.6}, '0': {'value': 12, 'percent_val': 41.4}}}, 'special_olympics_state_playbook': {'national': {None: {'value': 0, 'percent_val': 0.0}, 'Special Olympics ${e://Field/State} Playbook': {'value': 390, 'percent_val': 29.3}, '0': {'value': 941, 'percent_val': 70.7}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 19, 'percent_val': 86.4}, 'Special Olympics ${e://Field/State} Playbook': {'value': 3, 'percent_val': 13.6}}}, 'special_olympics_fitness_guide_for_schools': {'national': {None: {'value': 0, 'percent_val': 0.0}, 'Special Olympics Fitness Guide for Schools': {'value': 269, 'percent_val': 21.6}, '0': {'value': 976, 'percent_val': 78.4}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 19, 'percent_val': 76.0}, 'Special Olympics Fitness Guide for Schools': {'value': 6, 'percent_val': 24.0}}}, 'unified_physical_education_resource': {'national': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 828, 'percent_val': 65.8}, 'Unified Physical Education Resource': {'value': 431, 'percent_val': 34.2}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 19, 'percent_val': 70.4}, 'Unified Physical Education Resource': {'value': 8, 'percent_val': 29.6}}}, 'special_olympics_young_athletes_activity_guide': {'national': {None: {'value': 0, 'percent_val': 0.0}, 'Special Olympics Young Athletes Activity Guide': {'value': 411, 'percent_val': 34.2}, '0': {'value': 791, 'percent_val': 65.8}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 19, 'percent_val': 86.4}, 'Special Olympics Young Athletes Activity Guide': {'value': 3, 'percent_val': 13.6}}}, 'inclusive_youth_leadership_training_faciliatator_guide': {'national': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 873, 'percent_val': 85.3}, 'Inclusive Youth Leadership Training: Facilitator Guide': {'value': 150, 'percent_val': 14.7}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 24, 'percent_val': 82.8}, 'Inclusive Youth Leadership Training: Facilitator Guide': {'value': 5, 'percent_val': 17.2}}}, 'planning_and_hosting_a_youth_leadership_experience': {'national': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 722, 'percent_val': 94.1}, 'Planning and Hosting a Youth Leadership Experience: A Group Youth Engagement Activity Resource': {'value': 45, 'percent_val': 5.9}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 16, 'percent_val': 94.1}, 'Planning and Hosting a Youth Leadership Experience: A Group Youth Engagement Activity Resource': {'value': 1, 'percent_val': 5.9}}}, 'unified_classoom_lessons_and_activities': {'national': {'Unified Classroom lessons and activities': {'value': 524, 'percent_val': 39.7}, None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 796, 'percent_val': 60.3}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, 'Unified Classroom lessons and activities': {'value': 11, 'percent_val': 45.8}, '0': {'value': 13, 'percent_val': 54.2}}}, 'generation_unified_youtube_channel_or_videos': {'national': {'Generation Unified YouTube channel or Generation Unified videos': {'value': 360, 'percent_val': 37.5}, None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 601, 'percent_val': 62.5}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 7, 'percent_val': 41.2}, 'Generation Unified YouTube channel or Generation Unified videos': {'value': 10, 'percent_val': 58.8}}}, 'inclusion_tiles_game_or_facilitator_guide': {'national': {'0': {'value': 637, 'percent_val': 72.2}, None: {'value': 0, 'percent_val': 0.0}, 'Inclusion Tiles game/activity or Inclusion Tiles Facilitator Guide': {'value': 245, 'percent_val': 27.8}}, 'state': {None: {'value': 0, 'percent_val': 0.0}, '0': {'value': 13, 'percent_val': 68.4}, 'Inclusion Tiles game/activity or Inclusion Tiles Facilitator Guide': {'value': 6, 'percent_val': 31.6}}}}

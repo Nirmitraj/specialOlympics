@@ -12,6 +12,8 @@
     {% endfor %}
     <input type="submit" value="Submit" >
 </form>
+
+<!-- {{table_plot_6|safe}}   
 <br>
 {{table_plot_1|safe}}   
 <br>
@@ -23,12 +25,32 @@
 <br>
 {{table_plot_5|safe}} 
 <br>
+<br> -->
 
-<form class="state_abv" action="filter_tables/" method="post">
-    {%csrf_token%}
-    {{form.as_p}}
-    <input type="submit" value="Submit">
-</form>
+<div class="row">
+    <div class="column">
+        {{table_plot_6|safe}}   
+    </div>
+    <div class="column">
+        <div class="row">
+        {{table_plot_1|safe}}   
+        </div>
+        <div class="row">
+            {{table_plot_2|safe}}   
+        </div>
+    </div>
+    <div class="column">
+        {{table_plot_3|safe}}   
+    </div>
+    <div class="column">
+        {{table_plot_4|safe}}   
+    </div>
+    <div class="column">
+        {{table_plot_5|safe}}   
+    </div>
+</div>
+
+
 
 <!-- <img src={{table_plot_1|safe}} 
         alt="GeeksforGeeks logo"

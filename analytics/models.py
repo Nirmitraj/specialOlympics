@@ -23,7 +23,6 @@ class SchoolDetails(models.Model):
     survey_taken_year=models.IntegerField(null=False,default=None)               ##NEW COLUMNS
     sports_sports_teams = models.CharField(max_length=16,null=True,default=None)
     sports_unified_PE =	models.CharField(max_length=16,null=True,default=None)
-    sports_unified_PE=models.CharField(max_length=16,null=True,default=None)
     sports_unified_fitness=models.CharField(max_length=16,null=True,default=None)
     sports_unified_esports=models.CharField(max_length=16,null=True,default=None)
     sports_young_athletes=models.CharField(max_length=16,null=True,default=None)
@@ -54,7 +53,7 @@ class SchoolDetails(models.Model):
     elementary_school_playbook=models.CharField(max_length=108,null=True,default=None)
     middle_level_playbook=models.CharField(max_length=108,null=True,default=None)
     high_school_playbook=models.CharField(max_length=108,null=True,default=None)
-    special_olympics_state_playbook=models.CharField(max_length=108,null=True,default=None)
+    special_olympics_state_playbook=models.CharField(max_length=48,null=True,default=None)
     special_olympics_fitness_guide_for_schools=models.CharField(max_length=108,null=True,default=None)
     unified_physical_education_resource=models.CharField(max_length=108,null=True,default=None)
     special_olympics_young_athletes_activity_guide=models.CharField(max_length=108,null=True,default=None)
