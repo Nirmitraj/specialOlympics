@@ -27,7 +27,7 @@ def logout_user(request):
 	messages.success(request,('Youre now logged out'))
 	return redirect('home')
 
-'''here i am using two forms as state is not in default use form'''
+'''here i am using two forms as state filter is not in default user form'''
 def register_user(request):
 	if request.method =='POST':
 		form = SignUpForm(request.POST)
