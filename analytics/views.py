@@ -27,10 +27,12 @@ def dropdown(request):
             print("CLEANED DATA:",f.cleaned_data)
             state_abv_ = f.cleaned_data['state_abv']
             dashboard_filters = f.cleaned_data
+            print('htmlsample_1:',f)
             return HttpResponseRedirect(page)
     
     if request.method=='GET':
         f=Filters()
+    print('htmlsample_2:',f)
     return render(request, 'analytics'+page, {'form':f})
 
 
@@ -144,7 +146,7 @@ def index(request):
                 go.Bar(x= school_state,y = survey_false,name='No')]
 
         layout = dict(
-            title='school_surveys',
+            title='School survey ratio',
             yaxis = dict(range=[min(survey_true), max(survey_true)]),
             barmode='group',
         )
