@@ -12,7 +12,6 @@ import pandas as pd
 
 state_abv_ ='ma'
 dashboard_filters={'state_abv':'sca','survey_taken_year':2022}
-test_f=Filters()
 def dropdown(request):
     global state_abv_
     global dashboard_filters
@@ -20,7 +19,6 @@ def dropdown(request):
         f = Filters(request.POST)
 
         if f.is_valid():
-            #test_f=f
             if request.path=='/filter_welcome/':
                 page='/welcome.html'
             elif request.path=='/filter_tables/':
@@ -240,7 +238,7 @@ def index(request):
         'plot6':implement_youth_leadership_activity(),
         'plot7':implement_school_engagement_activity(),
         'plot8':sona_resources_useful(),
-        'form':test_f,#Filters(request.POST)
+        'form':Filters()
     }
 
     return render(request, 'analytics/welcome.html', context)
@@ -409,7 +407,7 @@ def tables(request):
         'table_plot_4':school_free_reduce_lunch(),
         'table_plot_5':school_minority(),
         'table_plot_6':frequency_of_leadership(),
-        'form':test_f,
+        'form':Filters(),
     }
     return render(request,'analytics/tables.html',context)
 
