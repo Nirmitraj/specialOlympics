@@ -16,12 +16,11 @@ test_f=Filters()
 def dropdown(request):
     global state_abv_
     global dashboard_filters
-    global test_f
     if request.method=='POST':
         f = Filters(request.POST)
 
         if f.is_valid():
-            test_f=f
+            #test_f=f
             if request.path=='/filter_welcome/':
                 page='/welcome.html'
             elif request.path=='/filter_tables/':
