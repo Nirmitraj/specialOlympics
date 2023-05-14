@@ -1,6 +1,6 @@
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from django.contrib.auth.models import User
-from authenticate.models import Userprofile
+from .models import CustomUser
 from analytics.models import SchoolDetails
 from django import forms
 
@@ -12,16 +12,23 @@ class EditProfileForm(UserChangeForm):
         #excludes private information from User
         fields = ('username', 'first_name', 'last_name', 'email','password',)
         
+STATE_CHOICES_RAW= list(
+SchoolDetails.objects.values_list('state_abv','school_state').distinct())
+STATE_CHOICES = []
+
+for val in STATE_CHOICES_RAW:
+    if val[0]!='-99':
+        STATE_CHOICES.append(val)
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(label="", widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'Email Address'}), )
     first_name = forms.CharField(label="", max_length=100, widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'First Name'}))
     last_name = forms.CharField(label="", max_length=100, widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'Last Name'}))
-
+    state = forms.CharField(label='State', widget=forms.Select(choices=STATE_CHOICES,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
 
     class Meta:
-        model = User
-        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
+        model = CustomUser
+        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2','email','state')
 
     def __init__(self, *args, **kwargs):
         super(SignUpForm, self).__init__(*args, **kwargs)
@@ -50,10 +57,3 @@ for val in STATE_CHOICES_RAW:
     if val[0]!='-99':
         STATE_CHOICES.append(val)
 
-
-class UserProfileForm(forms.ModelForm):
-    class Meta:
-        model=Userprofile
-        fields = ('state',)
-   
-    state = forms.CharField(label='State', widget=forms.Select(choices=STATE_CHOICES,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))

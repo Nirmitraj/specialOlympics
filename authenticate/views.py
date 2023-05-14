@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash 
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordChangeForm, PasswordResetForm
 from django.contrib import messages 
-from .forms import SignUpForm, EditProfileForm, UserProfileForm
+from .forms import SignUpForm, EditProfileForm
 # Create your views here.
 def home(request): 
 	return render(request, 'authenticate/home.html', {})
@@ -32,10 +32,11 @@ def register_user(request):
 	if request.method =='POST':
 		form = SignUpForm(request.POST)
 		profile_form=UserProfileForm(request.POST)
+		print(form,profile_form)
 		if form.is_valid() and profile_form.is_valid():
 			userform=form.save()
 			userform.refresh_from_db()#making sure values are store in user table
-			profile_form = UserProfileForm(request.POST, instance=userform.user)#was trying form.profile
+			profile_form = UserProfileForm(request.POST, instance=userform)#was trying form.profile
 			username = form.cleaned_data['username']
 			password = form.cleaned_data['password1']
 			profile_form.full_clean()
@@ -45,7 +46,7 @@ def register_user(request):
 			messages.success(request, ('You\'re now registered'))
 			return redirect('/auth/login')
 	else: 
-		form = SignUpForm() 
+		form = SignUpForm()
 		profile_form=UserProfileForm()
 
 	context = {'form': form,'profile_form':profile_form}
@@ -53,21 +54,21 @@ def register_user(request):
 
 def register_user_2(request):
 	if request.method =='POST':
-		profile_form=UserProfileForm(request.POST)
-		if profile_form.is_valid():
-			profile_form = UserProfileForm(request.POST, instance=user.profile)
-			username = profile_form.cleaned_data['username']
-			password = profile_form.cleaned_data['password1']
-			profile_form.full_clean()
-			profile_form.save()
+		form = SignUpForm(request.POST)
+		if form.is_valid():
+			print(form.cleaned_data)
+			userform=form.save()
+			userform.refresh_from_db()
+			username = form.cleaned_data['username']
+			password = form.cleaned_data['password1']
 			user = authenticate(username=username, password=password)
 			login(request,user)
 			messages.success(request, ('You\'re now registered'))
 			return redirect('/auth/login')
 	else: 
-		profile_form=UserProfileForm()
+		form=SignUpForm()
 
-	context = {'profile_form':profile_form}
+	context = {'form': form}
 	return render(request, 'authenticate/register.html', context)
 
 def edit_profile(request):#need to add state to edit profile 
