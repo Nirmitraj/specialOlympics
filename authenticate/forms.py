@@ -19,6 +19,7 @@ STATE_CHOICES = []
 for val in STATE_CHOICES_RAW:
     if val[0]!='-99':
         STATE_CHOICES.append(val)
+STATE_CHOICES.insert(0,('all','All'))
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(label="", widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'Email Address'}), )

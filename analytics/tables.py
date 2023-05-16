@@ -5,8 +5,9 @@ from django.http import HttpResponseRedirect
 from django.db.models import Count
 from .forms import Filters
 from analytics.models import SchoolDetails
-
-
+from authenticate.models import CustomUser
+from django.contrib.auth.decorators import login_required
+from analytics.views import state_choices
 
 '''gives filters for queries after removing values which will not be there in table'''
 def filter_set(dashboard_filters):
@@ -231,7 +232,7 @@ def frequency_of_leadership(dashboard_filters):
 
     return table_graph(new_response,title,headers,y_axis)
 
-def load_dashboard(dashboard_filters={'state_abv':'sca','survey_taken_year':2022},dropdown=Filters(),):
+def load_dashboard(dashboard_filters,dropdown):
     context ={
         'table_plot_1':school_locale_graph(dashboard_filters),
         'table_plot_2':school_level_graph(dashboard_filters),
@@ -243,40 +244,23 @@ def load_dashboard(dashboard_filters={'state_abv':'sca','survey_taken_year':2022
     }
     return context
 
+@login_required(login_url='../auth/login')
 def tables(request):
+    state = CustomUser.objects.values('state').filter(username=request.user)[0]
+    state=state.get('state','None')
     if request.method=='GET':
-        context = load_dashboard()
-        #return render(request, 'analytics/welcome.html', context) 
+        filter_state = state
+        if state=='all':
+            filter_state = 'ma'# on inital load some data has to be displayed so defaulting to ma
+        context = load_dashboard(dashboard_filters={'state_abv':filter_state,'survey_taken_year':2022},dropdown=Filters(state=state_choices(state)))
       
     if request.method=='POST':
-        dropdown = Filters(request.POST)
+        state=request.POST['state_abv']
+        state = state_choices(state)
+        dropdown = Filters(state,request.POST)
+        print(dropdown)
         if dropdown.is_valid():
-            state_abv_ = dropdown.cleaned_data['state_abv']
             dashboard_filters = dropdown.cleaned_data
             context = load_dashboard(dashboard_filters,dropdown)
             
-            #return HttpResponseRedirect('/')
-    return render(request, 'analytics/tables.html', context)
-
-def dropdown(request):
-    # global state_abv_
-    # global dashboard_filters
-    if request.method=='POST':
-        f = Filters(request.POST)
-
-        if f.is_valid():
-            if request.path=='/filter_welcome/':
-                page='/welcome.html'
-            elif request.path=='/filter_tables/':
-                page='/tables.html'
-            print("CLEANED DATA:",f.cleaned_data)
-            state_abv_ = f.cleaned_data['state_abv']
-            dashboard_filters = f.cleaned_data
-            print('htmlsample_1:',f)
-            render(request, 'analytics'+page, {'form':f})
-            return HttpResponseRedirect(page)
-    
-    if request.method=='GET':
-        f=Filters()
-    print('htmlsample_2:',f)
-    return render(request, 'analytics'+page, {'form':f})  
+    return render(request, 'analytics/tables.html', context)          

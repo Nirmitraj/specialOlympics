@@ -3,7 +3,7 @@
 {% load static %}
 {% block content %}
 
-<form class="form-inline"action="" method="post">
+<form class="form-inline"action="{% url 'dashboard' %}" method="post">
     {% for field in form %}
     {%csrf_token%}
     <div>
@@ -44,6 +44,8 @@
         {{plot8|safe}}
     </div>
 </div>
+
+
 <!-- {{plot1|safe}}
 {{plot2|safe}}
 {{plot3|safe}}

@@ -3,11 +3,13 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordChangeForm, PasswordResetForm
 from django.contrib import messages 
 from .forms import SignUpForm, EditProfileForm
+from django.contrib.auth.decorators import login_required
+
 # Create your views here.
 def home(request): 
 	return render(request, 'authenticate/home.html', {})
 
-def login_user (request):
+def login_user(request):
 	if request.method == 'POST': #if someone fills out form , Post it 
 		username = request.POST['username']
 		password = request.POST['password']
@@ -15,7 +17,7 @@ def login_user (request):
 		if user is not None:# if user exist
 			login(request, user)
 			messages.success(request,('Youre logged in'))
-			return redirect('/welcome.html') #routes to 'home' on successful login  
+			return redirect('/dashboard') #routes to 'home' on successful login  
 		else:
 			messages.success(request,('Error logging in'))
 			return redirect('login') #re routes to login page upon unsucessful login
@@ -51,6 +53,7 @@ def register_user(request):
 
 	context = {'form': form,'profile_form':profile_form}
 	return render(request, 'authenticate/register.html', context)
+
 
 def register_user_2(request):
 	if request.method =='POST':

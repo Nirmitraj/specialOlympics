@@ -6,13 +6,14 @@ from django.http import HttpResponseRedirect
 from django.db.models import Sum,Count,Max
 from .forms import Filters
 from analytics.models import SchoolDetails
+from authenticate.models import CustomUser
 import pandas as pd
+from django.contrib.auth.decorators import login_required
 
 
-
-state_abv_ ='ma'
+state_abv_ = 'sc'
     
-'''This sends filters in to django querys 
+''' This sends filters in to django querys 
     if all is present in input we remove
     that as it is eqvivalent of all in query'''
 
@@ -206,8 +207,9 @@ def core_experience_yearly(dashboard_filters):
     ) )
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     return plot_div
-  
-def load_dashboard(dashboard_filters={'state_abv':'sca','survey_taken_year':2022},dropdown=Filters(),):
+
+
+def load_dashboard(dashboard_filters,dropdown):
         context={
             'plot1':school_survey(dashboard_filters),
             'plot2':core_experience(dashboard_filters),
@@ -220,22 +222,32 @@ def load_dashboard(dashboard_filters={'state_abv':'sca','survey_taken_year':2022
             'form':dropdown
         }
         return context
-    
 
+
+
+@login_required(login_url='../auth/login/')
 def index(request):
+    state = CustomUser.objects.values('state').filter(username=request.user)[0]
+    state=state.get('state','None')
     if request.method=='GET':
-        context = load_dashboard()
-        #return render(request, 'analytics/welcome.html', context) 
-      
+        filter_state = state
+        if state=='all':
+            filter_state = 'ma'# on inital load some data has to be displayed so defaulting to ma
+        context = load_dashboard(dashboard_filters={'state_abv':filter_state,'survey_taken_year':2022},dropdown=Filters(state=state_choices(state)))
+    
     if request.method=='POST':
-        dropdown = Filters(request.POST)
+        state=request.POST['state_abv']
+        state = state_choices(state)
+        dropdown = Filters(state,request.POST)
+        print(dropdown)
         if dropdown.is_valid():
-            state_abv_ = dropdown.cleaned_data['state_abv']
+            #print('heloooooo')
             dashboard_filters = dropdown.cleaned_data
             context = load_dashboard(dashboard_filters,dropdown)
             
             #return HttpResponseRedirect('/')
     return render(request, 'analytics/welcome.html', context)          
+  
      
 
 
@@ -261,8 +273,19 @@ def percentage_values(total_values):
         res = {key:{'value':total_values[key],'percent_val':percent_arr[i]} for i,key in enumerate(total_values.keys()) }
         return res
 
-
-    
+def state_choices(state):#used for drop down in filters
+    STATE_CHOICES = []
+    STATE_CHOICES_RAW= list(SchoolDetails.objects.values_list('state_abv','school_state').distinct())
+    if state =='all':
+        for val in STATE_CHOICES_RAW:
+            if val[0]!='-99':
+                STATE_CHOICES.append(val)
+        return STATE_CHOICES
+    else:
+        for val in STATE_CHOICES_RAW:
+            if val[0]==state:
+                return [(val[0],val[1])]
+    return None
 '''
 query function for below six graphs
 as pattern is same only column names are changing i used this method for fetching data

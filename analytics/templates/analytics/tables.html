@@ -2,7 +2,7 @@
 {% load static %}
 {% block content %}
 
-<form class="form-inline"action="../tables/" method="post">
+<form class="form-inline"action="{% url 'tables' %}" method="post">
     {% for field in form %}
     {%csrf_token%}
     <div>
