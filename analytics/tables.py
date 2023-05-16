@@ -255,7 +255,6 @@ def tables(request):
         context = load_dashboard(dashboard_filters={'state_abv':filter_state,'survey_taken_year':2022},dropdown=Filters(state=state_choices(state)))
       
     if request.method=='POST':
-        state=request.POST['state_abv']
         state = state_choices(state)
         dropdown = Filters(state,request.POST)
         print(dropdown)

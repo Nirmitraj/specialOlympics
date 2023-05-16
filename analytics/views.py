@@ -236,7 +236,6 @@ def index(request):
         context = load_dashboard(dashboard_filters={'state_abv':filter_state,'survey_taken_year':2022},dropdown=Filters(state=state_choices(state)))
     
     if request.method=='POST':
-        state=request.POST['state_abv']
         state = state_choices(state)
         dropdown = Filters(state,request.POST)
         print(dropdown)
@@ -276,7 +275,7 @@ def percentage_values(total_values):
 def state_choices(state):#used for drop down in filters
     STATE_CHOICES = []
     STATE_CHOICES_RAW= list(SchoolDetails.objects.values_list('state_abv','school_state').distinct())
-    if state =='all':
+    if state =='all' or state== STATE_CHOICES_RAW:
         for val in STATE_CHOICES_RAW:
             if val[0]!='-99':
                 STATE_CHOICES.append(val)
