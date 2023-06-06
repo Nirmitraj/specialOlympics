@@ -1,3 +1,4 @@
+import copy
 from django.shortcuts import render
 from plotly.offline import plot
 import plotly.graph_objects as go
@@ -65,131 +66,146 @@ def percentage_values(total_values):
         return res
 
 def school_locale_graph(dashboard_filters):
+    state_name=dashboard_filters['state_abv']
     locale_data = school_locale_data(dashboard_filters)
     locale_statecount={'Rural':0,'Town':0,'Suburb':0,'City':0}
     for val in locale_data:
         key  = val[0].split(':')[0]
-        if key in locale_statecount.keys(): 
+        if key in locale_statecount.keys():
             locale_statecount[key] +=1
-
-
     locale_state = percentage_values(locale_statecount)
-    
-    total_locale_data=school_locale_data(dashboard_filters)
+    # filters=dashboard_filters
+    # filters.pop('state_abv')
+    filters =copy.copy(dashboard_filters)
+    filters.pop('state_abv')
+    total_locale_data=school_locale_data(filters)
     locale_nationcount={'Rural':0,'Town':0,'Suburb':0,'City':0}
     for val in total_locale_data:
         key = val[0].split(':')[0]
-        if key in locale_statecount.keys():
+        if key in locale_statecount.keys():#same keys both national and state
             locale_nationcount[key] +=1
 
     locale_nation = percentage_values(locale_nationcount)
 
 
     fig1 = go.Figure(data=[go.Table(
-        header=dict(values=['School locale', 'State 2022 year %','National 2022 year %'],
-                    line_color='darkslategray',
-                    fill_color='lightskyblue',
+        header=dict(values=['Locale', state_name+' '+str(dashboard_filters['survey_taken_year']),'National '+ str(dashboard_filters['survey_taken_year'])],
+                    line_color='white',
                     align='left'),
         cells=dict(values=[['Rural', 'Town','Suburban','Urban'],
                         [locale_state['Rural']['percent_val'], locale_state['Town']['percent_val'], locale_state['Suburb']['percent_val'], locale_state['City']['percent_val']],
                         [locale_nation['Rural']['percent_val'], locale_nation['Town']['percent_val'], locale_nation['Suburb']['percent_val'], locale_nation['City']['percent_val']]], 
-                    line_color='darkslategray',
-                    fill_color='lightcyan',
+                    line_color='white',
                     align='left'))
     ])
 
-    fig1.update_layout(width=700, height=300,title='Characteristics of schoolslocale in {year}, for the state {state_abv}'.format(year=dashboard_filters['survey_taken_year'],state_abv=dashboard_filters['state_abv']))
+    fig1.update_layout(width=750, height=390,font_size=15,title='Characteristics of schools locale in {year}, for the state {state_abv}'.format(state_abv=state_name,year=dashboard_filters['survey_taken_year']))
     plot_div = plot(fig1, output_type='div', include_plotlyjs=False)
     return plot_div
 
 def school_level_graph(dashboard_filters):
     school_level = school_level_data(dashboard_filters,state_abv_=dashboard_filters['state_abv'])
-    national_level = school_level_data(dashboard_filters)
+    filters =copy.copy(dashboard_filters)
+    filters.pop('state_abv')
+    national_level=school_level_data(filters)
     school_level=percentage_values(school_level)
     national_level=percentage_values(national_level)
-    print('School level',school_level,national_level)
-    fig2 = go.Figure(data=[go.Table(header=dict(values=['School level', 'State 2022 year %','National 2022 year %']),
+    # print('School level',school_level,national_level)
+    state_name=dashboard_filters['state_abv']
+    fig2 = go.Figure(data=[go.Table(header=dict(values=['School level',state_name+' '+str(dashboard_filters['survey_taken_year']),'National '+ str(dashboard_filters['survey_taken_year'])]),
                     cells=dict(values=[['Elementary','Middle','High','Other','Preschool'], 
                                         [school_level['Elementary']['percent_val'], school_level['Middle']['percent_val'], school_level['High']['percent_val'], school_level['Other']['percent_val'],school_level['Preschool']['percent_val']],
                                         [national_level['Elementary']['percent_val'],national_level['Middle']['percent_val'],national_level['High']['percent_val'],national_level['Other']['percent_val'],national_level['Preschool']['percent_val']]]))
                         ])
 
-    fig2.update_layout(width=700, height=350,title='Characteristics of schools level in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']))
+    fig2.update_layout(width=750, height=350,font_size=15,title='Characteristics of schools level in {year}, for the state {state_abv}'.format(state_abv=state_name,year=dashboard_filters['survey_taken_year']))
     plot_div = plot(fig2, output_type='div', include_plotlyjs=False)
     return plot_div
 
 def school_student_enrollment(dashboard_filters):
+    print("DASHBOARD FILTERS",dashboard_filters)
     student_enroll_state = school_enrollment_data(dashboard_filters,dashboard_filters['state_abv'])
-    student_enroll_nation = school_enrollment_data(dashboard_filters)
+    filters =copy.copy(dashboard_filters)
+    filters.pop('state_abv')
+    student_enroll_nation = school_enrollment_data(filters)
     student_enroll_state = percentage_values(student_enroll_state)
     student_enroll_nation = percentage_values(student_enroll_nation)
     print(student_enroll_state,student_enroll_nation)
-    fig3 = go.Figure(data=[go.Table(header=dict(values=['Student enrollment', 'State 2022 year %','National 2022 year %']),
+    state_name=dashboard_filters['state_abv']
+    fig3 = go.Figure(data=[go.Table(header=dict(values=['Student enrollment', state_name+' '+str(dashboard_filters['survey_taken_year']),'National '+ str(dashboard_filters['survey_taken_year'])]),
                     cells=dict(values=[['< 500','501-1000','1001-1500','More than 1500'], 
                                         [student_enroll_state.get('<500',{}).get('percent_val',0), student_enroll_state.get('501-1000',{}).get('percent_val',0), student_enroll_state.get('1001-1500',{}).get('percent_val',0), student_enroll_state.get('>1500',{}).get('percent_val',0)],
                                         [student_enroll_nation.get('<500',{}).get('percent_val',0), student_enroll_nation.get('501-1000',{}).get('percent_val',0), student_enroll_nation.get('1001-1500',{}).get('percent_val',0), student_enroll_nation.get('>1500',{}).get('percent_val',0)],]))])
 
-    fig3.update_layout(width=700, height=350,title='Characteristics of school_student_enrollment in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']))
+    fig3.update_layout(width=700, height=350,font_size=15,title='Percentage of schools at each student enrollment level <br> in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']))
     plot_div = plot(fig3, output_type='div', include_plotlyjs=False)
     return plot_div
 
 def school_free_reduce_lunch(dashboard_filters):
     student_lunch_state = school_lunch_data(dashboard_filters,dashboard_filters['state_abv'])
-    student_lunch_nation = school_lunch_data(dashboard_filters)
+    filters =copy.copy(dashboard_filters)
+    filters.pop('state_abv')
+    student_lunch_nation = school_lunch_data(filters)
     student_lunch_state=percentage_values(student_lunch_state)
     student_lunch_nation=percentage_values(student_lunch_nation)
     print('school_free_reduce_lunch:',student_lunch_state,student_lunch_nation)
-    fig4 = go.Figure(data=[go.Table(header=dict(values=['Student Receiving free or reduced lunch%', 'State 2022 year %','National 2022 year %']),
+    state_name=dashboard_filters['state_abv']
+    fig4 = go.Figure(data=[go.Table(header=dict(values=[' % of Student receiving free or reduced lunch', state_name+' '+str(dashboard_filters['survey_taken_year']),'National '+ str(dashboard_filters['survey_taken_year'])]),
                     cells=dict(values=[['0-25','26-50','51-75','76-100'], 
                                         [student_lunch_state.get("0%-25%",{}).get('percent_val','Nill'),student_lunch_state.get("26%-50%",{}).get('percent_val','Nill'), student_lunch_state.get("51%-75%",{}).get('percent_val','Nill'), student_lunch_state.get("76%-100%",{}).get('percent_val','Nill')],
                                         [student_lunch_nation.get("0%-25%",{}).get('percent_val','Nill'),student_lunch_nation.get("26%-50%",{}).get('percent_val','Nill'), student_lunch_nation.get("51%-75%",{}).get('percent_val','Nill'), student_lunch_nation.get("76%-100%",{}).get('percent_val','Nill')]]))
                         ])
-    fig4.update_layout(width=700, height=350,title='Characteristics of school free reduced lunch in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']))
+    fig4.update_layout(  title={
+        'text':'Percentage of schools with students receiving <br>free or reduced-price lunch in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']),
+        'x': 0.5  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+    },
+        width=700, height=350,font_size=15)
     plot_div = plot(fig4, output_type='div', include_plotlyjs=False)
     return plot_div
 
 def school_minority(dashboard_filters):
     minority_state = school_minority_data(dashboard_filters,dashboard_filters['state_abv'])
-    minority_nation = school_minority_data(dashboard_filters)
+    filters =copy.copy(dashboard_filters)
+    filters.pop('state_abv')
+    minority_nation = school_minority_data(filters)
     minority_state=percentage_values(minority_state)
     minority_nation=percentage_values(minority_nation)
     print('student_minority:',minority_state,minority_nation)
-    fig5 = go.Figure(data=[go.Table(header=dict(values=['Students of racial/ethnic minority %', 'State 2022 year %','National 2022 year %']),
+    state_name=dashboard_filters['state_abv']
+    fig5 = go.Figure(data=[go.Table(header=dict(values=['% of racial/ethnic minority students %', state_name+' '+str(dashboard_filters['survey_taken_year']),'National '+ str(dashboard_filters['survey_taken_year'])]),
                 cells=dict(values=[['< 10','11-25','26-50','51-75','76-90','> 90'], 
                                 [minority_state.get('10% or less',{}).get('percent_val','Nill'), minority_state.get('11%-25%',{}).get('percent_val','Nill'), minority_state.get('26%-50%',{}).get('percent_val','Nill'), minority_state.get('51%-75%',{}).get('percent_val','Nill'), minority_state.get('76%-90%',{}).get('percent_val','Nill'),minority_state.get('More than 90%',{}).get('percent_val','Nill')],
                                 [minority_nation.get('10% or less',{}).get('percent_val','Nill'), minority_state.get('11%-25%',{}).get('percent_val','Nill'),minority_nation.get('26%-50%',{}).get('percent_val','Nill'),minority_nation.get('51%-75%',{}).get('percent_val','Nill'),minority_nation.get('76%-90%',{}).get('percent_val','Nill'),minority_nation.get('More than 90%',{}).get('percent_val','Nill')]]))
                     ])
-    fig5.update_layout(width=800, height=370,title='Characteristics of Students of racial/ethnic minority in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']))
+    fig5.update_layout(width=800, height=370,font_size=15,title={'text':'Percentage of schools with students of racial/ethnic minority, <br> in {year}, for the state {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']),
+                                                                 'x':0.5})
     plot_div = plot(fig5, output_type='div', include_plotlyjs=False)
     return plot_div
 
 def table_graph(new_response,heading,headers,y_column):
     headerColor = 'grey'
-    rowEvenColor = 'lightgrey'
-    rowOddColor = 'white'
-
     fig = go.Figure(data=[go.Table(
     header=dict(
         values=headers,
-        line_color='darkslategray',
+        line_color='white',
         fill_color=headerColor,
         align=['left','center'],
-        font=dict(color='white', size=12)
+        font=dict(color='white', size=14)
     ),
     cells=dict(
         values=[
         y_column,
         new_response['state_values'],
         new_response['national_values']],
-        line_color='darkslategray',
+        line_color='white',
         # 2-D list of colors for alternating rows
-        fill_color = [[rowOddColor,rowEvenColor,rowOddColor, rowEvenColor,rowOddColor]*5],
+        #fill_color = [[rowOddColor,rowEvenColor,rowOddColor, rowEvenColor,rowOddColor]*5],
         align = ['left', 'center'],
-        font = dict(color = 'darkslategray', size = 11)
+        font = dict(color = 'darkslategray', size = 14)
         ))
     ])
 
-    fig.update_layout(title=heading, width=700, height=600)
+    fig.update_layout(title=heading, font_size=15,width=700, height=600)
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     return plot_div
 
@@ -222,14 +238,15 @@ def frequency_of_leadership(dashboard_filters):
     state_values= [] 
     national_values=[]
     y_axis=['Special Education Teachers','Students without IDD','Student with IDD','School Administrators','General Education Teachers','Physical Education (PE) Teachers ',
-            'Athletic Director','Adapted PE teachers','Parents of Students with IDD','Parents of Students without IDD','School Psychologist/Counselor/Social Worker','Special Olympics State Program Staff']
+            'Athletic Director','Adapted PE teachers','Parents of Students with IDD','Parents of Students without IDD','Psychologist/Counselor/Social Worker','Special Olympics State Program Staff']
     for key,yes_val in yes_response.items():
         state_values.append(response[key]['state'].get(yes_val,{}).get('percent_val',0))
         national_values.append(response[key]['national'].get(yes_val,{}).get('percent_val',0))
     new_response = {'state_values':state_values,'national_values':national_values,'lables':y_axis} #Main response to go out of this functions
-    title='Frequency of Leadership Team membership among common types of participants'
-    headers=['Participant','state_name','National'] 
-
+    title='Frequency of Leadership Team membership <br> among common types of participants'
+    state_name = dashboard_filters['state_abv']
+    headers=['Participant',state_name+' state','National']
+    
     return table_graph(new_response,title,headers,y_axis)
 
 def load_dashboard(dashboard_filters,dropdown):

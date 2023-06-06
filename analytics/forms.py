@@ -11,13 +11,13 @@ for val  in STATE_CHOICES_RAW:
 STATE_CHOICES.append(('all','all'))
 
 
-implementationlevel = {'all':'all',
+implementationlevel = {'all':'All',
                 'emerging':'Emerging',
                 'developing':'Developing',
-                'Full-implementation':'full implementation',
+                'Full-implementation':'Full implementation',
                 }
 
-locale = {'all':'all','City':'city','Suburb':'suburb','Rural':'rural'}
+locale = {'all':'All','City':'City','Suburb':'Suburb','Rural':'Rural'}
 
 years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct()
 '''
@@ -27,7 +27,7 @@ logic below is to convert actual year to smaller number (14,13,12...)
 so any (year - 2008) gives that years smaller value
 ex: 2022-2008 =14 
 '''
-year_dict = {val:'year '+str(val-2008)+' '+str(val) for val in years if type(val) == int and val > 2008 }
+year_dict = {val:'Year '+str(val-2008)+' '+str(val) for val in years if type(val) == int and val > 2008 }
 
 
 schoollevels = {'all':'all','Elementary':'Elementary','High':'High','Middle':'Middle','Preschool':'Preschool'}
@@ -42,7 +42,7 @@ class Filters(forms.Form):
         print('STATE',state)
         self.state = state
         super().__init__(*args)
-        self.fields['state_abv'] = forms.CharField(label='State', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
+        self.fields['state_abv'] = forms.CharField(label='State Program', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
 
     #state_abv= forms.CharField(label='State', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
 

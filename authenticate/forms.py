@@ -19,13 +19,14 @@ STATE_CHOICES = []
 for val in STATE_CHOICES_RAW:
     if val[0]!='-99':
         STATE_CHOICES.append(val)
+    STATE_CHOICES.sort()
 STATE_CHOICES.insert(0,('all','Admin'))
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(label="", widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'Email Address'}), )
     first_name = forms.CharField(label="", max_length=100, widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'First Name'}))
     last_name = forms.CharField(label="", max_length=100, widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'Last Name'}))
-    state = forms.CharField(label='State', widget=forms.Select(choices=STATE_CHOICES,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
+    state = forms.CharField(label='State Program', widget=forms.Select(choices=STATE_CHOICES,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
 
     class Meta:
         model = CustomUser

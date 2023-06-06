@@ -25,6 +25,19 @@ def filter_set(dashboard_filters):
     filters = dict(filters)
     return filters
 
+def core_exp_percentage(state,year):
+    print(state,year)
+    national_sum_1 = SchoolDetails.objects.values_list('unified_sports_component').filter(unified_sports_component=1,survey_taken_year=year).annotate(total = Count('unified_sports_component'))[0][1]
+    print(national_sum_1)
+    national_sum_2 = SchoolDetails.objects.values_list('youth_leadership_component').filter(youth_leadership_component=1,survey_taken_year=year).annotate(total = Count('youth_leadership_component'))[0][1]
+    national_sum_3 = SchoolDetails.objects.values_list('whole_school_component').filter(whole_school_component=1,survey_taken_year=year).annotate(total = Count('whole_school_component'))[0][1]
+    state_sum_1=SchoolDetails.objects.values_list('unified_sports_component').filter(state_abv=state,unified_sports_component=1,survey_taken_year=year).annotate(total = Count('unified_sports_component'))[0][1]
+    state_sum_2=SchoolDetails.objects.values_list('youth_leadership_component').filter(state_abv=state,youth_leadership_component=1,survey_taken_year=year).annotate(total = Count('youth_leadership_component'))[0][1]
+    state_sum_3=SchoolDetails.objects.values_list('whole_school_component').filter(state_abv=state,whole_school_component=1,survey_taken_year=year).annotate(total = Count('whole_school_component'))[0][1]
+    national_sum = national_sum_1 + national_sum_2 + national_sum_3
+    state_sum = state_sum_1+state_sum_2 +state_sum_3
+    return national_sum,state_sum
+
 def core_experience_data(dashboard_filters,key,range,survey_year=None):
     select_names = {'sports':'unified_sports_component',
                     'leadership':'youth_leadership_component',
@@ -32,15 +45,22 @@ def core_experience_data(dashboard_filters,key,range,survey_year=None):
     
     filters = filter_set(dashboard_filters)
     filters_national=filter_set(dashboard_filters)
+    if survey_year:
+        filters["survey_taken_year"] = survey_year
+        national_sum,state_sum = core_exp_percentage(state=filters['state_abv'],year=survey_year)
     if range == 'national':
         filters_national.pop('state_abv')
         filters = filters_national
 
-    if survey_year:
-        filters["survey_taken_year"] = survey_year
-    if key:
+    if key:#key value for selectnames dictionary
         data = dict(SchoolDetails.objects.values_list(select_names[key]).filter(**filters).annotate(total = Count(select_names[key])))
         data = data.get(True,0) #considering only partipated people
+        if survey_year:
+            if filters.get('state_abv',False):
+                data=round(((data/state_sum)*100),2)
+            else:
+                data=round(((data/national_sum)*100),2)
+            return data
         return data
     else:
         return 0
@@ -48,6 +68,7 @@ def core_experience_data(dashboard_filters,key,range,survey_year=None):
 def survey_years():
     survey_years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct().order_by('survey_taken_year')
     return list(survey_years)
+
 
 def core_experience_year_data(dashboard_filters):
     survey_year= survey_years()
@@ -90,7 +111,7 @@ def implementation_level_data(dashboard_filters):
     for year in survey_year:
         filters_state['survey_taken_year'] = year
         state_data = SchoolDetails.objects.values('implementation_level','survey_taken_year').filter(**filters_state).annotate(total = Count('implementation_level')).order_by('implementation_level')
-        
+
         for val in state_data:
             if val['implementation_level'] == 'Emerging':
                 response["state_emerging"][index] = val.get('total',0)
@@ -104,10 +125,44 @@ def implementation_level_data(dashboard_filters):
     return response
 
 
+def implementation_level(dashboard_filters):
+    data=implementation_level_data(dashboard_filters)
+    #data = implementation_level_percent(dashboard_filters)
+
+    print("IMPLEVEL:",data)
+    df = pd.DataFrame(data)
+
+    fig = px.line(df, x=df['survey_year'], y=df['emerging'], labels={"survey_year":"year","emerging":"Implementation level"})#color???
+    fig.add_scatter(x=df['survey_year'],y=df['emerging'], name="Emerging")
+    fig.add_scatter(x=df['survey_year'],y=df['state_emerging'], name="{0} Emerging".format(dashboard_filters['state_abv']))   
+    fig.add_scatter(x=df['survey_year'],y=df['developing'], name="Developing")#color="developing")
+    fig.add_scatter(x=df['survey_year'],y=df['state_developing'], name="{0} Developing".format((dashboard_filters['state_abv'])))   
+    fig.add_scatter(x=df['survey_year'],y=df['full_implement'], name="Full implementation".format(dashboard_filters['state_abv']))#,color="full_implemention")
+    fig.add_scatter(x=df['survey_year'],y=df['state_full_implement'], name="{0} Full implementation".format(dashboard_filters['state_abv']))
+    title_name = 'Implementation level over time,<br> National vs. State Program in state {0}'.format(dashboard_filters['state_abv'])
+    fig.update_layout( 
+    title={
+        'text': title_name,
+        'y': 0.95,  # Adjust the y position of the title (0 - bottom, 1 - top)
+        'x': 0.5  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+    },
+    legend=dict(
+        orientation="h",
+    ),
+    xaxis = dict (
+        tickmode='linear',
+        tick0 = min(df['survey_year']),
+        dtick=1
+    ))
+    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+    return plot_div
+
+
 def school_suvery_data(dashboard_filters):
     filters= filter_set(dashboard_filters)
     filters.pop('state_abv') # as this graph is for all states we remove state filter for this
-    return SchoolDetails.objects.values('school_state','survey_taken').filter(**filters).annotate(total = Count('survey_taken')).order_by('school_state')
+    print('Filterssssss',filters)
+    return SchoolDetails.objects.values('school_state','survey_taken').filter(**filters).exclude(school_state='-99').annotate(total = Count('survey_taken')).order_by('school_state')
 
 def school_survey(dashboard_filters):
     school_surveys = school_suvery_data(dashboard_filters)
@@ -124,9 +179,10 @@ def school_survey(dashboard_filters):
 
     trace = [go.Bar(x= school_state,y = survey_true,name='Yes'),
             go.Bar(x= school_state,y = survey_false,name='No')]
-
+    year = dashboard_filters['survey_taken_year']
+    print('YEAR',year)
     layout = dict(
-        title='School survey ratio',
+        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,year),
         yaxis = dict(range=[min(survey_true), max(survey_true)]),
         barmode='group',
     )
@@ -154,51 +210,31 @@ def core_experience(dashboard_filters):
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     return plot_div
 
-def implementation_level(dashboard_filters):
-    data=implementation_level_data(dashboard_filters)
-    
-    print("IMPLEVEL:",data)
-    df = pd.DataFrame(data)
-    fig = px.line(df, x=df['survey_year'], y=df['emerging'], labels={"survey_year":"year","emerging":"implementation"})#color???
-    fig.add_scatter(x=df['survey_year'],y=df['emerging'], name="emerging")
-    fig.add_scatter(x=df['survey_year'],y=df['developing'], name="developing")#color="developing")
-    fig.add_scatter(x=df['survey_year'],y=df['full_implement'], name="full_implement")#,color="full_implemention")
-    fig.add_scatter(x=df['survey_year'],y=df['state_emerging'], name="state_emerging")
-    fig.add_scatter(x=df['survey_year'],y=df['state_developing'], name="state_developing")
-    fig.add_scatter(x=df['survey_year'],y=df['state_full_implement'], name="state_full_implement")
-
-    fig.update_layout( 
-    legend=dict(
-        title="implementation level", orientation="h", y=1, yanchor="bottom", x=0.5, xanchor="center"
-    ),
-    xaxis = dict (
-        tickmode='linear',
-        tick0 = min(df['survey_year']),
-        dtick=1
-    )
-)
-    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-
-    return plot_div
-
 def core_experience_yearly(dashboard_filters):
     filters = filter_set(dashboard_filters)
     data = core_experience_year_data(dashboard_filters)
 
     print("CORE_EXP_YEAR:",data)
+    #{'sports': [6370, 3461], 'leadership': [3914, 2560], 'whole_school': [5132, 3361], 'survey_year': [2021, 2022], 'state_sports': [47, 21], 'state_leadership': [18, 12], 'state_whole_school': [26, 18]}
+            
     df = pd.DataFrame(data)
-    fig = px.line(df, x=df['survey_year'], y=df['state_sports'], labels={"survey_year":"year","sports":"core experience"})
+    fig = px.line(df, x=df['survey_year'], y=df['state_sports'], labels={"survey_year":"year","state_sports":"core experience"})
     fig.add_scatter(x=df['survey_year'],y=df['sports'], name="Unified sports")
-    fig.add_scatter(x=df['survey_year'],y=df['leadership'], name="Inclusive youth leadership")
+    fig.add_scatter(x=df['survey_year'],y=df['state_leadership'], name="{state} Inclusive youth leadership".format(state=filters['state_abv']))
     fig.add_scatter(x=df['survey_year'],y=df['whole_school'], name="Whole school engagement")
     fig.add_scatter(x=df['survey_year'],y=df['state_sports'], name="{state} Unified sports".format(state=filters['state_abv']))
-    fig.add_scatter(x=df['survey_year'],y=df['state_leadership'], name="{state} Inclusive youth leadership".format(state=filters['state_abv']))
+    fig.add_scatter(x=df['survey_year'],y=df['leadership'], name="Inclusive youth leadership")
     fig.add_scatter(x=df['survey_year'],y=df['state_whole_school'], name="{state} school engagement".format(state=filters['state_abv']))
-    title_name = "Core experience implementation over time in {0}".format(filters['state_abv'])
+    title_name = "Percentage of Core experience implementation over time,<br> National vs State program in state {0}".format(filters['state_abv'])
 
     fig.update_layout( 
+    title={
+        'text': title_name,
+        'y': 0.95,  # Adjust the y position of the title (0 - bottom, 1 - top)
+        'x': 0.5  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+    },
     legend=dict(
-        title=title_name, orientation="h", y=1, yanchor="bottom", x=0.5, xanchor="center"
+        orientation="h",
     ),
     xaxis = dict (
         tickmode='linear',
@@ -232,7 +268,7 @@ def index(request):
     if request.method=='GET':
         filter_state = state
         if state=='all':
-            filter_state = 'ma'# on inital load some data has to be displayed so defaulting to ma
+            filter_state = 'ak'# on inital load some data has to be displayed so defaulting to ma
         context = load_dashboard(dashboard_filters={'state_abv':filter_state,'survey_taken_year':2022},dropdown=Filters(state=state_choices(state)))
     
     if request.method=='POST':
@@ -279,6 +315,7 @@ def state_choices(state):#used for drop down in filters
         for val in STATE_CHOICES_RAW:
             if val[0]!='-99':
                 STATE_CHOICES.append(val)
+                STATE_CHOICES.sort()
         return STATE_CHOICES
     else:
         for val in STATE_CHOICES_RAW:
@@ -316,9 +353,10 @@ def implement_unified_sport_activity(dashboard_filters):
     for column_name in response.keys():
         response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all')) 
         response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state'))
-    y_axis = ['Unified Sports Teams', 'Unified PE', 'Unified fitness','unified esports', 'young athletes(participants)', 'Unified Developmental Sports']
-    title='Percentage of schools implementing each Unified Sports activity'
-    return horizontal_bar_graph(response,y_axis,title)
+    y_axis = ['Unified Sports Teams', 'Unified PE', 'Unified fitness','Unified esports', 'Young athletes(participants)', 'Unified Developmental Sports']
+    title='Percentage of schools implementing each <br> Unified Sports activity in {0} compared to national data'.format(dashboard_filters['state_abv'])
+    state=dashboard_filters['state_abv']#adding state to the response for graph lables
+    return horizontal_bar_graph(response,y_axis,title,state)
 
 def implement_youth_leadership_activity(dashboard_filters):
     response = {'leadership_unified_inclusive_club':{},'leadership_youth_training':{},'leadership_athletes_volunteer':{},
@@ -327,9 +365,10 @@ def implement_youth_leadership_activity(dashboard_filters):
     for column_name in response.keys():
         response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all')) 
         response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state'))
-    y_axis=['unifed/Inclusive Club','Inclusive Youth leadership Training/Class','Young Athletes Volunteers','Youth summit','Youth Activation Committee']
-    title='Percentage of schools implementing each Inclusive Youth Leadership activity'
-    return horizontal_bar_graph(response,y_axis,title)
+    y_axis=['Unifed/Inclusive Club','Inclusive Youth leadership Training/Class','Young Athletes Volunteers','Youth summit','Youth Activation Committee']
+    title='Percentage of schools implementing each <br>  Youth Leadership activity in {0} compared to national data'.format(dashboard_filters['state_abv'])
+    state=dashboard_filters['state_abv']#adding state to the response for graph lables
+    return horizontal_bar_graph(response,y_axis,title,state)
 
 def implement_school_engagement_activity(dashboard_filters):
     response = {'engagement_spread_word_campaign':{},'engagement_fansinstands':{},'engagement_sports_day':{},
@@ -339,35 +378,11 @@ def implement_school_engagement_activity(dashboard_filters):
     for column_name in response.keys():
         response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all')) 
         response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state'))
-    y_axis=['Spread the word'+'<br>'+'Inclusion/Respect/Disabilityy' +'<br>'+'Awareness Campaign','Unified Sports pep Rally','Unified Sports Day/Festival','Fundraising events /activities','Special Olympics play/performance','Unified Fitness Challenge']
-    title='Percentage of schools implementing each Inclusive Whole School Engagement activity'
-    return horizontal_bar_graph(response,y_axis,title)
+    y_axis=['Spread the word'+'<br>'+'Inclusion/Respect/Disability' +'<br>'+'Awareness Campaign','Unified Sports pep Rally','Unified Sports Day/Festival','Fundraising events /activities','Special Olympics play/performance','Unified Fitness Challenge']
+    title='Percentage of schools implementing each <br> Inclusive Whole School Engagement activity {0} compared to national data'.format(dashboard_filters['state_abv'])
+    state=dashboard_filters['state_abv']#adding state to the response for graph lables
+    return horizontal_bar_graph(response,y_axis,title,state)
 
-def frequency_of_leadership(dashboard_filters):
-    response = {'special_education_teachers':{},'general_education_teachers':{},'physical_education_teachers':{},'adapted_pe_teachers':{},'athletic_director':{},'students_with_idd':{},
-                'students_without_idd':{},'school_administrators':{},'parents_of_students_with_idd':{},'parents_of_students_without_idd':{},'school_psychologist':{},'special_olympics_state_program_staff':{}}
-    filters=filter_set(dashboard_filters)
-    for column_name in response.keys():
-        response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all')) 
-        response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state'))
-
-    #finding what is considering as yes in the tables the below dict is a what varible in column is equal to yes
-    yes_response = {'special_education_teachers':'Special Education teachers','general_education_teachers':'General Education teachers','physical_education_teachers':'Physical Education teachers',
-                           'adapted_pe_teachers':'Adapted PE teachers','athletic_director':'Athletic director','students_with_idd':'Students with IDD',
-                'students_without_idd':'Students without IDD','school_administrators':'School Administrators','parents_of_students_with_idd':'Parents of students with IDD',
-                'parents_of_students_without_idd':'Parents of students without IDD','school_psychologist':'School Psychologist/Counselor/Social Worker','special_olympics_state_program_staff':'SO state staff'}
-    state_values= [] 
-    national_values=[]
-    y_axis=['Special Education Teachers','Students without IDD','Student with IDD','School Administrators','General Education Teachers','Physical Education (PE) Teachers ',
-            'Athletic Director','Adapted PE teachers','Parents of Students with IDD','Parents of Students without IDD','School Psychologist/Counselor/Social Worker','Special Olympics State Program Staff']
-    for key,yes_val in yes_response.items():
-        state_values.append(response[key]['state'].get(yes_val,{}).get('percent_val',0))
-        national_values.append(response[key]['national'].get(yes_val,{}).get('percent_val',0))
-    new_response = {'state_values':state_values,'national_values':national_values,'lables':y_axis} #Main response to go out of this functions
-    title='Frequency of Leadership Team membership among common types of participants'
-    headers=['Participant','state_name','National'] 
-
-    return table_graph(new_response,title,headers,y_axis)
 
 def sona_resources_useful(dashboard_filters):
     response={'elementary_school_playbook':{},'middle_level_playbook':{},'high_school_playbook':{},'special_olympics_state_playbook':{},'special_olympics_fitness_guide_for_schools':{},'unified_physical_education_resource':{},
@@ -408,14 +423,15 @@ def sona_resources_useful(dashboard_filters):
             'Special Olympics Young Athletes Activity Guide','Inclusive Youth Leadership Training: Faciliatator Guide','Planning and Hosting a Youth Leadership Experience','Unified Classoom lessons and activities','Generation Unified Youtube channel or videos',
             'Inclusion Tiles game or facilitator guide']
     
-    title='Percentage of liaisons who found SONA resources useful'
-    return horizontal_stacked_bar(new_response,y_axis,title)
+    title='Percentage of liaisons who found SONA resources useful in State {0} compared to national data'.format(dashboard_filters['state_abv'])
+    state=dashboard_filters['state_abv']
+    return horizontal_stacked_bar(new_response,y_axis,title,state)
 
 
 '''   
 CHARTS
 '''
-def horizontal_bar_graph(response,y_axis,heading):
+def horizontal_bar_graph(response,y_axis,heading,state):
     print(response)
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -430,8 +446,8 @@ def horizontal_bar_graph(response,y_axis,heading):
     ))
     fig.add_trace(go.Bar(
         y=y_axis,
-        x=[response[val]['state'].get('Yes',{}).get('percent_val',0) for val in response if response],
-        name='state',
+        x=[response[val]['state'].get('Yes',{}).get('percent_val',0) for val in response if response ],
+        name=state,
         orientation='h',
         marker=dict(
             color='rgba(58, 71, 80, 0.6)',
@@ -439,41 +455,18 @@ def horizontal_bar_graph(response,y_axis,heading):
         )
     ))
 
-    fig.update_layout(title=heading,barmode='group',xaxis_range=[0,100])
+    fig.update_layout( 
+    title={
+        'text': heading,
+        # 'y': 0.95,  # Adjust the y position of the title (0 - bottom, 1 - top)
+        'x': 0.5  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+    },barmode='group',xaxis_range=[0,100])
+
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     return plot_div
     
-def table_graph(new_response,heading,headers,y_column):
-    headerColor = 'grey'
-    rowEvenColor = 'lightgrey'
-    rowOddColor = 'white'
 
-    fig = go.Figure(data=[go.Table(
-    header=dict(
-        values=headers,
-        line_color='darkslategray',
-        fill_color=headerColor,
-        align=['left','center'],
-        font=dict(color='white', size=12)
-    ),
-    cells=dict(
-        values=[
-        y_column,
-        new_response['state_values'],
-        new_response['national_values']],
-        line_color='darkslategray',
-        # 2-D list of colors for alternating rows
-        fill_color = [[rowOddColor,rowEvenColor,rowOddColor, rowEvenColor,rowOddColor]*5],
-        align = ['left', 'center'],
-        font = dict(color = 'darkslategray', size = 11)
-        ))
-    ])
-
-    fig.update_layout(title=heading, width=700, height=600)
-    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-    return plot_div
-
-def horizontal_stacked_bar(response,y_axis,heading):
+def horizontal_stacked_bar(response,y_axis,heading,state):
     print(response)
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -489,7 +482,7 @@ def horizontal_stacked_bar(response,y_axis,heading):
     fig.add_trace(go.Bar(
         y=y_axis,
         x=response['state_yes'],
-        name='state',
+        name=state,
         orientation='h',
         marker=dict(
             color='rgba(139, 144, 209, 0.8)',
