@@ -7,3 +7,4 @@ analytics/dash_apps/finished_apps/__pycache__/surveys_taken.cpython-311.pyc
 /AWS
 content
 *.pyc
+excel_data/

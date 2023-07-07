@@ -12,9 +12,9 @@ STATE_CHOICES.append(('all','all'))
 
 
 implementationlevel = {'all':'All',
-                'emerging':'Emerging',
-                'developing':'Developing',
-                'Full-implementation':'Full implementation',
+                '1':'Emerging',
+                '2':'Developing',
+                '3':'Full implementation',
                 }
 
 locale = {'all':'All','City':'City','Suburb':'Suburb','Rural':'Rural'}
@@ -30,7 +30,7 @@ ex: 2022-2008 =14
 year_dict = {val:'Year '+str(val-2008)+' '+str(val) for val in years if type(val) == int and val > 2008 }
 
 
-schoollevels = {'all':'all','Elementary':'Elementary','High':'High','Middle':'Middle','Preschool':'Preschool'}
+schoollevels = {'all':'all','1.00':'Elementary','2.00':'High','3.00':'Middle','4.00':'Preschool'}
 class Filters(forms.Form):
     implementation_level = forms.CharField(label='Implementation level', widget=forms.Select(choices=implementationlevel.items(),attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
     locale__startswith = forms.CharField(label='Locale', widget=forms.Select(choices=locale.items(),attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
