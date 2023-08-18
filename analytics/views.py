@@ -179,8 +179,13 @@ def implementation_level(dashboard_filters):
     fig.update_layout( 
     title={
         'text': title_name,
-        'y': 0.95,  # Adjust the y position of the title (0 - bottom, 1 - top)
-        'x': 0.5  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+        # 'y': 0.95,  # Adjust the y position of the title (0 - bottom, 1 - top)
+        # 'x': 0.5  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+
+        "x": 0.5,  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+        "y": 0.9,  # Adjust the y position of the title (0 - bottom, 1 - top)
+        "yanchor": "top",  # Anchor point of the title (aligned to the top)
+
     },
     legend=dict(
         orientation="h",
@@ -189,7 +194,11 @@ def implementation_level(dashboard_filters):
         tickmode='linear',
         tick0 = min(df['survey_year']),
         dtick=1
-    ))
+    ),
+    margin=dict(
+        t=100
+    )
+    )
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     return plot_div
 
@@ -269,13 +278,19 @@ def core_experience_yearly(dashboard_filters):
     fig.add_scatter(x=df['survey_year'],y=df['state_sports'], name="{state} Unified Sports".format(state=filters['state_abv']))
     fig.add_scatter(x=df['survey_year'],y=df['leadership'], name="Inclusive Youth Leadership")
     fig.add_scatter(x=df['survey_year'],y=df['state_whole_school'], name="{state} School Engagement".format(state=filters['state_abv']))
-    title_name = "Percentage of Core experience implementation over time,<br> National vs {0} State program".format(filters['state_abv'])
-
+    title_name = "Percentage of Core experience implementation over time,<br> National vs {0} State program <br><br>".format(filters['state_abv'])
+    
     fig.update_layout( 
+        
     title={
         'text': title_name,
-        'y': 0.95,  # Adjust the y position of the title (0 - bottom, 1 - top)
-        'x': 0.5  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+        # 'y': 0.95,  # Adjust the y position of the title (0 - bottom, 1 - top)
+        # 'x': 0.5,  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+         "x": 0.5,  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+        "y": 0.9,  # Adjust the y position of the title (0 - bottom, 1 - top)
+        "yanchor": "top",  # Anchor point of the title (aligned to the top)
+        # "font": {"size": 20},  # Font size of the title
+        # "pad": {"t": 5}  
     },
     legend=dict(
         orientation="h",
@@ -284,7 +299,11 @@ def core_experience_yearly(dashboard_filters):
         tickmode='linear',
         tick0 = min(df['survey_year']),
         dtick=1
-    ) )
+    ),
+      margin=dict(
+        t=100  # Increase the top margin (adjust the value as needed)
+    )
+      )
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     return plot_div
 
