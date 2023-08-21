@@ -344,8 +344,9 @@ def index(request):
             context = load_dashboard(dashboard_filters,dropdown)
             
             #return HttpResponseRedirect('/')
-    return render(request, 'analytics/welcome.html', context)          
-  
+    return render(request, 'analytics/welcome.html', context) 
+         
+
      
 
 
