@@ -503,6 +503,7 @@ def horizontal_bar_graph(response,y_axis,heading,state):
         x=[response[val]['national'].get('1',{}).get('percent_val',0) for val in response if response],
         name='National',
         orientation='h',
+        visible = "legendonly",
         marker=dict(
             color='rgba(246, 78, 139, 0.6)',
             line=dict(color='rgba(246, 78, 139, 1.0)', width=0)
@@ -538,6 +539,7 @@ def horizontal_stacked_bar(response,y_axis,heading,state):
         x=response['nation_yes'],
         name='National',
         orientation='h',
+        visible = "legendonly",
         marker=dict(
             color='rgba(99, 110, 250, 0.8)',
             line=dict(color='rgba(99, 110, 250, 1.0)', width=0)

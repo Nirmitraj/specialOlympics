@@ -7,7 +7,7 @@ urlpatterns=[
     path('',auth_views.home,name='home'),
     path('tables/',tables.tables,name='tables'),
     path('dashboard/',views.index,name='dashboard'),
-    path('index_graph/',index_graph.Employee_Details,name='index_graph'),
+    path('index_graph/',index_graph.index,name='index_graph'),
 
     # path('welcome.html/',views.index,name='homepage'),
     # path('tables.html/',tables.tables,name='tablespage'),
