@@ -1,22 +1,59 @@
 {%  extends 'base.html' %}
 {% load static %}
 {% block content %}
+{% load widget_tweaks %}  <!-- load widget_tweaks -->
 
+{% block extrahead %}
+    {{ form.media.css }}
+{% endblock %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 
-<form class="form-inline"action="{% url 'index_graph' %}" method="post">
-    {% for field in form %}
-    {%csrf_token%}
-    <div>
-    <div class="field-label">{{field.label }}</div>
-    <div class="field-select">{{ field }}</div>
-    </div>
-    {% endfor %}
-    <input type="submit" value="Submit" style="height: calc(1.5em + 0.75rem + 2px);width: 80px;margin-top: 24px;">
+</head>
+<body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+<!-- <script>
+    $(document).ready(function() {
+        var $select1 = $('#id_state_abv');
+
+        $select1.on('change', function() {
+            console.log('state_abv changed');
+        });
+    });
+</script> -->
+<form action="{% url 'index_graph' %}" method="post">
+  {% csrf_token %}
+  <div class="container">
+      <div class="form-row">
+          {% for field in form %}
+          <div class="form-group col-md-4 col-lg-4 mb-3">
+              <label for="{{ field.auto_id }}" class="d-block text-left">{{ field.label }}</label>
+              {{ field|add_class:"form-control" }}
+          </div>
+          {% endfor %}
+      </div>
+      <div class="form-group row">
+          <div class="col-sm-8">
+              <input type="submit" class="btn btn-primary mt-2" value="Submit">
+          </div>
+      </div>
+  </div>
 </form>
+
+{% block extrascripts %}
+{{ form.media.js }}
+    <script src="{% static 'django_select2/django_select2.js' %}"></script>
+  
+{% endblock %}
+<!-- <script>
+$(document).ready(function() {
+    $('.django-select2').select2();
+});
+</script> -->
+
 
 <title>Collapsible Rows</title>
 <style>
@@ -66,6 +103,12 @@
     margin: 0;
     width: 100%;
   }
+  .compare-by {
+    height: 38px; /* Adjust this value as needed */
+}
+
+  
+  
   
 </style>
 </head>
@@ -74,8 +117,23 @@
     <li>
       <details>
         <summary>{{plot_titles.plot1}}</summary>
+        <div class="dropdown-container" id="dropdown-container-1">
+        <select class="compare-by" id="compare-by-1">
+          <option value="">Compare By...</option>
+          <option value="imp_level">Implementation Level</option>
+          <option value="locale">Locale</option>
+          <option value="school_level">School Level</option>
+          <!-- Add more options as needed -->
+        </select>
+        <button id="reset-button-1" class="btn btn-secondary">Reset</button>
+
+        <!-- Add a spinner element for the loader (hidden by default) -->
+        <div id="loader" style="display: none;">
+          <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+        </div>
         <div class="content">
-        <div class="resizable-plot"> {{plot1|safe}}</div>
+        <div class="resizable-plot" id="resizable-plot-1"> {{plot1|safe}}</div>
+         </div>
         </div>
       </details>
     </li>
@@ -98,6 +156,7 @@
     <li>
         <details>
             <summary>{{plot_titles.plot4}}</summary>
+            
             <div class="content">
             <div class="resizable-plot"> {{plot4|safe}}</div>
             </div>
@@ -106,36 +165,358 @@
     <li>
         <details>
             <summary>{{plot_titles.plot5}}</summary>
+            <div class="dropdown-container" id="dropdown-container-2">
+              <select class="compare-by" id="compare-by-2">
+                <option value="">Compare By...</option>
+                <option value="imp_level">Implementation Level</option>
+                <option value="locale">Locale</option>
+                <option value="school_level">School Level</option>
+                <!-- Add more options as needed -->
+              </select>
+              <button id="reset-button-2" class="btn btn-secondary">Reset</button>
+      
+              <!-- Add a spinner element for the loader (hidden by default) -->
+              <div id="loader" style="display: none;">
+                <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+              </div>
             <div class="content">
-            <div class="resizable-plot"> {{plot5|safe}}</div>
+            <div class="resizable-plot" id="resizable-plot-2"> {{plot5|safe}}</div>
             </div>
           </details>
     </li>
     <li>
         <details>
             <summary>{{plot_titles.plot6}}</summary>
+            <div class="dropdown-container" id="dropdown-container-3">
+              <select class="compare-by" id="compare-by-3">
+                <option value="">Compare By...</option>
+                <option value="imp_level">Implementation Level</option>
+                <option value="locale">Locale</option>
+                <option value="school_level">School Level</option>
+                <!-- Add more options as needed -->
+              </select>
+              <button id="reset-button-3" class="btn btn-secondary">Reset</button>
+      
+              <!-- Add a spinner element for the loader (hidden by default) -->
+              <div id="loader" style="display: none;">
+                <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+              </div>
             <div class="content">
-            <div class="resizable-plot"> {{plot6|safe}}</div>
+            <div class="resizable-plot" id="resizable-plot-3"> {{plot6|safe}}</div>
             </div>
           </details>
     </li>
     <li>
         <details>
             <summary>{{plot_titles.plot7}}</summary>
+            <div class="dropdown-container" id="dropdown-container-4">
+              <select class="compare-by" id="compare-by-4">
+                <option value="">Compare By...</option>
+                <option value="imp_level">Implementation Level</option>
+                <option value="locale">Locale</option>
+                <option value="school_level">School Level</option>
+                <!-- Add more options as needed -->
+              </select>
+              <button id="reset-button-4" class="btn btn-secondary">Reset</button>
+      
+              <!-- Add a spinner element for the loader (hidden by default) -->
+              <div id="loader" style="display: none;">
+                <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+              </div>
             <div class="content">
-            <div class="resizable-plot"> {{plot7|safe}}</div>
+            <div class="resizable-plot" id="resizable-plot-4"> {{plot7|safe}}</div>
             </div>
           </details>
     </li>
     <li>
         <details>
             <summary>{{plot_titles.plot8}}</summary>
+            <!-- <div class="dropdown-container" id="dropdown-container-4">
+              <select class="compare-by" id="compare-by-5">
+                <option value="">Compare By...</option>
+                <option value="imp_level">Implementation Level</option>
+                <option value="locale">Locale</option>
+                <option value="school_level">School Level</option> -->
+                <!-- Add more options as needed -->
+              <!-- </select>
+              <button id="reset-button-5" class="btn btn-secondary">Reset</button>
+       -->
+              <!-- Add a spinner element for the loader (hidden by default) -->
+              <!-- <div id="loader" style="display: none;">
+                <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+              </div> -->
             <div class="content">
-            <div class="resizable-plot"> {{plot8|safe}}</div>
+            <div class="resizable-plot-5"> {{plot8|safe}}</div>
             </div>
           </details>
     </li>
   </ul>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script>
+  $('#compare-by-1').change(function() {
+      var selectedOption = $(this).val();
+      var state_abv = $('#id_state_abv').val();
+      var survey_taken_year = $('#id_survey_taken_year').val();
+
+      console.log(selectedOption)
+      if (selectedOption) {  // If an option is selected (not the placeholder)
+          $.ajax({
+
+              url: "{% url 'get_graph' %}",  // Replace with your URL pattern name
+              data: {
+                'state_abv': state_abv,
+                'survey_taken_year': survey_taken_year,
+                'type': selectedOption,
+                'graph_no': 1
+
+              },
+              traditional: true,
+              success: function(data) {
+                // print("YOO NEW DATA", data)
+                  // Replace the content of the plot with the received data
+                  // You might need to adjust this part to match your actual data and plot element
+                  $('#resizable-plot-1').html(data.plot_div);
+              }
+          });
+      }
+  });
+
+  $('#compare-by-2').change(function() {
+      var selectedOption = $(this).val();
+      var state_abv = $('#id_state_abv').val();
+      var survey_taken_year = $('#id_survey_taken_year').val();
+
+
+      if (selectedOption) {  // If an option is selected (not the placeholder)
+          $.ajax({
+
+              url: "{% url 'get_graph' %}",  // Replace with your URL pattern name
+              data: {
+                'state_abv': state_abv,
+                'survey_taken_year': survey_taken_year,
+                'type': selectedOption,
+                'graph_no': 5
+              },
+              traditional: true,
+              success: function(data) {
+                // print("YOO NEW DATA", data)
+                  // Replace the content of the plot with the received data
+                  // You might need to adjust this part to match your actual data and plot element
+                  $('#resizable-plot-2').html(data.plot_div);
+              }
+          });
+      }
+  });
+
+  $('#compare-by-3').change(function() {
+      var selectedOption = $(this).val();
+      var state_abv = $('#id_state_abv').val();
+      var survey_taken_year = $('#id_survey_taken_year').val();
+
+
+      if (selectedOption) {  // If an option is selected (not the placeholder)
+          $.ajax({
+
+              url: "{% url 'get_graph' %}",  // Replace with your URL pattern name
+              data: {
+                'state_abv': state_abv,
+                'survey_taken_year': survey_taken_year,
+                'type': selectedOption,
+                'graph_no': 6
+              },
+              traditional: true,
+              success: function(data) {
+                // print("YOO NEW DATA", data)
+                  // Replace the content of the plot with the received data
+                  // You might need to adjust this part to match your actual data and plot element
+                  $('#resizable-plot-3').html(data.plot_div);
+              }
+          });
+      }
+  });
+
+  $('#compare-by-4').change(function() {
+      var selectedOption = $(this).val();
+      var state_abv = $('#id_state_abv').val();
+      var survey_taken_year = $('#id_survey_taken_year').val();
+
+
+      if (selectedOption) {  // If an option is selected (not the placeholder)
+          $.ajax({
+
+              url: "{% url 'get_graph' %}",  // Replace with your URL pattern name
+              data: {
+                'state_abv': state_abv,
+                'survey_taken_year': survey_taken_year,
+                'type': selectedOption,
+                'graph_no': 7
+              },
+              traditional: true,
+              success: function(data) {
+                // print("YOO NEW DATA", data)
+                  // Replace the content of the plot with the received data
+                  // You might need to adjust this part to match your actual data and plot element
+                  $('#resizable-plot-4').html(data.plot_div);
+              }
+          });
+      }
+  });
+
+  $('#compare-by-5').change(function() {
+      var selectedOption = $(this).val();
+      var state_abv = $('#id_state_abv').val();
+      var survey_taken_year = $('#id_survey_taken_year').val();
+
+
+      if (selectedOption) {  // If an option is selected (not the placeholder)
+          $.ajax({
+
+              url: "{% url 'get_graph' %}",  // Replace with your URL pattern name
+              data: {
+                'state_abv': state_abv,
+                'survey_taken_year': survey_taken_year,
+                'type': selectedOption,
+                'graph_no': 8
+              },
+              traditional: true,
+              success: function(data) {
+                // print("YOO NEW DATA", data)
+                  console.log(data)
+                  // Replace the content of the plot with the received data
+                  // You might need to adjust this part to match your actual data and plot element
+                  $('#resizable-plot-5').html(data.plot_div);
+              }
+          });
+      }
+  });
+
+ 
+
+  // Handle the click event for the reset button
+$('#reset-button-1').click(function() {
+  // Show the loader
+  $('#loader').show();
+  var state_abv = $('#id_state_abv').val();
+  var survey_taken_year = $('#id_survey_taken_year').val();
+
+
+  // Make the AJAX request
+  $.ajax({
+    url: "{% url 'get_graph' %}",
+    data: {
+      // 'state_abv': ["AK"],
+      // 'survey_taken_year': ['2022'],
+      // 'type': 'reset'  // Indicate that this is a reset request
+      'state_abv': state_abv,
+      'survey_taken_year': survey_taken_year,
+      'type': 'reset',
+      'graph_no': 1
+    },
+    traditional: true,
+    success: function(data) {
+      // Hide the loader
+      console.log("something!")
+      $('#loader').hide();
+      $('#compare-by-1').val('');
+
+      // Replace the content of the plot with the received data
+      $('#resizable-plot-1').html(data.plot_div);
+    }
+  });
+});
+
+$('#reset-button-2').click(function() {
+  // Show the loader
+  $('#loader').show();
+  var state_abv = $('#id_state_abv').val();
+  var survey_taken_year = $('#id_survey_taken_year').val();
+
+
+  // Make the AJAX request
+  $.ajax({
+    url: "{% url 'get_graph' %}",
+    data: {
+      // 'state_abv': ["AK"],
+      // 'survey_taken_year': ['2022'],
+      // 'type': 'reset'  // Indicate that this is a reset request
+      'state_abv': state_abv,
+      'survey_taken_year': survey_taken_year,      'type': 'reset',
+      'graph_no': 5
+    },
+    traditional: true,
+    success: function(data) {
+      // Hide the loader
+      console.log("something!")
+      $('#loader').hide();
+      $('#compare-by-2').val('');
+
+      // Replace the content of the plot with the received data
+      $('#resizable-plot-2').html(data.plot_div);
+    }
+  });
+});
+
+$('#reset-button-3').click(function() {
+  // Show the loader
+  $('#loader').show();
+  var state_abv = $('#id_state_abv').val();
+  var survey_taken_year = $('#id_survey_taken_year').val();
+  // Make the AJAX request
+  $.ajax({
+    url: "{% url 'get_graph' %}",
+    data: {
+      // 'state_abv': ["AK"],
+      // 'survey_taken_year': ['2022'],
+      // 'type': 'reset'  // Indicate that this is a reset request
+      'state_abv': state_abv,
+      'survey_taken_year': survey_taken_year,      'type': 'reset',
+      'graph_no': 6
+    },
+    traditional: true,
+    success: function(data) {
+      // Hide the loader
+      console.log("something!")
+      $('#loader').hide();
+      $('#compare-by-3').val('');
+
+      // Replace the content of the plot with the received data
+      $('#resizable-plot-3').html(data.plot_div);
+    }
+  });
+});
+
+$('#reset-button-4').click(function() {
+  // Show the loader
+  $('#loader').show();
+  var state_abv = $('#id_state_abv').val();
+  var survey_taken_year = $('#id_survey_taken_year').val();
+  // Make the AJAX request
+  $.ajax({
+    url: "{% url 'get_graph' %}",
+    data: {
+      // 'state_abv': ["AK"],
+      // 'survey_taken_year': ['2022'],
+      // 'type': 'reset'  // Indicate that this is a reset request
+      'state_abv': state_abv,
+      'survey_taken_year': survey_taken_year,      'type': 'reset',
+      'graph_no': 7
+    },
+    traditional: true,
+    success: function(data) {
+      // Hide the loader
+      console.log("something!")
+      $('#loader').hide();
+      $('#compare-by-4').val('');
+
+      // Replace the content of the plot with the received data
+      $('#resizable-plot-4').html(data.plot_div);
+    }
+  });
+});
+
+
+  </script>
 </body>
 </html>
 

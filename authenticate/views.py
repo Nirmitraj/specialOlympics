@@ -17,7 +17,7 @@ def login_user(request):
 		if user is not None:# if user exist
 			login(request, user)
 			messages.success(request,('Youre logged in'))
-			return redirect('/dashboard') #routes to 'home' on successful login  
+			return redirect('/index_graph') #routes to 'home' on successful login  
 		else:
 			messages.success(request,('Error logging in'))
 			return redirect('login') #re routes to login page upon unsucessful login

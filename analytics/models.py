@@ -1,5 +1,8 @@
 from django.db import models
 
+# class Zipcode(models.Model):
+#     code = models.IntegerField()
+#     state_abv = models.CharField(max_length=6)
 
 class SchoolDetails(models.Model):
     auto_increment_id = models.AutoField(primary_key=True)
@@ -78,7 +81,9 @@ class SchoolDetails(models.Model):
     reducing_disciplinary_referrals_for_students_with_idd=models.CharField(max_length=32,null=True,default=None)
     increasing_attendance_of_students_without_idd=models.CharField(max_length=32,null=True,default=None)
     reducing_disciplinary_referrals_for_students_without_idd=models.CharField(max_length=32,null=True,default=None)
-    
+
 class Person(models.Model):
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
+
+

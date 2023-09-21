@@ -42,7 +42,11 @@ INSTALLED_APPS = [
     'django_plotly_dash.apps.DjangoPlotlyDashConfig',
     'channels',
     'channels_redis',
-    'bootstrap4'
+    'bootstrap4',
+    'django_select2',
+    'widget_tweaks',
+
+
 ]
 
 MIDDLEWARE = [

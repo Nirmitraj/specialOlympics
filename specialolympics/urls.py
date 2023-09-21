@@ -23,4 +23,6 @@ urlpatterns = [
     path('',include('analytics.urls')),
     path('auth/',include('authenticate.urls')),
     path('django_plotly_dash/', include('django_plotly_dash.urls')),
+    path("select2/", include("django_select2.urls")),
+
 ]

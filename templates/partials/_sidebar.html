@@ -1,7 +1,7 @@
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion toggled" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="../dashboard">
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="../index_graph">
         <!-- <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-laugh-wink"></i>
         </div> -->
@@ -13,7 +13,7 @@
     <div class="sidebar-heading">
         Dashboard
     </div>
-    <li class="nav-item {% if request.path == '/dashboard/' %}active{% endif %}">
+    <!-- <li class="nav-item {% if request.path == '/dashboard/' %}active{% endif %}">
         <a class="nav-link" href="../dashboard">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Figures</span></a>
@@ -22,11 +22,16 @@
         <a class="nav-link" href="../tables">
             <i class="fas fa-fw fa-table"></i>
             <span>Tables</span></a>
-    </li>
+    </li> -->
     <li class="nav-item {% if request.path == '/index_graph/' %}active{% endif %}">
         <a class="nav-link" href="../index_graph">
             <i class="fas fa-fw fa-tachometer-alt"></i>
-            <span>Dashboard</span></a>
+            <span>Figures</span></a>
+    </li>
+    <li class="nav-item {% if request.path == '/index_table/' %}active{% endif %}">
+        <a class="nav-link" href="../index_table">
+            <i class="fas fa-fw fa-table"></i>
+            <span>Tables</span></a>
     </li>
     <hr class="sidebar-divider d-none d-md-block">
     <!-- Nav Item - Dashboard -->
