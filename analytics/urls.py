@@ -9,8 +9,9 @@ urlpatterns=[
     path('tables/',tables.tables,name='tables'),
     path('dashboard/',views.index,name='dashboard'),
     path('index_graph/',index_graph.index,name='index_graph'),
-    path('index_graph/',index_graph.GetZipcodesView,name='get_zipcode'),
     path('api/get_graph/', index_graph.get_graph, name='get_graph'),
+    path('get_zipcodes/', index_graph.get_zipcodes, name='get_zipcodes'),
+
 
     path('index_table/',index_table.tables,name='index_table'),
 

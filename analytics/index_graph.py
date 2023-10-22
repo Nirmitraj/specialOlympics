@@ -269,7 +269,7 @@ def add_in_forFilters(new_filters):
 def school_suvery_data(dashboard_filters):
     new_filters= filter_set(dashboard_filters)
     print("PRIIINNTTTT", new_filters)
-    # new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
+    new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
     new_filters.pop('zipcode',None)
     print('Filterssssss',new_filters)
     filters = add_in_forFilters(new_filters)
@@ -281,8 +281,8 @@ def school_suvery_data(dashboard_filters):
 def school_suvery_implementation_level_data(dashboard_filters):
     new_filters= filter_set(dashboard_filters)
     print("PRIIINNTTTTI", new_filters)
-    # new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
-    new_filters.pop('zipcodeI',None)
+    new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
+    new_filters.pop('zipcode',None)
     print('FilterssssssI',new_filters)
     filters = add_in_forFilters(new_filters)
     
@@ -293,8 +293,8 @@ def school_suvery_implementation_level_data(dashboard_filters):
 def school_suvery_locale_data(dashboard_filters):
     new_filters= filter_set(dashboard_filters)
     print("PRIIINNTTTTI", new_filters)
-    # new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
-    new_filters.pop('zipcodeI',None)
+    new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
+    new_filters.pop('zipcode',None)
     print('FilterssssssI',new_filters)
     filters = add_in_forFilters(new_filters)
     
@@ -317,8 +317,8 @@ def school_suvery_locale_data(dashboard_filters):
 def school_suvery_school_data(dashboard_filters):
     new_filters= filter_set(dashboard_filters)
     print("PRIIINNTTTTI", new_filters)
-    # new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
-    new_filters.pop('zipcodeI',None)
+    new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
+    new_filters.pop('zipcode',None)
     print('FilterssssssI',new_filters)
     filters = add_in_forFilters(new_filters)
     
@@ -415,7 +415,7 @@ def school_survey_school_level(dashboard_filters):
     # print('YEAR2',years_minus_2008)
     # Create the layout for the plot
     layout = dict(
-        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,year),
+        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
         yaxis=dict(range=[0, 100]),
         barmode='group',
     )
@@ -518,7 +518,7 @@ def school_survey_locale_level(dashboard_filters):
     # print('YEAR2',years_minus_2008)
     # Create the layout for the plot
     layout = dict(
-        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,year),
+        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
         yaxis=dict(range=[0, 100]),
         barmode='group',
     )
@@ -631,7 +631,7 @@ def school_survey_implementation_level(dashboard_filters):
     # print('YEAR2',years_minus_2008)
     # Create the layout for the plot
     layout = dict(
-        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,year),
+        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
         yaxis=dict(range=[0, 100]),
         barmode="group",
         bargap=0.1,  # Add this line
@@ -693,7 +693,7 @@ def school_survey(dashboard_filters):
     # if isinstance(year, list):
         # year = year[0]    
     layout = dict(
-        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,year),
+        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
         yaxis = dict(range=[0, 100]),
         barmode='group',
     )
@@ -724,8 +724,7 @@ def core_experience(dashboard_filters):
         values = [sports,leadership,wholeschool]
     ))
     filters = add_in_forFilters(filters)
-
-    fig = px.pie(core_exp_df, values='values', names='lables',title='Core Experience implementation in {year} {state_abv}'.format(state_abv=filters['state_abv'],year=filters['survey_taken_year']))
+    fig = px.pie(core_exp_df, values='values', names='lables',title='Core Experience implementation in {year} {state_abv}'.format(state_abv=filters['state_abv'],year=('('+str(int(filters['survey_taken_year'])-1)+'-'+str(filters['survey_taken_year'])[-2:]+')')))
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     print("plot div yo", plot_div)
     return plot_div
@@ -818,7 +817,7 @@ def index(request):
         print(request)
         state = state_choices(state)
         dropdown = Filters(state,request.POST)
-        print(dropdown)
+        print("===================",dropdown)
         if dropdown.is_valid():
             #print('heloooooo')
             dashboard_filters = dropdown.cleaned_data
@@ -882,6 +881,14 @@ def get_graph(request):
     # print("YOO NEW DATA", plot_div)
     return JsonResponse({'plot_div': mark_safe(plot_div)})
      
+
+def get_zipcodes(request):
+    state_abv = request.GET.get('state_abv')
+    zipcodes = SchoolDetails.objects.filter(state_abv=state_abv).values_list('zipcode', flat=True)
+    zipcode_dict = {'all': 'All'}  
+    zipcode_dict.update({zipcode: zipcode for zipcode in zipcodes if zipcode != '-99'})
+
+    return JsonResponse(zipcode_dict, safe=False)
 
 
 '''
@@ -1276,15 +1283,3 @@ def horizontal_stacked_bar(response,y_axis,heading,state, compare_type="default"
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     return plot_div
 
-class GetZipcodesView(View):
-    def get(self, request, *args, **kwargs):
-        state_abv = request.GET.get('state', None)
-        zipcodes = SchoolDetails.objects.values_list('zipcode')
-
-        if state_abv is not None:
-            # Assuming you have a model Zipcode that has fields 'zipcode' and 'state_abv'
-            zipcodes = list(zipcodes.objects.filter(state_abv=state_abv))
-        else:
-            zipcodes = []
-
-        return JsonResponse({'zipcodes': zipcodes})
