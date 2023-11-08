@@ -53,7 +53,7 @@ state_abv_ = 'sc'
 def filter_set(dashboard_filters):
     filters = []
     for key,val in dashboard_filters.items():
-        if val != 'all':
+        if val != 'all' and val != 'All':
             filters.append((key,val))
     filters = dict(filters)
     return filters
@@ -538,6 +538,15 @@ def school_survey_implementation_level(dashboard_filters):
 
     school_surveys = school_suvery_implementation_level_data(dashboard_filters)
     print("school survey", school_surveys)
+    # Assuming data_json is your data
+    # for state in states:
+    # # Filter data for current state and survey_taken=True
+    # state_data = [data for data in survey_data if data['school_state'] == state and data['survey_taken']]
+
+    # # Get total for each implementation level and append to respective list
+    # level_1_totals.append(sum(data['total'] for data in state_data if data['implementation_level'] == '1'))
+    # level_2_totals.append(sum(data['total'] for data in state_data if data['implementation_level'] == '2'))
+    # level_3_totals.append(sum(data['total'] for data in state_data if data['implementation_level'] == '3'))
     data_json={}
     # if 'school_state__in' in data_json.keys():
     #     for val in school_surveys:
@@ -568,6 +577,9 @@ def school_survey_implementation_level(dashboard_filters):
             # school_state =(list(data_json.keys()))[0]
 
     print("school_state", school_state, dashboard_filters, data_json)
+  
+        # survey_true_val = [data_json[i].get('True',0) for i in school_state]
+
     #convert to percentages
     # Initialize lists to store the data for each group
     survey_1 = []
@@ -671,6 +683,9 @@ def school_survey(dashboard_filters):
         # school_state =(list(data_json.keys()))[0]
 
     print("school_state", school_state, dashboard_filters, data_json)
+
+    survey_true_val = [data_json[i].get('True',0) for i in school_state]
+
     #convert to percentages
     for state in school_state:
         print(state)
@@ -680,8 +695,13 @@ def school_survey(dashboard_filters):
 
     survey_true = [data_json[i].get('True',0) for i in school_state]
     survey_false =[data_json[i].get('False',0) for i in school_state]
-
-    trace = [go.Bar(x= school_state,y = survey_true,name='Yes')]
+    print("survey_true", survey_true)
+    trace = [go.Bar(
+        x= school_state,
+        y = survey_true,
+        customdata=survey_true_val,
+        hovertemplate='%{y}%, %{customdata}, %{x}',
+        name='Yes')]
     year = dashboard_filters['survey_taken_year']
     print('YEAR',year)
     years_str = year  # convert the array to a string
@@ -708,10 +728,6 @@ def core_experience(dashboard_filters):
     # survey_year = survey_year['survey_taken_year__max']
     print("core experience")
     filters = filter_set(dashboard_filters)
-    if "zipcode" in filters:
-        filters.pop("zipcode")
-    if "zipcode" in dashboard_filters:
-        dashboard_filters.pop("zipcode")
     print("after filter", filters)
     sports=core_experience_data(dashboard_filters,'sports',range='state')
     leadership = core_experience_data(dashboard_filters,'leadership',range='state')
@@ -778,6 +794,7 @@ def core_experience_yearly(dashboard_filters):
 
 
 def load_dashboard(dashboard_filters,dropdown):
+        print("This is it", dashboard_filters, dropdown)
         context={
             'plot1':school_survey(dashboard_filters),
             'plot2':core_experience(dashboard_filters),
@@ -821,6 +838,7 @@ def index(request):
         if dropdown.is_valid():
             #print('heloooooo')
             dashboard_filters = dropdown.cleaned_data
+            print("@@@@@@@@@@@@", dashboard_filters)
             context = load_dashboard(dashboard_filters,dropdown)
             
             #return HttpResponseRedirect('/')
@@ -885,9 +903,11 @@ def get_graph(request):
 def get_zipcodes(request):
     state_abv = request.GET.get('state_abv')
     zipcodes = SchoolDetails.objects.filter(state_abv=state_abv).values_list('zipcode', flat=True)
-    zipcode_dict = {'all': 'All'}  
-    zipcode_dict.update({zipcode: zipcode for zipcode in zipcodes if zipcode != '-99'})
+    zipcode_dict = {}
+    zipcode_dict.update({zipcode: zipcode for zipcode in zipcodes if zipcode != -99})
+    zipcode_dict.update({'all': 'All'} ) 
 
+    print(zipcode_dict)
     return JsonResponse(zipcode_dict, safe=False)
 
 
@@ -963,9 +983,13 @@ def main_query(column_name,filters,key,compareType="default"):
             filters.pop('state_abv')
         if 'state_abv__in' in filters:
             filters.pop('state_abv__in')
+        if 'zipcode' in filters:
+            filters.pop('zipcode')
 
         
-        print("Main_QUery_filters", compareType, filters)
+    print("Main_QUery_filters", compareType, filters)
+    print("Filters wow", filters)
+
     data = {}
     match compareType:
         case "default":
@@ -1040,6 +1064,7 @@ def implement_school_engagement_activity(dashboard_filters, type="default"):
         response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all',)) 
         response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state',compareType=type), column_name, compare_type=type)
     y_axis=['Spread the word'+'<br>'+'Inclusion/Respect/Disability' +'<br>'+'Awareness Campaign','Unified Sports pep Rally','Unified Sports Day/Festival','Fundraising events /activities','Special Olympics play/performance','Unified Fitness Challenge']
+    print("STATE ABV CHECK", dashboard_filters['state_abv'])
     title='Percentage of schools implementing each <br> Inclusive Whole School Engagement activity in Program {0} vs. national Data'.format(dashboard_filters['state_abv'])
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
     return horizontal_bar_graph(response,y_axis,title,state,compare_type=type)
@@ -1062,6 +1087,9 @@ def sona_resources_useful(dashboard_filters, type="default"):
     nation_no=[]
     state_yes=[]
     nation_yes=[]
+    state_yes_val=[]
+    state_no_val=[]
+    nation_yes_val=[]
     if type == "default":
         for val in column_names:
             n_keys=response[val]['national'].keys()
@@ -1073,6 +1101,7 @@ def sona_resources_useful(dashboard_filters, type="default"):
                     #logic here is the response has only three keys for all columns so if its not these two then it should be the column name
                     #saves time to avoid writing down all column yes names and then verifying
                     nation_yes.append(response[val]['national'].get(key,{}).get('percent_val',0))
+                    nation_yes_val.append(response[val]['national'].get(key,{}).get('value',0))
 
             for key in s_keys:
                 if key=='1':
@@ -1082,6 +1111,8 @@ def sona_resources_useful(dashboard_filters, type="default"):
                     #logic here is the response has only three keys for all columns so if its not these two then it should be the column name
                     #saves time to avoid writing down all column yes names and then verifying
                     state_yes.append(response[val]['state'].get(key,{}).get('percent_val',0))
+                    state_yes_val.append(response[val]['state'].get(key,{}).get('value',0))
+
     else:
         for val in column_names:
             n_keys=response[val]['national'].keys()
@@ -1101,7 +1132,7 @@ def sona_resources_useful(dashboard_filters, type="default"):
                     #logic here is the response has only three keys for all columns so if its not these two then it should be the column name
                     #saves time to avoid writing down all column yes names and then verifying
                     # state_yes.append(response[val]['state'].get(key,{}).get('percent_val',0))
-    new_response = {'state_yes':state_yes,'nation_yes':nation_yes}
+    new_response = {'state_yes':state_yes,'nation_yes':nation_yes, 'state_yes_val': state_yes_val, 'nation_yes_val': nation_yes_val}
     
     y_axis=['Elementary School Playbook: A Guide for Grades K-5','Middle Level Playbook: A Guide for Grades 5-8','High School Playbook','Special Olympics State Playbook','Special Olympics Fitness Guide for Schools','Unified Physical Education Resource',
             'Special Olympics Young Athletes Activity Guide','Inclusive Youth Leadership Training: Faciliatator Guide','Planning and Hosting a Youth Leadership Experience','Unified Classoom lessons and activities','Generation Unified Youtube channel or videos',
@@ -1128,7 +1159,10 @@ def horizontal_bar_graph(response,y_axis,heading,state,compare_type="default"):
         y=y_axis,
         x=[response[val]['national'].get('1',{}).get('percent_val',0) for val in response if response],
         name='National',
+        customdata=[response[val]['national'].get('1',{}).get('value',0) for val in response if response],
         orientation='h',
+        hovertemplate='%{x}%, %{customdata}, %{y}',
+
         visible = "legendonly",
         marker=dict(
             color='rgba(246, 78, 139, 0.6)',
@@ -1141,8 +1175,12 @@ def horizontal_bar_graph(response,y_axis,heading,state,compare_type="default"):
         fig.add_trace(go.Bar(
         y=y_axis,
         x=[response[val]['state'].get('1',{}).get('percent_val',0) for val in response if response ],
+        customdata=[response[val]['state'].get('1',{}).get('value',0) for val in response if response],
+
         name=state,
         orientation='h',
+        hovertemplate='%{x}%, %{customdata}, %{y}',
+
         marker=dict(
             color='rgba(58, 71, 80, 0.6)',
             line=dict(color='rgba(58, 71, 80, 1.0)', width=0)
@@ -1165,7 +1203,7 @@ def horizontal_bar_graph(response,y_axis,heading,state,compare_type="default"):
                             name=f"{state} {y_axis[i]} Level {get_horizontal_bar_legend_name(level_data, compare_type)} ",
                             orientation='h',
                             offsetgroup=1,
-                            hovertemplate=f"{level_data.get('percentage', 0)} Level {get_horizontal_bar_legend_name(level_data, compare_type)}",
+                            hovertemplate=f"{level_data.get('percentage', 0)}%, {level_data.get('total', 0)}, Level {get_horizontal_bar_legend_name(level_data, compare_type)}",
                             width=0.5,
                             # base=j*1.1,  # Shift each bar slightly
                             # Add this line to increase the width of the bars
@@ -1228,13 +1266,15 @@ def get_horizontal_bar_legend_name(data, type="default"):
 
 
 def horizontal_stacked_bar(response,y_axis,heading,state, compare_type="default"):
-    print(response)
+    print("SONA RESULT", response)
     fig = go.Figure()
     fig.add_trace(go.Bar(
         y=y_axis,
         x=response['nation_yes'],
+        customdata=response['nation_yes_val'],
         name='National',
         visible = "legendonly",
+        hovertemplate='%{x}%, %{customdata}, %{y}',
         orientation='h',
         marker=dict(
             color='rgba(99, 110, 250, 0.8)',
@@ -1245,7 +1285,9 @@ def horizontal_stacked_bar(response,y_axis,heading,state, compare_type="default"
         fig.add_trace(go.Bar(
             y=y_axis,
             x=response['state_yes'],
+            customdata=response['state_yes_val'],
             name=state,
+            hovertemplate='%{x}%, %{customdata}, %{y}',
             orientation='h',
             marker=dict(
                 color='rgba(139, 144, 209, 0.8)',

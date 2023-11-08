@@ -24,7 +24,7 @@ locale = {'all':'All','City':'City','Suburb':'Suburb','Rural':'Rural'}
 years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct()
 zipcodes = SchoolDetails.objects.values_list('zipcode', flat=True)
 zipcode_dict = {'all': 'All'}  
-zipcode_dict.update({zipcode: zipcode for zipcode in zipcodes if zipcode != '-99'})
+zipcode_dict.update({zipcode: zipcode for zipcode in zipcodes if zipcode != -99})
 
 print(zipcode_dict)
 
@@ -137,9 +137,9 @@ class Filters(forms.Form):
         self.fields['state_abv'] = forms.CharField(label='State Program', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'state_drop'}))
         zipcodes = SchoolDetails.objects.filter(state_abv='AK').values_list('zipcode', flat=True)
         zipcode_dict = {'all': 'All'}  
-        zipcode_dict.update({zipcode: zipcode for zipcode in zipcodes if zipcode != '-99'})
+        zipcode_dict.update({zipcode: zipcode for zipcode in zipcodes if zipcode != -99})
 
-        self.fields['zipcode']= forms.CharField(label='Postal code', widget=forms.Select(choices=zipcode_dict.items(),attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'postalCode_drop'}))
+        self.fields['zipcode']= forms.CharField(label='Zip code', widget=forms.Select(choices=zipcode_dict.items(),attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'postalCode_drop'}))
 
     # state_abv= forms.CharField(label='State', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
 

@@ -11,6 +11,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 
 </head>
 <body>
@@ -106,6 +107,14 @@ $(document).ready(function() {
   .compare-by {
     height: 38px; /* Adjust this value as needed */
 }
+.select-info-container {
+    position: relative;
+}
+
+#info-button-1 {
+    position: absolute;
+    right: 0;
+}
 
   
   
@@ -113,11 +122,31 @@ $(document).ready(function() {
 </style>
 </head>
 <body>
+  <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="infoModalLabel">Graph Information</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          This graph here represents the information about the school in every district of america
+          <!-- Add your text content explaining the graph here -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
   <ul id="rowList">
     <li>
       <details>
         <summary>{{plot_titles.plot1}}</summary>
         <div class="dropdown-container" id="dropdown-container-1">
+        <div class="select-info-container">
         <select class="compare-by" id="compare-by-1">
           <option value="">Compare By...</option>
           <option value="imp_level">Implementation Level</option>
@@ -126,7 +155,10 @@ $(document).ready(function() {
           <!-- Add more options as needed -->
         </select>
         <button id="reset-button-1" class="btn btn-secondary">Reset</button>
-
+        <button id="info-button-1" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+          <i class="fas fa-question-circle"></i>
+                </button>
+      </div>
         <!-- Add a spinner element for the loader (hidden by default) -->
         <div id="loader" style="display: none;">
           <img src="{% static 'images/loader.gif' %}" alt="Loading...">
@@ -256,8 +288,8 @@ $(document).ready(function() {
   <script>
   $('#compare-by-1').change(function() {
       var selectedOption = $(this).val();
-      var state_abv = $('#id_state_abv').val();
-      var survey_taken_year = $('#id_survey_taken_year').val();
+      var state_abv = $('#state_drop').val();
+      var survey_taken_year = $('#survey_drop').val();
 
       console.log(selectedOption)
       if (selectedOption) {  // If an option is selected (not the placeholder)
@@ -284,8 +316,8 @@ $(document).ready(function() {
 
   $('#compare-by-2').change(function() {
       var selectedOption = $(this).val();
-      var state_abv = $('#id_state_abv').val();
-      var survey_taken_year = $('#id_survey_taken_year').val();
+      var state_abv = $('#state_drop').val();
+      var survey_taken_year = $('#survey_drop').val();
 
 
       if (selectedOption) {  // If an option is selected (not the placeholder)
@@ -311,8 +343,8 @@ $(document).ready(function() {
 
   $('#compare-by-3').change(function() {
       var selectedOption = $(this).val();
-      var state_abv = $('#id_state_abv').val();
-      var survey_taken_year = $('#id_survey_taken_year').val();
+      var state_abv = $('#state_drop').val();
+      var survey_taken_year = $('#survey_drop').val();
 
 
       if (selectedOption) {  // If an option is selected (not the placeholder)
@@ -338,9 +370,9 @@ $(document).ready(function() {
 
   $('#compare-by-4').change(function() {
       var selectedOption = $(this).val();
-      var state_abv = $('#id_state_abv').val();
-      var survey_taken_year = $('#id_survey_taken_year').val();
-
+      var state_abv = $('#state_drop').val();
+      var survey_taken_year = $('#survey_drop').val();
+      console.log(state_abv)
 
       if (selectedOption) {  // If an option is selected (not the placeholder)
           $.ajax({
@@ -365,8 +397,8 @@ $(document).ready(function() {
 
   $('#compare-by-5').change(function() {
       var selectedOption = $(this).val();
-      var state_abv = $('#id_state_abv').val();
-      var survey_taken_year = $('#id_survey_taken_year').val();
+      var state_abv = $('#state_drop').val();
+      var survey_taken_year = $('#survey_drop').val();
 
 
       if (selectedOption) {  // If an option is selected (not the placeholder)
@@ -397,8 +429,8 @@ $(document).ready(function() {
 $('#reset-button-1').click(function() {
   // Show the loader
   $('#loader').show();
-  var state_abv = $('#id_state_abv').val();
-  var survey_taken_year = $('#id_survey_taken_year').val();
+  var state_abv = $('#state_drop').val();
+      var survey_taken_year = $('#survey_drop').val();
 
 
   // Make the AJAX request
@@ -429,8 +461,8 @@ $('#reset-button-1').click(function() {
 $('#reset-button-2').click(function() {
   // Show the loader
   $('#loader').show();
-  var state_abv = $('#id_state_abv').val();
-  var survey_taken_year = $('#id_survey_taken_year').val();
+  var state_abv = $('#state_drop').val();
+      var survey_taken_year = $('#survey_drop').val();
 
 
   // Make the AJAX request
@@ -460,8 +492,8 @@ $('#reset-button-2').click(function() {
 $('#reset-button-3').click(function() {
   // Show the loader
   $('#loader').show();
-  var state_abv = $('#id_state_abv').val();
-  var survey_taken_year = $('#id_survey_taken_year').val();
+  var state_abv = $('#state_drop').val();
+      var survey_taken_year = $('#survey_drop').val();
   // Make the AJAX request
   $.ajax({
     url: "{% url 'get_graph' %}",
@@ -489,8 +521,8 @@ $('#reset-button-3').click(function() {
 $('#reset-button-4').click(function() {
   // Show the loader
   $('#loader').show();
-  var state_abv = $('#id_state_abv').val();
-  var survey_taken_year = $('#id_survey_taken_year').val();
+  var state_abv = $('#state_drop').val();
+      var survey_taken_year = $('#survey_drop').val();
   // Make the AJAX request
   $.ajax({
     url: "{% url 'get_graph' %}",
@@ -505,7 +537,6 @@ $('#reset-button-4').click(function() {
     traditional: true,
     success: function(data) {
       // Hide the loader
-      console.log("something!")
       $('#loader').hide();
       $('#compare-by-4').val('');
 
@@ -529,9 +560,14 @@ $(document).ready(function() {
             success: function(data) {
                 var select = $('#postalCode_drop');
                 select.empty();
-                $.each(data, function(index, value) { 
-                   $('<option>').val(value).text(value).appendTo(select);
-                });
+                console.log(data)
+                let entries = Object.entries(data);  // Convert the dictionary to an array of [key, value] pairs
+                entries.reverse();  // Reverse the array
+                console.log(entries)
+
+                for (let [key, value] of entries) {
+                    $('<option>').val(value).text(value).appendTo(select);
+                };
             }
         });
     });
