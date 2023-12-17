@@ -1,7 +1,9 @@
 from django.urls import path
-from analytics import views,tables,index_graph, index_table, get_zipcodes
+from analytics import views,tables,index_graph, index_table, get_counties
 from authenticate import views as auth_views
 from analytics.dash_apps.finished_apps import surveys_taken,surveys_dup
+from django.urls import path
+from django_select2.views import AutoResponseView
 
 dashboard_filters={'state_abv':'sca','survey_taken_year':2022}
 urlpatterns=[
@@ -10,7 +12,8 @@ urlpatterns=[
     path('dashboard/',views.index,name='dashboard'),
     path('index_graph/',index_graph.index,name='index_graph'),
     path('api/get_graph/', index_graph.get_graph, name='get_graph'),
-    path('get_zipcodes/', index_graph.get_zipcodes, name='get_zipcodes'),
+    path('get_counties/', index_graph.get_counties, name='get_counties'),
+    path('select2/', AutoResponseView.as_view(), name='select2'),
 
 
     path('index_table/',index_table.tables,name='index_table'),

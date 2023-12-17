@@ -1,7 +1,7 @@
 from django import forms
 from django_select2 import forms as s2forms
 from analytics.models import SchoolDetails
-from django_select2.forms import Select2TagWidget, Select2MultipleWidget
+from django_select2.forms import Select2Widget
 
 STATE_CHOICES_RAW= list(
 SchoolDetails.objects.values_list('state_abv','school_state').distinct())
@@ -22,13 +22,11 @@ implementationlevel = {'all':'All',
 locale = {'all':'All','City':'City','Suburb':'Suburb','Rural':'Rural'}
 
 years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct()
-zipcodes = SchoolDetails.objects.values_list('zipcode', flat=True)
-zipcode_dict = {'all': 'All'}  
-zipcode_dict.update({zipcode: zipcode for zipcode in zipcodes if zipcode != -99})
+counties = SchoolDetails.objects.values_list('school_county', flat=True)
+county_dict = {'all': 'All'}  
+county_dict.update({county: county for county in counties if county != '-99'})
 
-print(zipcode_dict)
 
-print("=================ZIPCODE TESTING=====================")
 
 # print(SchoolDetails.objects.values_list[0])
 '''
@@ -42,18 +40,33 @@ first_year = min(years) if years else None
 last_year = max(years) if years else None
 year_dict = {val:'Year '+str(val-2008)+' ('+str(val-1)+'-'+(str(val)[-2:]+')') for val in years if type(val) == int and val > 2008}
 
-class StateAbvSelect2Widget(s2forms.ModelSelect2MultipleWidget):
-    search_fields = [
-        "state_abv__icontains",
-        "school_state__icontains",
-    ]
+# class StateAbvSelect2Widget(s2forms.ModelSelect2MultipleWidget):
+#     search_fields = [
+#         "state_abv__icontains",
+#         "school_state__icontains",
+#     ]
 schoollevels = {'all':'All','1.00':'Elementary','2.00':'High','3.00':'Middle','4.00':'Preschool'}
 class Filters(forms.Form):
-    implementation_level = forms.CharField(label='Implementation level', widget=forms.Select(choices=implementationlevel.items(),attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'implementation_drop'}))
-    locale__startswith = forms.CharField(label='Locale', widget=forms.Select(choices=locale.items(),attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'locale_drop'}))
-    gradeLevel_WithPreschool = forms.CharField(label='School level',widget = forms.Select(choices = schoollevels.items(),attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'gradeLevel_drop'}))
-    survey_taken_year= forms.CharField(label='Survey year', widget=forms.Select(choices=year_dict.items(),attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'survey_drop'}))
-#   zipcode = forms.MultipleChoiceField(
+    implementation_level = forms.ChoiceField(
+        label='Implementation level', 
+        widget=forms.Select(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'implementation_drop'}),
+        choices=implementationlevel.items()
+    )
+    locale__startswith = forms.ChoiceField(
+        label='Locale', 
+        widget=forms.Select(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'locale_drop'}),
+        choices=locale.items()
+    )
+    gradeLevel_WithPreschool = forms.ChoiceField(
+        label='School level',
+        widget=forms.Select(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'gradeLevel_drop'}),
+        choices=schoollevels.items()
+    )
+    survey_taken_year= forms.ChoiceField(
+        label='Survey year', 
+        widget=forms.Select(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'survey_drop'}),
+        choices=year_dict.items()
+    )#   zipcode = forms.MultipleChoiceField(
 #         label='Postal code',
 #         choices=zipcode_dict.items(),
 #         widget=Select2MultipleWidget(
@@ -63,6 +76,8 @@ class Filters(forms.Form):
 #         initial=list(zipcode_dict.keys())[0]  # Set the first key in the dictionary as the default value
 #     )
     state = 'all'
+    school_county = 'all'
+
     # implementation_level = forms.MultipleChoiceField(
     #     widget=Select2MultipleWidget(attrs={'style': 'width: 300px;'}), 
     #     choices=implementationlevel.items(),
@@ -134,12 +149,19 @@ class Filters(forms.Form):
         print('==STATE',state)
         self.state = state
         super().__init__(*args)
+
         self.fields['state_abv'] = forms.CharField(label='State Program', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'state_drop'}))
-        zipcodes = SchoolDetails.objects.filter(state_abv='AK').values_list('zipcode', flat=True)
-        zipcode_dict = {'all': 'All'}  
-        zipcode_dict.update({zipcode: zipcode for zipcode in zipcodes if zipcode != -99})
 
-        self.fields['zipcode']= forms.CharField(label='Zip code', widget=forms.Select(choices=zipcode_dict.items(),attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'postalCode_drop'}))
-
+        # self.fields['state_abv'] = forms.ChoiceField(
+        #     label='State Program', 
+        #     widget=forms.Select(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'state_drop'}),
+        #     choices=state
+        # )
+        
+        self.fields['school_county'] = forms.ChoiceField(
+            label='County', 
+            widget=Select2Widget(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'county_drop'}),
+            choices=county_dict.items()
+        )
     # state_abv= forms.CharField(label='State', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
 

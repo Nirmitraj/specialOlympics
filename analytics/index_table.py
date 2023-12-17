@@ -22,7 +22,7 @@ def filter_set(dashboard_filters):
 def school_locale_data(dashboard_filters):
     #headline__startswith="Rural"
     filters = filter_set(dashboard_filters)
-    print('Filters:',filters)
+    # print('Filters:',filters)
     return SchoolDetails.objects.filter(**filters).values_list('locale')
 
 def school_level_data(dashboard_filters,state_abv_=None):
@@ -33,7 +33,7 @@ def school_level_data(dashboard_filters,state_abv_=None):
     for val in keys:
         if val not in data.keys():
             data[val]=0
-    print("Grade Level in Preschool:",data)
+    # print("Grade Level in Preschool:",data)
     return data #{str(key):val for key,val in data}
 
 def school_enrollment_data(dashboard_filters,state_abv_=None):
@@ -87,8 +87,8 @@ def school_locale_graph(dashboard_filters):
     # filters.pop('state_abv')
     filters =copy.copy(dashboard_filters)
     filters.pop('state_abv')
-    if "zipcode" in filters:
-        filters.pop("zipcode")
+    if "county" in filters:
+        filters.pop("county")
     total_locale_data=school_locale_data(filters)
     locale_nationcount={'Rural':0,'Town':0,'Suburb':0,'City':0}
     for val in total_locale_data:
@@ -118,8 +118,8 @@ def school_level_graph(dashboard_filters):
     school_level = school_level_data(dashboard_filters,state_abv_=dashboard_filters['state_abv'])
     filters =copy.copy(dashboard_filters)
     filters.pop('state_abv')
-    if "zipcode" in filters:
-        filters.pop("zipcode")
+    if "county" in filters:
+        filters.pop("county")
     national_level=school_level_data(filters)#sending no state filters gives national data
     school_level=percentage_values(school_level)
     national_level=percentage_values(national_level)
@@ -147,8 +147,8 @@ def school_student_enrollment(dashboard_filters):
     student_enroll_state = school_enrollment_data(dashboard_filters,dashboard_filters['state_abv'])
     filters =copy.copy(dashboard_filters)
     filters.pop('state_abv')
-    if "zipcode" in filters:
-        filters.pop("zipcode")
+    if "county" in filters:
+        filters.pop("county")
     student_enroll_nation = school_enrollment_data(filters)
     student_enroll_state = percentage_values(student_enroll_state)
     student_enroll_nation = percentage_values(student_enroll_nation)
@@ -173,8 +173,8 @@ def school_free_reduce_lunch(dashboard_filters):
     student_lunch_state = school_lunch_data(dashboard_filters,dashboard_filters['state_abv'])
     filters =copy.copy(dashboard_filters)
     filters.pop('state_abv')
-    if "zipcode" in filters:
-        filters.pop("zipcode")
+    if "county" in filters:
+        filters.pop("county")
     student_lunch_nation = school_lunch_data(filters)
     student_lunch_state=percentage_values(student_lunch_state)
     student_lunch_nation=percentage_values(student_lunch_nation)
@@ -203,8 +203,8 @@ def school_minority(dashboard_filters):
     minority_state = school_minority_data(dashboard_filters,dashboard_filters['state_abv'])
     filters =copy.copy(dashboard_filters)
     filters.pop('state_abv')
-    if "zipcode" in filters:
-        filters.pop("zipcode")
+    if "county" in filters:
+        filters.pop("county")
     minority_nation = school_minority_data(filters)
     minority_state=percentage_values(minority_state)
     minority_nation=percentage_values(minority_nation)
