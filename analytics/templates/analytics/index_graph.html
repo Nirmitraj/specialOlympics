@@ -139,7 +139,33 @@ $(document).ready(function() {
     right: 0;
 }
 
+#info-button-2 {
+  float: right;
+}
+
+#info-button-3 {
+  float: right;
+}
+
+#info-button-4 {
+  float: right;
+}
+
+#info-button-5 {
+  float: right;
+}
+
+#info-button-6 {
+  float: right;
+}
   
+#info-button-7 {
+  float: right;
+}
+
+#info-button-8 {
+  float: right;
+}
   
   
 </style>
@@ -155,7 +181,9 @@ $(document).ready(function() {
           </button>
         </div>
         <div class="modal-body">
-          This graph here represents the information about the school in every district of america
+          <p id="modal-text">This figure illustrates the response rates for the Year 14 State Program.</p>
+
+
           <!-- Add your text content explaining the graph here -->
         </div>
         <div class="modal-footer">
@@ -212,6 +240,9 @@ $(document).ready(function() {
 
         <details>
             <summary>{{plot_titles.plot2}}</summary>
+            <button id="info-button-2" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+              <i class="fas fa-question-circle"></i>
+            </button>
             <div class="content">
             <div class="resizable-plot"> {{plot2|safe}}</div>
             </div>
@@ -231,6 +262,9 @@ $(document).ready(function() {
 
         <details>
             <summary>{{plot_titles.plot3}}</summary>
+            <button id="info-button-3" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+              <i class="fas fa-question-circle"></i>
+            </button>
             <div class="content">
             <div class="resizable-plot"> {{plot3|safe}}</div>
             </div>
@@ -250,7 +284,9 @@ $(document).ready(function() {
 
         <details>
             <summary>{{plot_titles.plot4}}</summary>
-            
+            <button id="info-button-4" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+              <i class="fas fa-question-circle"></i>
+            </button>
             <div class="content">
             <div class="resizable-plot"> {{plot4|safe}}</div>
             </div>
@@ -280,6 +316,9 @@ $(document).ready(function() {
 
                 <!-- Add more options as needed -->
               </select>
+              <button id="info-button-5" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+                <i class="fas fa-question-circle"></i>
+              </button>
               <button id="reset-button-2" class="btn btn-secondary">Reset</button>
       
               <!-- Add a spinner element for the loader (hidden by default) -->
@@ -315,6 +354,9 @@ $(document).ready(function() {
 
                 <!-- Add more options as needed -->
               </select>
+              <button id="info-button-6" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+                <i class="fas fa-question-circle"></i>
+              </button>
               <button id="reset-button-3" class="btn btn-secondary">Reset</button>
       
               <!-- Add a spinner element for the loader (hidden by default) -->
@@ -350,6 +392,9 @@ $(document).ready(function() {
 
                 <!-- Add more options as needed -->
               </select>
+              <button id="info-button-7" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+                <i class="fas fa-question-circle"></i>
+              </button>
               <button id="reset-button-4" class="btn btn-secondary">Reset</button>
       
               <!-- Add a spinner element for the loader (hidden by default) -->
@@ -389,6 +434,9 @@ $(document).ready(function() {
               <!-- <div id="loader" style="display: none;">
                 <img src="{% static 'images/loader.gif' %}" alt="Loading...">
               </div> -->
+              <button id="info-button-8" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+                <i class="fas fa-question-circle"></i>
+              </button>
             <div class="content">
             <div class="resizable-plot-5"> {{plot8|safe}}</div>
             </div>
@@ -411,6 +459,86 @@ $(document).ready(function() {
 //     $('#state_drop').select2();
 //     $('#county_drop').select2();
 // });
+$(document).ready(function() {
+    // Assuming your info buttons have ids 'info-button-1', 'info-button-2', etc.
+    $('#info-button-1, #info-button-2, #info-button-3, #info-button-4, #info-button-5, #info-button-6, #info-button-7, #info-button-8').click(function() {
+        var buttonId = $(this).attr('id');
+        var message;
+        var selectedYear = $('#survey_drop').val();
+        var state = $('#state_drop').val();
+
+        switch (selectedYear) {
+          case '2022':
+            year = "14 (2021-22)"
+            break;
+          case '2021':
+            year = "13 (2020-21)"
+            break;
+          case '2020':
+            year = "12 (2019-20)"
+            break;
+          case '2019':
+           year = "11 (2018-19)"
+           break;
+    }
+
+        // Update the message based on the button id
+        switch (buttonId) {
+            case 'info-button-1':
+                message = 'This figure illustrates the response rates for the Year ' + year + ' State Program.';
+                break;
+            case 'info-button-2':
+                message = 'The graph depicts the implementation of the Core Experience in ' + state +', categorized by sports, whole school, and leadership.';
+                break;
+            case 'info-button-3':
+                message = 'This figure illustrates the implementation levels over time for National vs ' + state + ' State Program, segmented into national and state emerging, developing, and full implementation.';
+                break;
+            case 'info-button-4':
+                message = 'The figure displays the percentage of National vs ' + state + '  State Program Core Experience implementation over time, with a breakdown by Unified Sports, Inclusive Leadership, and Whole School Engagement.';
+                break;
+            case 'info-button-5':
+                message = 'This figure showcases the percentage of National Data vs ' + state + ' Data schools implementing each Unified Sports activity, categorized into Unified Developmental Sports, Young Athletes, Unified esports, Unified fitness, Unified PE, and Unified Sports Teams.';
+                break;
+            case 'info-button-6':
+                message = 'This figure displays the percentage of schools participating in each Youth Leadership activity, distinguishing between National Data and ' + state + ' State Program schools. The activities are categorized into Youth Activation Committee, Youth Summit, Young Athletes Volunteers, Inclusive Youth Leadership Training/Class, and Unified/Inclusive Club.';
+                break;
+            case 'info-button-7':
+                message = 'This figure illustrates the percentage of schools participating in each Inclusive Whole School Engagement activity, comparing National Data to ' + state + ' State Program schools.';
+                break;
+            case 'info-button-8':
+                message = 'This figure illustrates the percentage of Liaisons who found SONA resources useful, comparing State Program ' + state + ' to National Data. ';
+                break;
+            default:
+                message = 'Default message.';
+        }
+
+        // Update the modal text
+        $('#modal-text').text(message);
+    });
+});
+
+$(document).ready(function() {
+    var selectedYear = $('#survey_drop').val();
+    console.log(typeof selectedYear)
+    var year = ""
+    switch (selectedYear) {
+      case '2022':
+        year = "14 (2021-22)"
+        break;
+      case '2021':
+        year = "13 (2020-21)"
+        break;
+      case '2020':
+        year = "12 (2019-20)"
+        break;
+      case '2019':
+        year = "11 (2018-19)"
+        break;
+    }
+    // Update the text in the modal
+    $('#modal-text').text('This figure illustrates the response rates for the Year ' + year + ' State Program.');
+});
+
   $('#compare-by-1').change(function() {
       var selectedOption = $(this).val();
       var state_abv = $('#state_drop').val();
@@ -647,7 +775,7 @@ $('#reset-button-4').click(function() {
   // Show the loader
   $('#loader').show();
   var state_abv = $('#state_drop').val();
-      var survey_taken_year = $('#survey_drop').val();
+  var survey_taken_year = $('#survey_drop').val();
   // Make the AJAX request
   $.ajax({
     url: "{% url 'get_graph' %}",

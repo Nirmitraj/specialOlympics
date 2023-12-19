@@ -2,6 +2,7 @@ from django import forms
 from django_select2 import forms as s2forms
 from analytics.models import SchoolDetails
 from django_select2.forms import Select2Widget
+from collections import OrderedDict
 
 STATE_CHOICES_RAW= list(
 SchoolDetails.objects.values_list('state_abv','school_state').distinct())
@@ -19,7 +20,7 @@ implementationlevel = {'all':'All',
                 '3':'Full implementation',
                 }
 
-locale = {'all':'All','City':'City','Suburb':'Suburb','Rural':'Rural'}
+locale = {'all':'All','City':'City','Suburb':'Suburb','Rural':'Rural', 'Town':'Town'}
 
 years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct()
 counties = SchoolDetails.objects.values_list('school_county', flat=True)
@@ -39,13 +40,13 @@ ex: 2022-2008 =14
 first_year = min(years) if years else None
 last_year = max(years) if years else None
 year_dict = {val:'Year '+str(val-2008)+' ('+str(val-1)+'-'+(str(val)[-2:]+')') for val in years if type(val) == int and val > 2008}
-
+year_dict = OrderedDict(sorted(year_dict.items(), reverse=True))
 # class StateAbvSelect2Widget(s2forms.ModelSelect2MultipleWidget):
 #     search_fields = [
 #         "state_abv__icontains",
 #         "school_state__icontains",
 #     ]
-schoollevels = {'all':'All','1.00':'Elementary','2.00':'High','3.00':'Middle','4.00':'Preschool'}
+schoollevels = {'all':'All','4.00':'Preschool', '1.00':'Elementary', '3.00':'Middle', '2.00':'High',}
 class Filters(forms.Form):
     implementation_level = forms.ChoiceField(
         label='Implementation level', 

@@ -15,6 +15,7 @@ from collections.abc import Iterable
 from django.utils.safestring import mark_safe
 from django.db.models import Case, When, Value, CharField
 from django.db.models import QuerySet
+from plotly.graph_objects import Figure, Pie
 
 
 state_abv_ = 'sc'
@@ -865,11 +866,19 @@ def core_experience(dashboard_filters):
     colors = ['rgba(170, 180, 200, 0.8)', 'rgba(109, 154, 168, 0.8)', 'rgba(120, 130, 160, 0.8)']  # Define your colors here with opacity
 
     core_exp_df = pd.DataFrame(dict(
-        lables = ['sports','leadership','wholeschool'],
+        lables = ['Sports','Leadership','Wholeschool'],
         values = [sports,leadership,wholeschool]
     ))
     filters = add_in_forFilters(filters)
-    fig = px.pie(core_exp_df, values='values', color_discrete_sequence=colors, names='lables',title='Core Experience implementation in {year} {state_abv}'.format(state_abv=filters['state_abv'],year=('('+str(int(filters['survey_taken_year'])-1)+'-'+str(filters['survey_taken_year'])[-2:]+')')))
+    fig = Figure(data=[Pie(labels=core_exp_df['lables'], 
+                        values=core_exp_df['values'], 
+                        hovertemplate='%{label}, %{value}<extra></extra>')])
+
+    # Set the color of the pie chart
+    fig.update_traces(marker=dict(colors=colors))
+
+    # Set the title of the plot
+    fig.update_layout(title_text='Core Experience implementation in {year} {state_abv}'.format(state_abv=filters['state_abv'],year=('('+str(int(filters['survey_taken_year'])-1)+'-'+str(filters['survey_taken_year'])[-2:]+')')))
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     # print("plot div yo", plot_div)
     if sports or leadership or wholeschool:
@@ -955,8 +964,8 @@ def load_dashboard(dashboard_filters,dropdown):
             'plot3': "Implementation level over time",
             'plot4': "Percentage of Core experience implementation over time",
             'plot5': "Percentage of schools implementing each Unified Sports activity",
-            'plot6': "Percentage of schools implementing each Youth Leadership activity",
-            'plot7': "Percentage of schools implementing each Inclusive Whole School Engagement activity",
+            'plot6': "Percentage of schools implementing each Inclusive Youth Leadership activity",
+            'plot7': "Percentage of schools implementing each Whole School Engagement activity",
             'plot8': "Percentage of liaisons who found SONA resources useful",
         }
         }
