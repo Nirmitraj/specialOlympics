@@ -2,28 +2,34 @@
 
 {% block content %}
 
-<h2 class ="text-center"> Login</h2>
+<h2 class="text-center">Login</h2>
 
-<div class = "col-md-6 offset-md-3"> 
-	<form method ="POST">
-		
-		{% csrf_token %}
-
-	  <div class="form-group">
-
-	    <input type="text" class="form-control" placeholder="Enter Username" name = "username">
-
-	  </div>
-	  <div class="form-group">
-
-	    <input type="password" class="form-control"  placeholder="Enter Password" name="password"> 
-	  </div>
-	 
-
-	  <button type="submit" class="btn btn-secondary">Login</button>
-	</form>
-	<a href="/auth/change_password/">change password</a>
-
+<div class="col-md-6 offset-md-3">
+    <form id="loginForm" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+            <input type="text" class="form-control" placeholder="Enter Username" name="username">
+        </div>
+        <div class="form-group">
+            <input type="password" class="form-control" placeholder="Enter Password" name="password">
+        </div>
+        <button id="loginButton" type="submit" class="btn btn-secondary">Login</button>
+        <button id="loadingButton" class="btn btn-secondary" type="button" style="display: none;">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Loading...
+        </button>
+    </form>
+    <a href="/auth/change_password/">change password</a>
 </div>
+
+<script>
+$(document).ready(function() {
+    $('#loginForm').submit(function(e) {
+		console.log("WORKING!!")
+        $('#loginButton').hide();  // Hide the login button
+        $('#loadingButton').show();  // Show the loading button
+    });
+});
+</script>
 
 {% endblock %}
