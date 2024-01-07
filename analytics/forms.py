@@ -146,6 +146,8 @@ class Filters(forms.Form):
 
   
 
+
+
     def __init__(self, state, *args, **kwargs):
         print('==STATE',state)
         self.state = state
@@ -166,3 +168,7 @@ class Filters(forms.Form):
         )
     # state_abv= forms.CharField(label='State', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
 
+
+class FeedbackForm(forms.Form):
+        title = forms.CharField(max_length=100)
+        description = forms.CharField(widget=forms.Textarea)

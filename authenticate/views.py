@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 def home(request): 
-	return render(request, 'authenticate/home.html', {})
+	return redirect('/auth/login')
 
 def login_user(request):
 	if request.method == 'POST': #if someone fills out form , Post it 

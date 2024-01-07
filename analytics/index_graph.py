@@ -121,6 +121,8 @@ def core_experience_data(dashboard_filters,key,range,survey_year=None):
         return 0
 
 def survey_years():
+
+
     survey_years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct().order_by('survey_taken_year')
     return list(survey_years)
 
@@ -138,6 +140,92 @@ def core_experience_year_data(dashboard_filters):
         response['state_whole_school'].append(core_experience_data(dashboard_filters,'whole_school',survey_year=year,range='state'))            
     return response
 
+
+def survey_response_year_data(dashboard_filters):
+    # survey_year= survey_years()
+    # print("survey_year", survey_year)
+    # for year in survey_year:
+    #     response['national'].append(core_experience_data(dashboard_filters,'sports',survey_year=year,range='national'))
+    #     response['state'].append(core_experience_data(dashboard_filters,'sports',survey_year=year,range='state'))
+    # return response
+
+
+    filters = filter_set(dashboard_filters)
+    survey_year = survey_years()
+    # print(survey_year)
+    response = {'national_yes':[0]*len(survey_year), 'national_no':[0]*len(survey_year), 'survey_year':[0]*len(survey_year),'state_yes':[0]*len(survey_year), 'state_no':[0]*len(survey_year)}
+    index = 0
+    filters = filter_set(dashboard_filters)
+    filters.pop('state_abv')
+    if "county" in filters:
+        filters.pop('county')
+    
+    for year in survey_year:
+        filters['survey_taken_year'] = year
+        # print(filters)
+        national_data = SchoolDetails.objects.values('survey_taken', 'survey_taken_year').filter(**filters).exclude(school_state='-99').annotate(total=Count('survey_taken')).order_by('survey_taken_year')        #  = SchoolDetails.objects.values('implementation_level','survey_taken_year').filter(**filters).annotate(total = Count('implementation_level')).order_by('implementation_level')
+        for val in national_data:
+            if val['survey_taken']:
+                response["national_yes"][index] = val.get('total',0)
+                response["survey_year"][index] = val.get('survey_taken_year',0)
+            else:
+                response["national_no"][index] = val.get('total',0)
+
+
+        index+=1
+
+    print(response)
+
+    index = 0
+    filters_state = filter_set(dashboard_filters)
+    if "county" in filters_state:
+        filters_state.pop('county')
+    filters_state = add_in_forFilters(filters_state)
+    
+    for year in survey_year:
+        filters_state['survey_taken_year'] = year
+        state_data = SchoolDetails.objects.values('survey_taken', 'survey_taken_year').filter(**filters_state).exclude(school_state='-99').annotate(total=Count('survey_taken')).order_by('survey_taken_year')
+        print("=====TEST1=====", state_data,filters_state)
+
+        for val in state_data:
+            if val['survey_taken']:
+                response["state_yes"][index] = val.get('total',0)
+            else:
+                response["state_no"][index] = val.get('total',0)
+        index+=1
+    
+    print(response)
+
+    # # print('implementation_level_data',response)
+    national_sum=''
+    state_sum=''
+
+    return response
+
+def survey_response_year_percentage_data(response):
+    # Calculate the percentage for 'national_yes'
+    national_percentages = [
+        round((yes / (yes + no)) * 100, 2) if (yes + no) > 0 else 0
+        for yes, no in zip(response['national_yes'], response['national_no'])
+    ]
+    
+    # Calculate the percentage for 'state_yes'
+    state_percentages = [
+        round((yes / (yes + no)) * 100, 2) if (yes + no) > 0 else 0
+        for yes, no in zip(response['state_yes'], response['state_no'])
+    ]
+    
+    # Update the response dictionary with the calculated percentages
+    response['national_yes'] = national_percentages
+    response['state_yes'] = state_percentages
+    
+    # Return only the 'national_yes' and 'state_yes' percentage values
+    return {
+        'national': response['national_yes'],
+        'state': response['state_yes'],
+        'survey_year': response['survey_year']
+    }
+
 def implementation_level_data(dashboard_filters):
     filters = filter_set(dashboard_filters)
     survey_year = survey_years()
@@ -154,7 +242,7 @@ def implementation_level_data(dashboard_filters):
         filters['survey_taken_year'] = year
         # print(filters)
         national_data = SchoolDetails.objects.values('implementation_level','survey_taken_year').filter(**filters).annotate(total = Count('implementation_level')).order_by('implementation_level')
-        # print(national_data,filters)
+        print("=========TEST=======", national_data,filters)
         for val in national_data:
             if val['implementation_level'] in ['1','1.00']:
                 response["emerging"][index] = val.get('total',0)
@@ -212,24 +300,48 @@ def implementation_level_percentages(response):
                      response[val][i]=0
 
     return response
+
 def implementation_level(dashboard_filters):
     raw_data=implementation_level_data(dashboard_filters)
+    print(raw_data, "===========RAW DATA==============")
     data = implementation_level_percentages(raw_data)
     # colors = ['rgba(200, 200, 220, 0.8)', 'rgba(168, 184, 134, 0.8)', 'rgba(170, 180, 200, 0.8)', 'rgba(109, 154, 168, 0.8)', 'rgba(120, 130, 160, 0.8)', 'rgba(140, 138, 173, 0.8)']     # Define your colors here with opacity
+    print(data, "===========data==============")
 
     # print("IMPLEVEL:",data)
     df = pd.DataFrame(data)
+    print(df, "===========df==============")
+
     print('SURVEY YEAR',(df == 0).all())
     print("end")
-    fig = px.line(df, x=df['survey_year'], y=df['emerging'], labels={"survey_year":"year","emerging":"Implementation Level"})#color???
-    fig.add_scatter(x=df['survey_year'],y=df['emerging'], name="Emerging")
-    fig.add_scatter(x=df['survey_year'],y=df['state_emerging'], name="{0} Emerging".format(dashboard_filters['state_abv']))   
-    fig.add_scatter(x=df['survey_year'],y=df['developing'], name="Developing")#color="developing")
+    # fig = px.line(df, x=df['survey_year'], y=df['emerging'], labels={"survey_year":"year","emerging":"Implementation Level"})#color???
+    fig = go.Figure()
+    # hovertemplate='Year: %{x}<br>Emerging: %{y}%<br>Raw Data: %{customdata}<extra></extra>'
+    fig.add_scatter(x=df['survey_year'],y=df['state_emerging'], customdata=[raw_data['state_emerging'][x-2018] for x in df['survey_year']],  name="{0} Emerging".format(dashboard_filters['state_abv']))   
     fig.add_scatter(x=df['survey_year'],y=df['state_developing'], name="{0} Developing".format((dashboard_filters['state_abv'])))   
-    fig.add_scatter(x=df['survey_year'],y=df['full_implement'], name="Full Implementation".format(dashboard_filters['state_abv']))#,color="full_implemention")
     fig.add_scatter(x=df['survey_year'],y=df['state_full_implement'], name="{0} Full Implementation".format(dashboard_filters['state_abv']))
+
+    fig.add_scatter(x=df['survey_year'],y=df['emerging'], name="Emerging (National)", visible='legendonly')
+    fig.add_scatter(x=df['survey_year'],y=df['developing'], name="Developing (National)" , visible='legendonly')#color="developing")
+    fig.add_scatter(x=df['survey_year'],y=df['full_implement'], name="Full Implementation (National)".format(dashboard_filters['state_abv']), visible='legendonly')#,color="full_implemention")
     title_name = 'Implementation level over time,<br> National vs. {0} State Program'.format(dashboard_filters['state_abv'])
 
+# for i in range(0,len(response['survey_year'])):
+#             total=0
+#             for val in ['emerging','developing','full_implement']:
+#                 total += response[val][i]
+#             for val in ['emerging','developing','full_implement']:
+#                 # print(total)
+#                 try:
+#                     response[val][i]=round((response[val][i]/total)*100,2)
+#                 except ZeroDivisionError:
+#                     response[val][i]=0
+
+#     for i in range(0,len(response['survey_year'])):
+#             total=0
+#             for val in ['state_emerging','state_developing','state_full_implement']:
+#                 total += response[val][i]
+#             for val in ['state_emerging','state_developing','state_full_implement']:
     fig.update_layout( 
     title={
         'text': title_name,
@@ -424,7 +536,7 @@ def school_survey_year(dashboard_filters):
     # print('YEAR2',years_minus_2008)
     # Create the layout for the plot
     layout = dict(
-        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
+        title='Year {0} ({1}) State Program response rate compared by Survey Year'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
         yaxis=dict(range=[0, 100]),
         barmode='group',
     )
@@ -531,7 +643,7 @@ def school_survey_school_level(dashboard_filters):
     # print('YEAR2',years_minus_2008)
     # Create the layout for the plot
     layout = dict(
-        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
+        title='Year {0} ({1}) State Program response rate compared by School Level'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
         yaxis=dict(range=[0, 100]),
         barmode='group',
     )
@@ -636,7 +748,7 @@ def school_survey_locale_level(dashboard_filters):
     # print('YEAR2',years_minus_2008)
     # Create the layout for the plot
     layout = dict(
-        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
+        title='Year {0} ({1}) State Program response rate compared by Locale'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
         yaxis=dict(range=[0, 100]),
         barmode='group',
     )
@@ -766,7 +878,7 @@ def school_survey_implementation_level(dashboard_filters):
     # Create the layout for the plot
 
     layout = dict(
-        title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
+        title='Year {0} ({1}) State Program response rate compared by Implementation Level'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
         yaxis=dict(range=[0, 100]),
         barmode="group",
         bargap=0.1,  # Add this line
@@ -850,6 +962,88 @@ def school_survey(dashboard_filters):
      return plot_div
     else:
       return None
+    
+def school_survey_over_time(dashboard_filters):
+    # print("core_experience_yearly filters", filters)
+    raw_data = survey_response_year_data(dashboard_filters)
+    print(raw_data, "===========RAW DATA==============")
+
+    data = survey_response_year_percentage_data(raw_data.copy())
+    # print("CORE_EXP_YEAR:",data)
+
+    print(data, "===========data==============")
+
+    # print("IMPLEVEL:",data)
+    df = pd.DataFrame(data)
+    print(df, "===========df==============")
+
+    print('SURVEY YEAR',(df == 0).all())
+    print("end")
+    print(raw_data, "===========RAW DATA1==============")
+
+    
+    # fig = px.line(df, x=df['survey_year'], y=df['emerging'], labels={"survey_year":"year","emerging":"Implementation Level"})#color???
+    fig = go.Figure()
+    # hovertemplate='Year: %{x}<br>Emerging: %{y}%<br>Raw Data: %{customdata}<extra></extra>'
+    fig.add_scatter(
+        x=df['survey_year'],
+        y=df['state'],
+        name="{0} response".format(dashboard_filters['state_abv']),
+        customdata=raw_data['state_yes'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         )  )  
+    fig.add_scatter(x=df['survey_year'],y=df['national'], name="National response", visible='legendonly', customdata=raw_data['national_yes'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ) )
+    title_name = 'Survey response rate over time,<br> National vs. {0} State Program'.format(dashboard_filters['state_abv'])
+
+# for i in range(0,len(response['survey_year'])):
+#             total=0
+#             for val in ['emerging','developing','full_implement']:
+#                 total += response[val][i]
+#             for val in ['emerging','developing','full_implement']:
+#                 # print(total)
+#                 try:
+#                     response[val][i]=round((response[val][i]/total)*100,2)
+#                 except ZeroDivisionError:
+#                     response[val][i]=0
+
+#     for i in range(0,len(response['survey_year'])):
+#             total=0
+#             for val in ['state_emerging','state_developing','state_full_implement']:
+#                 total += response[val][i]
+#             for val in ['state_emerging','state_developing','state_full_implement']:
+    fig.update_layout( 
+    title={
+        'text': title_name,
+        # 'y': 0.95,  # Adjust the y position of the title (0 - bottom, 1 - top)
+        # 'x': 0.5  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+
+        "x": 0.5,  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
+        "y": 0.9,  # Adjust the y position of the title (0 - bottom, 1 - top)
+        "yanchor": "top",  # Anchor point of the title (aligned to the top)
+
+    },
+    legend=dict(
+        orientation="h",
+    ),
+    xaxis = dict (
+        tickmode='linear',
+        tick0 = min(df['survey_year']),
+        dtick=1
+    ),
+    margin=dict(
+        t=100
+    ),
+
+    )
+    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+    # print("imp level yoo?")
+    if (df == 0).all().all():
+        return None
+    return plot_div
 
 def core_experience(dashboard_filters):
     # survey_year=SchoolDetails.objects.aggregate(Max('survey_taken_year'))
@@ -872,7 +1066,7 @@ def core_experience(dashboard_filters):
     filters = add_in_forFilters(filters)
     fig = Figure(data=[Pie(labels=core_exp_df['lables'], 
                         values=core_exp_df['values'], 
-                        hovertemplate='%{label}, %{value}<extra></extra>')])
+                        hovertemplate='%{label}, %{value} schools<extra></extra>')])
 
     # Set the color of the pie chart
     fig.update_traces(marker=dict(colors=colors))
@@ -898,13 +1092,14 @@ def core_experience_yearly(dashboard_filters):
             
     df = pd.DataFrame(data)
     print("CORE EXP SURVEY YEAR",(df))
-    fig = px.line(df, x=df['survey_year'], y=df['state_sports'], labels={"survey_year":"year","state_sports":"core experience"})
-    fig.add_scatter(x=df['survey_year'],y=df['sports'], name="Unified Sports")
+    fig = go.Figure()
     fig.add_scatter(x=df['survey_year'],y=df['state_leadership'], name="{state} Inclusive Youth Leadership".format(state=filters['state_abv']))
-    fig.add_scatter(x=df['survey_year'],y=df['whole_school'], name="Whole School Engagement")
     fig.add_scatter(x=df['survey_year'],y=df['state_sports'], name="{state} Unified Sports".format(state=filters['state_abv']))
-    fig.add_scatter(x=df['survey_year'],y=df['leadership'], name="Inclusive Youth Leadership")
     fig.add_scatter(x=df['survey_year'],y=df['state_whole_school'], name="{state} School Engagement".format(state=filters['state_abv']))
+
+    fig.add_scatter(x=df['survey_year'],y=df['sports'], name="Unified Sports (National)",  visible='legendonly' )
+    fig.add_scatter(x=df['survey_year'],y=df['whole_school'], name="Whole School Engagement (National)",  visible='legendonly')
+    fig.add_scatter(x=df['survey_year'],y=df['leadership'], name="Inclusive Youth Leadership (National)",  visible='legendonly')
     title_name = "Percentage of Core experience implementation over time,<br> National vs {0} State program <br><br>".format(filters['state_abv'])
     
     fig.update_layout( 
@@ -947,6 +1142,7 @@ def load_dashboard(dashboard_filters,dropdown):
         plot6 = implement_youth_leadership_activity(dashboard_filters)
         plot7 = implement_school_engagement_activity(dashboard_filters)
         plot8 = sona_resources_useful(dashboard_filters)
+        plot9 = school_survey_over_time(dashboard_filters)
 
         context={
             # 'plot1':school_survey(dashboard_filters),
@@ -967,9 +1163,11 @@ def load_dashboard(dashboard_filters,dropdown):
             'plot6': "Percentage of schools implementing each Inclusive Youth Leadership activity",
             'plot7': "Percentage of schools implementing each Whole School Engagement activity",
             'plot8': "Percentage of liaisons who found SONA resources useful",
-        }
-        }
+            'plot9': "Survey response rate over time",
 
+        }
+        }
+        
         if plot1 is not None:
             context['plot1'] = plot1
         if plot2 is not None:
@@ -986,6 +1184,8 @@ def load_dashboard(dashboard_filters,dropdown):
             context['plot7'] = plot7
         if plot8 is not None:
             context['plot8'] = plot8
+        if plot9 is not None:
+            context['plot9'] = plot9
         return context
 
 
@@ -1233,11 +1433,22 @@ def implement_unified_sport_activity(dashboard_filters, type="default"):
     filters=filter_set(dashboard_filters)
     # print("implement_unified_sport_activity filters", filters)
     filters = add_in_forFilters(filters)
+
+    comparedBy = ""
+    match type:
+        case 'imp_level':
+            comparedBy = "compared by Implementation Level"
+        case 'locale':
+            comparedBy = "compared by Locale"
+        case 'school_level':
+            comparedBy = "compared by School Level"
+        case 'survey_taken_year':
+            comparedBy = "compared by Survey Year" 
     for column_name in response.keys():
         response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all')) 
         response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state', compareType=type), column_name, compare_type=type)
     y_axis = ['Unified Sports Teams', 'Unified PE', 'Unified fitness','Unified esports', 'Young athletes(participants)', 'Unified Developmental Sports']
-    title='Percentage of schools implementing each <br> Unified Sports activity in {0} vs. National data'.format(dashboard_filters['state_abv'])
+    title='Percentage of schools implementing each <br> Unified Sports activity in {0} vs. National data {1}'.format(dashboard_filters['state_abv'], comparedBy)
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
     emptyGraph = True
     print("implement_unified_sport_activity state", response)
@@ -1260,11 +1471,23 @@ def implement_youth_leadership_activity(dashboard_filters, type="default"):
                'leadership_youth_summit':{},'leadership_activation_committe':{}}
     filters=filter_set(dashboard_filters)
     filters = add_in_forFilters(filters)
+    print("===========THE TYPE:", type)
+    comparedBy = ""
+    match type:
+        case 'imp_level':
+            comparedBy = "compared by Implementation Level"
+        case 'locale':
+            comparedBy = "compared by Locale"
+        case 'school_level':
+            comparedBy = "compared by School Level"
+        case 'survey_taken_year':
+            comparedBy = "compared by Survey Year"   
+    
     for column_name in response.keys():
         response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all')) 
         response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state', compareType=type), column_name, compare_type=type)
     y_axis=['Unifed/Inclusive Club','Inclusive Youth Leadership Training/Class','Young Athletes Volunteers','Youth summit','Youth Activation Committee']
-    title='Percentage of schools implementing each <br>  Youth Leadership activity in Program {0} vs. national data'.format(dashboard_filters['state_abv'])
+    title='Percentage of schools implementing each <br>  Youth Leadership activity in Program {0} vs. National data {1}'.format(dashboard_filters['state_abv'], comparedBy)
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
     
     
@@ -1292,12 +1515,22 @@ def implement_school_engagement_activity(dashboard_filters, type="default"):
     
     filters=filter_set(dashboard_filters)
     filters = add_in_forFilters(filters)
+    comparedBy = ""
+    match type:
+        case 'imp_level':
+            comparedBy = "compared by Implementation Level"
+        case 'locale':
+            comparedBy = "compared by Locale"
+        case 'school_level':
+            comparedBy = "compared by School Level"
+        case 'survey_taken_year':
+            comparedBy = "compared by Survey Year" 
     for column_name in response.keys():
         response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all',)) 
         response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state',compareType=type), column_name, compare_type=type)
     y_axis=['Spread the word'+'<br>'+'Inclusion/Respect/Disability' +'<br>'+'Awareness Campaign','Unified Sports pep Rally','Unified Sports Day/Festival','Fundraising events /activities','Special Olympics play/performance','Unified Fitness Challenge']
     # print("STATE ABV CHECK", dashboard_filters['state_abv'])
-    title='Percentage of schools implementing each <br> Inclusive Whole School Engagement activity in Program {0} vs. national Data'.format(dashboard_filters['state_abv'])
+    title='Percentage of schools implementing each <br> Inclusive Whole School Engagement activity in Program {0} vs. National Data {1}'.format(dashboard_filters['state_abv'], comparedBy)
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
     emptyGraph = True
     print("implement_unified_sport_activity state", response)

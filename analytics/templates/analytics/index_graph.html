@@ -47,9 +47,13 @@
           {% endfor %}
       </div>
       <div class="form-group row">
-          <div class="col-sm-8">
-              <input type="submit" class="btn btn-primary mt-2" value="Submit">
-          </div>
+        <div class="col-sm-8">
+          <button id="loadingButton" class="btn btn-primary" type="button" style="display: none;">
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span class="sr-only">Loading...</span>
+          </button>
+          <input id="submitButton" type="submit" class="btn btn-primary mt-2" value="Submit">
+      </div>
       </div>
   </div>
 </form>
@@ -194,8 +198,40 @@ $(document).ready(function() {
   </div>
   <ul id="rowList">
     <li>
+      {% if plot9 %}
+      <details open>
+
+        <summary>{{plot_titles.plot9}}</summary>
+        <div class="dropdown-container" id="dropdown-container-1">
+        <div class="select-info-container">
+        <button id="info-button-1" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+          <i class="fas fa-question-circle"></i>
+                </button>
+      </div>
+        <!-- Add a spinner element for the loader (hidden by default) -->
+        <div id="loader" style="display: none;">
+          <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+        </div>
+        <div class="content">
+        <div class="resizable-plot" id="resizable-plot-1"> {{plot9|safe}}</div>
+         </div>
+        </div>
+
+      </details>
+      
+      {% else %}
+      <details open>
+          <summary>{{plot_titles.plot9}}</summary>
+          <div class="content" style="padding: 10px; text-align: center;">
+            <p style="color: grey;">No data available to display</p>
+          </div>
+      </details>
+  {% endif %}
+
+    </li>
+    <li>
       {% if plot1 %}
-      <details>
+      <details open>
 
         <summary>{{plot_titles.plot1}}</summary>
         <div class="dropdown-container" id="dropdown-container-1">
@@ -238,7 +274,7 @@ $(document).ready(function() {
     <li>
       {% if plot2 %}
 
-        <details>
+        <details open>
             <summary>{{plot_titles.plot2}}</summary>
             <button id="info-button-2" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
               <i class="fas fa-question-circle"></i>
@@ -260,11 +296,12 @@ $(document).ready(function() {
     <li>
       {% if plot3 %}
 
-        <details>
+        <details open>
             <summary>{{plot_titles.plot3}}</summary>
             <button id="info-button-3" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
               <i class="fas fa-question-circle"></i>
             </button>
+        
             <div class="content">
             <div class="resizable-plot"> {{plot3|safe}}</div>
             </div>
@@ -282,7 +319,7 @@ $(document).ready(function() {
     <li>
       {% if plot4 %}
 
-        <details>
+        <details open>
             <summary>{{plot_titles.plot4}}</summary>
             <button id="info-button-4" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
               <i class="fas fa-question-circle"></i>
@@ -304,7 +341,7 @@ $(document).ready(function() {
     </li>
     <li>
       {% if plot5 %}
-        <details>
+        <details open>
             <summary>{{plot_titles.plot5}}</summary>
             <div class="dropdown-container" id="dropdown-container-2">
               <select class="compare-by" id="compare-by-2">
@@ -342,7 +379,7 @@ $(document).ready(function() {
     <li>
       {% if plot6 %}
 
-        <details>
+        <details open>
             <summary>{{plot_titles.plot6}}</summary>
             <div class="dropdown-container" id="dropdown-container-3">
               <select class="compare-by" id="compare-by-3">
@@ -380,7 +417,7 @@ $(document).ready(function() {
     <li>
       {% if plot7 %}
 
-        <details>
+        <details open>
             <summary>{{plot_titles.plot7}}</summary>
             <div class="dropdown-container" id="dropdown-container-4">
               <select class="compare-by" id="compare-by-4">
@@ -418,7 +455,7 @@ $(document).ready(function() {
     <li>
       {% if plot8 %}
 
-        <details>
+        <details open>
             <summary>{{plot_titles.plot8}}</summary>
             <!-- <div class="dropdown-container" id="dropdown-container-4">
               <select class="compare-by" id="compare-by-5">
@@ -438,7 +475,7 @@ $(document).ready(function() {
                 <i class="fas fa-question-circle"></i>
               </button>
             <div class="content">
-            <div class="resizable-plot-5"> {{plot8|safe}}</div>
+              <div class="resizable-plot" id="resizable-plot-5"> {{plot8|safe}}</div>
             </div>
           </details>
           {% else %}
@@ -459,6 +496,14 @@ $(document).ready(function() {
 //     $('#state_drop').select2();
 //     $('#county_drop').select2();
 // });
+
+$(document).ready(function() {
+    $('#submitButton').click(function(e) {
+        // e.preventDefault();  // Prevent the form from being submitted
+        $(this).hide();  // Hide the submit button
+        $('#loadingButton').show();  // Show the loading button
+    });
+});
 $(document).ready(function() {
     // Assuming your info buttons have ids 'info-button-1', 'info-button-2', etc.
     $('#info-button-1, #info-button-2, #info-button-3, #info-button-4, #info-button-5, #info-button-6, #info-button-7, #info-button-8').click(function() {

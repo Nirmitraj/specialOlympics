@@ -4,6 +4,7 @@ from authenticate import views as auth_views
 from analytics.dash_apps.finished_apps import surveys_taken,surveys_dup
 from django.urls import path
 from django_select2.views import AutoResponseView
+from analytics import feedback
 
 dashboard_filters={'state_abv':'sca','survey_taken_year':2022}
 urlpatterns=[
@@ -14,6 +15,7 @@ urlpatterns=[
     path('api/get_graph/', index_graph.get_graph, name='get_graph'),
     path('get_counties/', index_graph.get_counties, name='get_counties'),
     path('select2/', AutoResponseView.as_view(), name='select2'),
+    path('feedback/', feedback.feedback, name='feedback'),
 
 
     path('index_table/',index_table.tables,name='index_table'),
