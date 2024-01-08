@@ -388,6 +388,9 @@ def add_in_forFilters(new_filters):
 def school_suvery_data(dashboard_filters):
     new_filters= filter_set(dashboard_filters)
     # print("PRIIINNTTTT", new_filters)
+    # state = CustomUser.objects.values('state').filter(username=request.user)[0]
+    # state=state.get('state','None')
+    # if state == 'all':
     new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
     new_filters.pop('county',None)
     # print('Filterssssss',new_filters)
