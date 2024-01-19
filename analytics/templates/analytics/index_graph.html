@@ -19,6 +19,8 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script> 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/css/select2.min.css"></script> 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
 
 </head>
 <body>
@@ -35,6 +37,12 @@
         });
     });
 </script> -->
+
+<form method="POST" action="{% url 'download_pdf' %}">
+  {% csrf_token %}
+  <button type="submit">Generate Report</button>
+</form>
+
 <form action="{% url 'index_graph' %}" method="post">
   {% csrf_token %}
   <div class="container">
@@ -497,6 +505,15 @@ $(document).ready(function() {
 //     $('#county_drop').select2();
 // });
 
+function generatePDF() {
+    html2canvas(document.body).then(function(canvas) {
+        var imgData = canvas.toDataURL('image/png');
+        var doc = new jsPDF();
+        doc.addImage(imgData, 'PNG', 10, 10);
+        doc.save('download.pdf');
+    });
+}
+
 $(document).ready(function() {
     $('#submitButton').click(function(e) {
         // e.preventDefault();  // Prevent the form from being submitted
@@ -513,6 +530,9 @@ $(document).ready(function() {
         var state = $('#state_drop').val();
 
         switch (selectedYear) {
+          case '2023':
+            year = "15 (2022-23)"
+            break;
           case '2022':
             year = "14 (2021-22)"
             break;
@@ -567,6 +587,9 @@ $(document).ready(function() {
     console.log(typeof selectedYear)
     var year = ""
     switch (selectedYear) {
+      case '2023':
+        year = "15 (2022-23)"
+        break;
       case '2022':
         year = "14 (2021-22)"
         break;

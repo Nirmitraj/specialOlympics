@@ -170,5 +170,14 @@ class Filters(forms.Form):
 
 
 class FeedbackForm(forms.Form):
-        title = forms.CharField(max_length=100)
+        requester = forms.CharField(max_length=100)
+        REQUEST_TYPES = [
+            ('feature_request', 'Feature Request'),
+            ('problem', 'Problem'),
+            ('question', 'Question'),
+            ('refund', 'Refund'),
+        ]
+
+        request_type = forms.ChoiceField(choices=REQUEST_TYPES, label='Request type')
+        subject = forms.CharField(max_length=100)
         description = forms.CharField(widget=forms.Textarea)

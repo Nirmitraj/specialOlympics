@@ -77,7 +77,7 @@
                 <div class="container-fluid">
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-                        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                        <a href="{% url 'pdf_view' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
                             <i class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
                     </div>
                     <!-- Page Heading -->
@@ -138,7 +138,26 @@
     <!-- Page level custom scripts -->
     <script src="{% static 'js/demo/chart-area-demo.js' %}"></script>
     <script src="{% static 'js/demo/chart-pie-demo.js' %}"></script>
-
+    <div class="modal fade" id="pdfModal" tabindex="-1" role="dialog" aria-labelledby="pdfModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document" style="max-width: 90%;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="pdfModalLabel">Walkthrough</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <object data="{% static 'Walkthrough.pdf' %}" type="application/pdf" width="100%" height="500px">
+                        <p>It appears you don't have a PDF plugin for this browser. You can <a href="{% static 'Walkthrough.pdf' %}">click here to download the PDF file.</a></p>
+                    </object>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="feedbackModal" tabindex="-1" role="dialog" aria-labelledby="feedbackModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -151,16 +170,29 @@
                 </div>
                 <div class="modal-body">
                     <!-- Feedback form goes here -->
-                    <form>
+                    <form method="post" action="{% url 'handle_form_submission' %}">
                         <div class="form-group">
-                            <label for="feedbackTitle">Title</label>
-                            <input type="text" class="form-control" id="feedbackTitle" placeholder="Enter title">
+                        <div class="form-group">
+                            <label for="requestor">Requestor</label>
+                            <input type="text" class="form-control" id="requestor" name="requestor" placeholder="Enter Requestor">
                         </div>
+                        <div class="form-group">
+                            <label for="requestType">Request Type</label>
+                            <select class="form-control" id="requestType" name="requestType">
+                                <option>Feature request</option>
+                                <option>Problem</option>
+                                <option>Question</option>
+                                <option>Refund</option>
+                            </select>
+                        </div>
+                        <label for="feedbackTitle">Subject</label>
+                        <input type="text" class="form-control" id="feedbackTitle" name="feedbackTitle" placeholder="Enter Subject">
+                    </div>
+
                         <div class="form-group">
                             <label for="feedbackDescription">Description</label>
-                            <textarea class="form-control" id="feedbackDescription" rows="3" placeholder="Enter description"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Submit</button>
+                            <textarea class="form-control" id="feedbackDescription" name="feedbackDescription" rows="3" placeholder="Enter description"></textarea>
+                        </div>                        <button type="submit" class="btn btn-primary">Submit</button>
                     </form>
                 </div>
             </div>

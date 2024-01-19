@@ -332,7 +332,7 @@ def index(request):
         filter_state = state
         if state=='all':
             filter_state = 'AK'# on inital load some data has to be displayed so defaulting to ma
-        context = load_dashboard(dashboard_filters={'state_abv':filter_state,'survey_taken_year':2022},dropdown=Filters(state=state_choices(state)))
+        context = load_dashboard(dashboard_filters={'state_abv':filter_state,'survey_taken_year':2023},dropdown=Filters(state=state_choices(state)))
     
     if request.method=='POST':
         state = state_choices(state)

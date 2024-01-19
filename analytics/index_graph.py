@@ -16,6 +16,14 @@ from django.utils.safestring import mark_safe
 from django.db.models import Case, When, Value, CharField
 from django.db.models import QuerySet
 from plotly.graph_objects import Figure, Pie
+from io import BytesIO
+from reportlab.pdfgen import canvas
+from django.http import FileResponse
+import imgkit
+import plotly.io as pio
+from reportlab.lib.pagesizes import letter, landscape
+from django.core.cache import cache
+
 
 
 state_abv_ = 'sc'
@@ -317,7 +325,7 @@ def implementation_level(dashboard_filters):
     # fig = px.line(df, x=df['survey_year'], y=df['emerging'], labels={"survey_year":"year","emerging":"Implementation Level"})#color???
     fig = go.Figure()
     # hovertemplate='Year: %{x}<br>Emerging: %{y}%<br>Raw Data: %{customdata}<extra></extra>'
-    fig.add_scatter(x=df['survey_year'],y=df['state_emerging'], customdata=[raw_data['state_emerging'][x-2018] for x in df['survey_year']],  name="{0} Emerging".format(dashboard_filters['state_abv']))   
+    fig.add_scatter(x=df['survey_year'],y=df['state_emerging'], name="{0} Emerging".format(dashboard_filters['state_abv']))   
     fig.add_scatter(x=df['survey_year'],y=df['state_developing'], name="{0} Developing".format((dashboard_filters['state_abv'])))   
     fig.add_scatter(x=df['survey_year'],y=df['state_full_implement'], name="{0} Full Implementation".format(dashboard_filters['state_abv']))
 
@@ -385,13 +393,12 @@ def add_in_forFilters(new_filters):
     filters = dict(filters)
     return filters
 
-def school_suvery_data(dashboard_filters):
+def school_suvery_data(dashboard_filters, isAdmin):
     new_filters= filter_set(dashboard_filters)
     # print("PRIIINNTTTT", new_filters)
     # state = CustomUser.objects.values('state').filter(username=request.user)[0]
-    # state=state.get('state','None')
-    # if state == 'all':
-    new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
+    if isAdmin:
+        new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
     new_filters.pop('county',None)
     # print('Filterssssss',new_filters)
     filters = add_in_forFilters(new_filters)
@@ -400,10 +407,11 @@ def school_suvery_data(dashboard_filters):
 
     return SchoolDetails.objects.values('school_state','survey_taken').filter(**filters).exclude(school_state='-99').annotate(total = Count('survey_taken')).order_by('school_state')
 
-def school_suvery_school_year_data(dashboard_filters):
+def school_suvery_school_year_data(dashboard_filters, isAdmin):
     new_filters= filter_set(dashboard_filters)
     # print("PRIIINNTTTTI", new_filters)
-    new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
+    if isAdmin:
+        new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
     new_filters.pop('county',None)
     new_filters.pop('survey_taken_year',None)
 
@@ -414,10 +422,11 @@ def school_suvery_school_year_data(dashboard_filters):
     
     return SchoolDetails.objects.values('school_state','survey_taken', 'survey_taken_year').filter(**filters).exclude(school_state='-99').annotate(total = Count('survey_taken')).order_by('school_state')
 
-def school_suvery_implementation_level_data(dashboard_filters):
+def school_suvery_implementation_level_data(dashboard_filters, isAdmin):
     new_filters= filter_set(dashboard_filters)
     # print("PRIIINNTTTTI", new_filters)
-    new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
+    if isAdmin:
+     new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
     new_filters.pop('county',None)
     # print('FilterssssssI',new_filters)
     filters = add_in_forFilters(new_filters)
@@ -426,10 +435,11 @@ def school_suvery_implementation_level_data(dashboard_filters):
     
     return SchoolDetails.objects.values('school_state','survey_taken', 'implementation_level').filter(**filters).exclude(school_state='-99').annotate(total = Count('survey_taken')).order_by('school_state')
 
-def school_suvery_locale_data(dashboard_filters):
+def school_suvery_locale_data(dashboard_filters, isAdmin):
     new_filters= filter_set(dashboard_filters)
     # print("PRIIINNTTTTI", new_filters)
-    new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
+    if isAdmin:
+        new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
     new_filters.pop('county',None)
     # print('FilterssssssI',new_filters)
     filters = add_in_forFilters(new_filters)
@@ -450,10 +460,11 @@ def school_suvery_locale_data(dashboard_filters):
 
     return school_surveys.values('school_state', 'survey_taken', 'grouped_locale').annotate(total = Count('survey_taken')).order_by('school_state')
 
-def school_suvery_school_data(dashboard_filters):
+def school_suvery_school_data(dashboard_filters, isAdmin):
     new_filters= filter_set(dashboard_filters)
     # print("PRIIINNTTTTI", new_filters)
-    new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
+    if isAdmin:
+        new_filters.pop('state_abv',None) # as this graph is for all states we remove state filter for this
     new_filters.pop('county',None)
     # print('FilterssssssI',new_filters)
     filters = add_in_forFilters(new_filters)
@@ -462,8 +473,8 @@ def school_suvery_school_data(dashboard_filters):
     
     return SchoolDetails.objects.values('school_state','survey_taken','gradeLevel_WithPreschool').filter(**filters).exclude(school_state='-99').annotate(total = Count('survey_taken')).order_by('school_state')
 
-def school_survey_year(dashboard_filters):
-    school_surveys = school_suvery_school_year_data(dashboard_filters)
+def school_survey_year(dashboard_filters, isAdmin = False):
+    school_surveys = school_suvery_school_year_data(dashboard_filters, isAdmin)
     data_json={}
     totals = {}
     print(school_surveys)
@@ -493,6 +504,7 @@ def school_survey_year(dashboard_filters):
     survey_3 = []
     survey_4 = []
     survey_5 = []
+    survey_6 = []
     for state in school_state:
         # Get the data for each group, or default to 0 if the group doesn't exist
 
@@ -501,6 +513,7 @@ def school_survey_year(dashboard_filters):
         survey_3.append(data_json[state].get('True', {}).get(2020, 0))
         survey_4.append(data_json[state].get('True', {}).get(2021, 0))
         survey_5.append(data_json[state].get('True', {}).get(2022, 0))
+        survey_6.append(data_json[state].get('True', {}).get(2023, 0))
         print(survey_5)
       
 
@@ -509,7 +522,8 @@ def school_survey_year(dashboard_filters):
     {"x": school_state, "y": survey_2, "name": '2019 (Yes)', "trace": None},
     {"x": school_state, "y": survey_3, "name": '2020 (Yes)', "trace": None},
     {"x": school_state, "y": survey_4, "name": '2021 (Yes)', "trace": None},
-    {"x": school_state, "y": survey_5, "name": '2022 (Yes)', "trace": None}
+    {"x": school_state, "y": survey_5, "name": '2022 (Yes)', "trace": None},
+    {"x": school_state, "y": survey_6, "name": '2023 (Yes)', "trace": None}
 
     ]
 
@@ -524,7 +538,7 @@ def school_survey_year(dashboard_filters):
     traces.sort(key=lambda x: sum(x["y"]), reverse=True)
 
     # Calculate the total for each state
-    survey_total = [sum(x) for x in zip(survey_1, survey_2, survey_3, survey_4, survey_5)]
+    survey_total = [sum(x) for x in zip(survey_1, survey_2, survey_3, survey_4, survey_5, survey_6)]
 
     # Create the trace for the total
 
@@ -556,9 +570,9 @@ def school_survey_year(dashboard_filters):
     return plot_div
 
 
-def school_survey_school_level(dashboard_filters):
+def school_survey_school_level(dashboard_filters, isAdmin = False):
 
-    school_surveys = school_suvery_school_data(dashboard_filters)
+    school_surveys = school_suvery_school_data(dashboard_filters, isAdmin)
     # print("school survey", school_surveys)
     data_json={}
     # if 'school_state__in' in data_json.keys():
@@ -662,9 +676,9 @@ def school_survey_school_level(dashboard_filters):
 
     return plot_div
 
-def school_survey_locale_level(dashboard_filters):
+def school_survey_locale_level(dashboard_filters, isAdmin = False):
 
-    school_surveys = school_suvery_locale_data(dashboard_filters)
+    school_surveys = school_suvery_locale_data(dashboard_filters, isAdmin)
     # print("school survey", school_surveys)
     data_json={}
     # if 'school_state__in' in data_json.keys():
@@ -767,9 +781,9 @@ def school_survey_locale_level(dashboard_filters):
 
     return plot_div
 
-def school_survey_implementation_level(dashboard_filters):
+def school_survey_implementation_level(dashboard_filters, isAdmin = False):
 
-    school_surveys = school_suvery_implementation_level_data(dashboard_filters)
+    school_surveys = school_suvery_implementation_level_data(dashboard_filters, isAdmin)
     print("school survey", school_surveys)
     # Assuming data_json is your data
     # for state in states:
@@ -899,9 +913,9 @@ def school_survey_implementation_level(dashboard_filters):
 
     return plot_div
 
-def school_survey(dashboard_filters):
+def school_survey(dashboard_filters, isAdmin):
 
-    school_surveys = school_suvery_data(dashboard_filters)
+    school_surveys = school_suvery_data(dashboard_filters, isAdmin)
     # print("school survey", school_surveys)
     data_json={}
     # if 'school_state__in' in data_json.keys():
@@ -1135,9 +1149,9 @@ def core_experience_yearly(dashboard_filters):
     return plot_div
 
 
-def load_dashboard(dashboard_filters,dropdown):
+def load_dashboard(dashboard_filters,dropdown,isAdmin=False):
         # print("This is it", dashboard_filters, dropdown)
-        plot1 = school_survey(dashboard_filters)
+        plot1 = school_survey(dashboard_filters, isAdmin)
         plot2 = core_experience(dashboard_filters)
         plot3 = implementation_level(dashboard_filters)
         plot4 = core_experience_yearly(dashboard_filters)
@@ -1197,14 +1211,22 @@ def load_dashboard(dashboard_filters,dropdown):
 def index(request):
     state = CustomUser.objects.values('state').filter(username=request.user)[0]
     state=state.get('state','None')
+    admin = False
     if request.method=='GET':
         filter_state = state
         if state=='all':
             filter_state = 'AK'# on inital load some data has to be displayed so defaulting to ma
-        context = load_dashboard(dashboard_filters={'state_abv': filter_state,'survey_taken_year': '2022'},dropdown=Filters(state=state_choices(state)))
+            admin = True
+        context = load_dashboard(dashboard_filters={'state_abv': filter_state,'survey_taken_year': '2023'},dropdown=Filters(state=state_choices(state)), isAdmin=admin)
     
     if request.method=='POST':
         print(request)
+        getState = CustomUser.objects.values('state').filter(username=request.user)[0]
+        getState=getState.get('state','None')
+        admin = False
+        if getState == 'all':
+            admin = True
+
         state = state_choices(state)
         post_data = request.POST.copy()  # Make a mutable copy of the POST data
         # if not isinstance(post_data.get('school_county'), str):
@@ -1228,38 +1250,46 @@ def index(request):
             print("==State==", dashboard_filters)
 
             # print("@@@@@@@@@@@@", dashboard_filters)
-            context = load_dashboard(dashboard_filters,dropdown)
+            context = load_dashboard(dashboard_filters,dropdown, isAdmin=admin)
+
+                        # Create a new PDF in memory
             
-            #return HttpResponseRedirect('/')
+    # cache.set('context', context, 300)  # Cache the context for 300 seconds
+
     return render(request, 'analytics/index_graph.html', context) 
          
 
 def get_graph(request):
     # print("REQUEST CHECK", request)
+    state = CustomUser.objects.values('state').filter(username=request.user)[0]
+    state=state.get('state','None')
+    print(state)
     dashboard_filters = request.GET.copy()  # Get the filters from the request
     type = dashboard_filters['type']
     graph_no = dashboard_filters['graph_no'][0]
+    admin = False
     # print(dashboard_filters)
     dashboard_filters.pop('type')
     dashboard_filters.pop('graph_no')
-
+    if state=='all':
+        admin = True
     # print("NEW FUNCTION:", dashboard_filters, type, graph_no)
     if graph_no is '1':
         # print("NEW FUNCTION2:", graph_no)
         match type:
             case 'locale':
-                plot_div = school_survey_locale_level(dashboard_filters)
+                plot_div = school_survey_locale_level(dashboard_filters, isAdmin = admin)
             case 'imp_level':
-                plot_div = school_survey_implementation_level(dashboard_filters)
+                plot_div = school_survey_implementation_level(dashboard_filters, isAdmin = admin)
             case 'school_level':
-                plot_div = school_survey_school_level(dashboard_filters)
+                plot_div = school_survey_school_level(dashboard_filters, isAdmin = admin)
             case 'survey_taken_year':
-                plot_div = school_survey_year(dashboard_filters)
+                plot_div = school_survey_year(dashboard_filters, isAdmin = admin)
             case 'reset':
                 print("RESET BEING USED")
-                plot_div = school_survey(dashboard_filters)
+                plot_div = school_survey(dashboard_filters, isAdmin = admin)
             case '':
-                plot_div = school_survey(dashboard_filters)
+                plot_div = school_survey(dashboard_filters, isAdmin = admin)
     elif graph_no is '5':
             if type == 'reset':
                 plot_div = implement_unified_sport_activity(dashboard_filters=dashboard_filters, type="default")
@@ -1301,7 +1331,36 @@ def get_counties(request):
     # print(county_dict)
     return JsonResponse(county_dict, safe=False)
 
+def generate_pdf_file(context):
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=landscape(letter))
+    print("CONTEXT", context)
+    # Adjust these as needed
+    x = 50
+    y = 750
+    width = 400
+    height = 300
 
+    # Convert each Plotly graph to an image and embed it in the PDF
+    for i in range(1, 9):
+        fig = context[f'plot{i}']
+        image_path = f'figure{i}.png'
+        pio.write_image(fig, image_path)
+        c.drawImage(image_path, x, y, width, height)
+        y -= height  # Move down for the next image
+
+    c.showPage()
+    c.save()
+
+    buffer.seek(0)
+    return buffer
+
+def download_pdf(request):
+    context = cache.get('context')
+    print("CACHE", context)
+
+    pdf = generate_pdf_file(context)
+    return FileResponse(pdf, as_attachment=True, filename='report.pdf')
 '''
 Utility functions
 '''
@@ -1754,6 +1813,8 @@ def get_horizontal_bar_legend_name(data, type="default"):
                     return '2021'
                 case 2022:
                     return '2022'
+                case 2023:
+                    return '2023'
 
                 
     return 'none'            

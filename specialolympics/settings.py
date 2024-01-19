@@ -59,6 +59,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
 ROOT_URLCONF = 'specialolympics.urls'
 AUTH_USER_MODEL = 'authenticate.CustomUser'
 
@@ -166,3 +172,12 @@ STATICFILES_DIRS=[
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'auth/login/'
 LOGIN_REDIRECT_URL='../auth/login/'
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = 'specialolympics760@gmail.com'
+EMAIL_HOST_PASSWORD = 'vquksowxgxmsjfin'

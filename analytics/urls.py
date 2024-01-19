@@ -5,8 +5,9 @@ from analytics.dash_apps.finished_apps import surveys_taken,surveys_dup
 from django.urls import path
 from django_select2.views import AutoResponseView
 from analytics import feedback
+from analytics import pdf_view
 
-dashboard_filters={'state_abv':'sca','survey_taken_year':2022}
+dashboard_filters={'state_abv':'sca','survey_taken_year':2023}
 urlpatterns=[
     path('',auth_views.home,name='home'),
     path('tables/',tables.tables,name='tables'),
@@ -17,8 +18,10 @@ urlpatterns=[
     path('select2/', AutoResponseView.as_view(), name='select2'),
     path('feedback/', feedback.feedback, name='feedback'),
 
+    path('pdf/', pdf_view.PdfView.as_view(), name='pdf_view'),
 
     path('index_table/',index_table.tables,name='index_table'),
+    path('download_pdf/', index_graph.download_pdf, name='download_pdf'),
 
 
     # path('welcome.html/',views.index,name='homepage'),

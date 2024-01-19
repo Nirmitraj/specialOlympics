@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+from . import handle_form_submission
 
 import analytics
 
@@ -24,5 +25,6 @@ urlpatterns = [
     path('auth/',include('authenticate.urls')),
     path('django_plotly_dash/', include('django_plotly_dash.urls')),
     path("select2/", include("django_select2.urls")),
+    path('handle_form_submission/', handle_form_submission.handle_form_submission, name='handle_form_submission'),
 
 ]
