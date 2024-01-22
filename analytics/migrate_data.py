@@ -28,6 +28,8 @@ class Command():
         #localeNum #enrollment #free lunch #non white #implementation level
         if data == '#NULL!':
             return None
+        if data == '':
+            return None
         else: return data
 
     def clean_str_zip_null(self,data):
@@ -74,6 +76,26 @@ class Command():
              return '4.00'
         else:
             return None
+        
+
+
+                # elementary_school_playbook=self.clean_str_null(row['G13_1']),#13
+                # middle_level_playbook=self.clean_str_null(row['G13_4']),#13
+                # high_school_playbook=self.clean_str_null(row['G13_5']),#13
+                # special_olympics_state_playbook=self.clean_str_null(row['G13_4']),#13
+                # special_olympics_fitness_guide_for_schools=self.clean_str_null(row['G13_2']),#13
+                # unified_physical_education_resource=self.clean_str_null(row['G13_7']),#13
+                # special_olympics_young_athletes_activity_guide=self.clean_str_null(row['G13_8']),#13
+                # inclusive_youth_leadership_training_faciliatator_guide=self.clean_str_null(row['G13_10']),#13
+
+    def clean_SONA_playbook_null(self,data):
+        #sportcompnent #youthleadership #wholeschool
+        #localeNum #enrollment #free lunch #non white #implementation level
+        if data == 'NA':
+            return None
+        elif data == -99:
+            return None
+        else: return '1'
     
 
     def handle(self, *args, **kwargs):
@@ -131,14 +153,14 @@ class Command():
                 parents_of_students_without_idd=self.clean_str_null(row['Y15_F3_10']),#1
                 school_psychologist=self.clean_str_null(row['Y15_F3_11']),#123
                 special_olympics_state_program_staff=self.clean_str_null(row['Y15_F3_12']),#123
-                elementary_school_playbook=self.clean_str_null(row['G13_1']),#13
-                middle_level_playbook=self.clean_str_null(row['G13_4']),#13
-                high_school_playbook=self.clean_str_null(row['G13_5']),#13
-                special_olympics_state_playbook=self.clean_str_null(row['G13_4']),#13
-                special_olympics_fitness_guide_for_schools=self.clean_str_null(row['G13_2']),#13
-                unified_physical_education_resource=self.clean_str_null(row['G13_7']),#13
-                special_olympics_young_athletes_activity_guide=self.clean_str_null(row['G13_8']),#13
-                inclusive_youth_leadership_training_faciliatator_guide=self.clean_str_null(row['G13_10']),#13
+                elementary_school_playbook=self.clean_SONA_playbook_null(row['G13_1']),#13
+                middle_level_playbook=self.clean_SONA_playbook_null(row['G13_4']),#13
+                high_school_playbook=self.clean_SONA_playbook_null(row['G13_5']),#13
+                special_olympics_state_playbook=self.clean_SONA_playbook_null(row['G13_4']),#13
+                special_olympics_fitness_guide_for_schools=self.clean_SONA_playbook_null(row['G13_2']),#13
+                unified_physical_education_resource=self.clean_SONA_playbook_null(row['G13_7']),#13
+                special_olympics_young_athletes_activity_guide=self.clean_SONA_playbook_null(row['G13_8']),#13
+                inclusive_youth_leadership_training_faciliatator_guide=self.clean_SONA_playbook_null(row['G13_10']),#13
                 planning_and_hosting_a_youth_leadership_experience=None,#self.clean_str_null(row['Y12_E9_10_1']),#13
                 unified_classoom_lessons_and_activities=self.clean_str_null(row['G13_11']),#13
                 generation_unified_youtube_channel_or_videos=self.clean_str_null(row['G13_12']),#13

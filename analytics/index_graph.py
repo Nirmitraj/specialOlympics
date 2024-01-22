@@ -23,8 +23,13 @@ import imgkit
 import plotly.io as pio
 from reportlab.lib.pagesizes import letter, landscape
 from django.core.cache import cache
-
-
+import plotly.io as py
+import io
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase.pdfmetrics import stringWidth
+from PIL import Image
+import tempfile
 
 state_abv_ = 'sc'
     
@@ -309,7 +314,7 @@ def implementation_level_percentages(response):
 
     return response
 
-def implementation_level(dashboard_filters):
+def implementation_level(dashboard_filters, getImage = False):
     raw_data=implementation_level_data(dashboard_filters)
     print(raw_data, "===========RAW DATA==============")
     data = implementation_level_percentages(raw_data)
@@ -376,9 +381,15 @@ def implementation_level(dashboard_filters):
     )
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     # print("imp level yoo?")
-    if (df == 0).all().all():
-        return None
-    return plot_div
+    if getImage:
+        img_bytes = io.BytesIO()
+        py.write_image(fig, img_bytes, format='png')
+        img_bytes.seek(0)
+        return img_bytes
+    else:
+        if (df == 0).all().all():
+            return None
+        return plot_div
 
 def add_in_forFilters(new_filters):
     filters = []
@@ -913,7 +924,7 @@ def school_survey_implementation_level(dashboard_filters, isAdmin = False):
 
     return plot_div
 
-def school_survey(dashboard_filters, isAdmin):
+def school_survey(dashboard_filters, isAdmin, getImage=False):
 
     school_surveys = school_suvery_data(dashboard_filters, isAdmin)
     # print("school survey", school_surveys)
@@ -942,6 +953,7 @@ def school_survey(dashboard_filters, isAdmin):
     for state in school_state:
         # print(state)
         total = data_json[state].get('True',0) + data_json[state].get('False',0)
+        print("HERE IS THE TOTAL", total)
         data_json[state]['True'] = round((data_json[state].get('True',0)/total)*100,2)
         data_json[state]['False'] = round((data_json[state].get('False',0)/total)*100,2)
 
@@ -975,12 +987,18 @@ def school_survey(dashboard_filters, isAdmin):
     fig = go.Figure(data=trace, layout=layout)
     fig.update_layout(width=1400, height=500)
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-    if survey_true:
-     return plot_div
+    if getImage:
+        img_bytes = io.BytesIO()
+        py.write_image(fig, img_bytes, format='png')
+        img_bytes.seek(0)
+        return img_bytes
     else:
-      return None
+        if survey_true:
+            return plot_div
+        else:
+             return None
     
-def school_survey_over_time(dashboard_filters):
+def school_survey_over_time(dashboard_filters, getImage = False):
     # print("core_experience_yearly filters", filters)
     raw_data = survey_response_year_data(dashboard_filters)
     print(raw_data, "===========RAW DATA==============")
@@ -1056,13 +1074,20 @@ def school_survey_over_time(dashboard_filters):
     ),
 
     )
-    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-    # print("imp level yoo?")
-    if (df == 0).all().all():
-        return None
-    return plot_div
 
-def core_experience(dashboard_filters):
+    if getImage:
+        img_bytes = io.BytesIO()
+        py.write_image(fig, img_bytes, format='png')
+        img_bytes.seek(0)
+        return img_bytes
+    else:
+        plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+        # print("imp level yoo?")
+        if (df == 0).all().all():
+            return None
+        return plot_div
+
+def core_experience(dashboard_filters, getImage = False):
     # survey_year=SchoolDetails.objects.aggregate(Max('survey_taken_year'))
     # survey_year = survey_year['survey_taken_year__max']
     # print("core experience")
@@ -1092,13 +1117,24 @@ def core_experience(dashboard_filters):
     fig.update_layout(title_text='Core Experience implementation in {year} {state_abv}'.format(state_abv=filters['state_abv'],year=('('+str(int(filters['survey_taken_year'])-1)+'-'+str(filters['survey_taken_year'])[-2:]+')')))
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
     # print("plot div yo", plot_div)
-    if sports or leadership or wholeschool:
-        return plot_div
+    if getImage:
+#         fig.update_layout(
+#     autosize=True,
+#     width=900,  # Adjust as needed
+#     height=1024,  # Adjust as needed
+# )
+        img_bytes = io.BytesIO()
+        py.write_image(fig, img_bytes, format='png')
+        img_bytes.seek(0)
+        return img_bytes
     else:
-        return None
+        if sports or leadership or wholeschool:
+            return plot_div
+        else:
+            return None
 
 
-def core_experience_yearly(dashboard_filters):
+def core_experience_yearly(dashboard_filters, getImage = False):
     filters = filter_set(dashboard_filters)
     # print("core_experience_yearly filters", filters)
     data = core_experience_year_data(dashboard_filters)
@@ -1143,23 +1179,30 @@ def core_experience_yearly(dashboard_filters):
         t=100  # Increase the top margin (adjust the value as needed)
     )
       )
-    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-    if (df.drop('survey_year', axis=1) == 0.0).all().all():
-        return None
-    return plot_div
+    
+    if getImage:
+        img_bytes = io.BytesIO()
+        py.write_image(fig, img_bytes, format='png')
+        img_bytes.seek(0)
+        return img_bytes
+    else:
+        plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+        if (df.drop('survey_year', axis=1) == 0.0).all().all():
+            return None
+        return plot_div
 
 
-def load_dashboard(dashboard_filters,dropdown,isAdmin=False):
+def load_dashboard(dashboard_filters,dropdown,isAdmin=False, getImage = False):
         # print("This is it", dashboard_filters, dropdown)
-        plot1 = school_survey(dashboard_filters, isAdmin)
-        plot2 = core_experience(dashboard_filters)
-        plot3 = implementation_level(dashboard_filters)
-        plot4 = core_experience_yearly(dashboard_filters)
-        plot5 = implement_unified_sport_activity(dashboard_filters)
-        plot6 = implement_youth_leadership_activity(dashboard_filters)
-        plot7 = implement_school_engagement_activity(dashboard_filters)
-        plot8 = sona_resources_useful(dashboard_filters)
-        plot9 = school_survey_over_time(dashboard_filters)
+        plot1 = school_survey(dashboard_filters, isAdmin, getImage)
+        plot2 = core_experience(dashboard_filters, getImage)
+        plot3 = implementation_level(dashboard_filters, getImage)
+        plot4 = core_experience_yearly(dashboard_filters, getImage)
+        plot5 = implement_unified_sport_activity(dashboard_filters, getImage)
+        plot6 = implement_youth_leadership_activity(dashboard_filters, getImage)
+        plot7 = implement_school_engagement_activity(dashboard_filters, getImage)
+        plot8 = sona_resources_useful(dashboard_filters, getImage)
+        plot9 = school_survey_over_time(dashboard_filters, getImage)
 
         context={
             # 'plot1':school_survey(dashboard_filters),
@@ -1217,7 +1260,7 @@ def index(request):
         if state=='all':
             filter_state = 'AK'# on inital load some data has to be displayed so defaulting to ma
             admin = True
-        context = load_dashboard(dashboard_filters={'state_abv': filter_state,'survey_taken_year': '2023'},dropdown=Filters(state=state_choices(state)), isAdmin=admin)
+        context = load_dashboard(dashboard_filters={'state_abv': filter_state,'survey_taken_year': '2022'},dropdown=Filters(state=state_choices(state)), isAdmin=admin)
     
     if request.method=='POST':
         print(request)
@@ -1331,35 +1374,223 @@ def get_counties(request):
     # print(county_dict)
     return JsonResponse(county_dict, safe=False)
 
-def generate_pdf_file(context):
-    buffer = BytesIO()
-    c = canvas.Canvas(buffer, pagesize=landscape(letter))
-    print("CONTEXT", context)
-    # Adjust these as needed
-    x = 50
-    y = 750
-    width = 400
-    height = 300
 
-    # Convert each Plotly graph to an image and embed it in the PDF
-    for i in range(1, 9):
-        fig = context[f'plot{i}']
-        image_path = f'figure{i}.png'
-        pio.write_image(fig, image_path)
-        c.drawImage(image_path, x, y, width, height)
-        y -= height  # Move down for the next image
+def generate_pdf_file(request):
 
-    c.showPage()
-    c.save()
+    state = CustomUser.objects.values('state').filter(username=request.user)[0]
+    state=state.get('state','None')
+    admin = False
 
-    buffer.seek(0)
-    return buffer
+    getState = CustomUser.objects.values('state').filter(username=request.user)[0]
+    getState=getState.get('state','None')
+    admin = False
+    if getState == 'all':
+        admin = True
+
+    state = state_choices(state)
+    post_data = request.POST.copy()  # Make a mutable copy of the POST data
+    # if not isinstance(post_data.get('school_county'), str):
+    dropdown = Filters(state,post_data)
+    if not dropdown.is_valid():
+        post_data['school_county'] = 'all'
+        dropdown = Filters(state,post_data)
+
+
+
+    # if not isinstance(dropdown.cleaned_data.get('school_county'), str):
+    #         dropdown.cleaned_data['school_county'] = 'all'
+    print("===================",dropdown)
+    print("==State==", dropdown.is_valid())
+    if not dropdown.is_valid():
+        print(dropdown.errors)
+
+    if dropdown.is_valid():
+        #print('heloooooo')
+        dashboard_filters = dropdown.cleaned_data
+        print("==State==", dashboard_filters)
+
+        # print("@@@@@@@@@@@@", dashboard_filters)
+        context = load_dashboard(dashboard_filters,dropdown, isAdmin=admin, getImage=True)
+
+
+    # context = load_dashboard(dashboard_filters={'state_abv': filter_state,'survey_taken_year': '2023'},dropdown=Filters(state=state_choices(state)), isAdmin=admin, getImage=True)
+        print(dashboard_filters)
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer)
+        # c.drawString(100, 100, "Hello world.")
+        print("CONTEXT", context)
+        c.setFont("Helvetica-Bold", 18)  # Set the font and size
+        c.drawCentredString(300, 800, "Special Olympics Report")  # Draw the title
+        pdfmetrics.registerFont(TTFont('Arial', 'Arial.ttf'))
+
+        # Adjust these as needed
+        x = 50
+        y = 250
+        width = 400
+        height = 200
+        
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(50, 760, "Filters Used")
+
+
+        # Set the font and size
+        # dashboard_filter = {'implementation_level': 'all', 'locale__startswith': 'all', 'gradeLevel_WithPreschool': 'all', 'survey_taken_year': '2022', 'state_abv': 'AK', 'school_county': 'all'}
+                # Draw the text
+        c.setFont("Helvetica-Bold", 12)
+
+        # Draw the bold part of the text
+        c.drawString(70, 730, "Implementation level - ")
+
+        # Calculate the width of the bold text
+        bold_text_width = stringWidth("Implementation level - ", "Helvetica-Bold", 12)
+
+        # Set the font and size back to normal
+        c.setFont("Helvetica", 12)
+
+        # Draw the normal part of the text, starting after the bold text
+        c.drawString(70 + bold_text_width, 730, f"{dashboard_filters['implementation_level'].capitalize()}")        # Set the font and size to bold
+        c.setFont("Helvetica-Bold", 12)
+
+        # Draw the bold part of the text and the normal part of the text for each line
+        bold_text = "Locale - "
+        c.drawString(70, 710, bold_text)
+        c.setFont("Helvetica", 12)
+        c.drawString(70 + stringWidth(bold_text, "Helvetica-Bold", 12), 710, f"{dashboard_filters['locale__startswith'].capitalize()}")
+
+        c.setFont("Helvetica-Bold", 12)
+        bold_text = "School Level - "
+        c.drawString(70, 690, bold_text)
+        c.setFont("Helvetica", 12)
+        c.drawString(70 + stringWidth(bold_text, "Helvetica-Bold", 12), 690, f"{dashboard_filters['gradeLevel_WithPreschool'].capitalize()}")
+
+        c.setFont("Helvetica-Bold", 12)
+        bold_text = "Survey Year - "
+        c.drawString(70, 670, bold_text)
+        c.setFont("Helvetica", 12)
+        c.drawString(70 + stringWidth(bold_text, "Helvetica-Bold", 12), 670, f"{dashboard_filters['survey_taken_year'].capitalize()}")
+
+        c.setFont("Helvetica-Bold", 12)
+        bold_text = "State program - "
+        c.drawString(70, 650, bold_text)
+        c.setFont("Helvetica", 12)
+        c.drawString(70 + stringWidth(bold_text, "Helvetica-Bold", 12), 650, f"{dashboard_filters['state_abv']}")
+
+        c.setFont("Helvetica-Bold", 12)
+        bold_text = "County - "
+        c.drawString(70, 630, bold_text)
+        c.setFont("Helvetica", 12)
+        c.drawString(70 + stringWidth(bold_text, "Helvetica-Bold", 12), 630, f"{dashboard_filters['school_county'].capitalize()}")
+
+
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(50, 580, "Graphs")
+        # # Convert each Plotly graph to an image and embed it in the PDF
+        if dashboard_filters['survey_taken_year'] == '2023':
+            year = "15 (2022-23)"
+        elif dashboard_filters['survey_taken_year'] == '2022':
+            year = "14 (2021-22)"
+        elif dashboard_filters['survey_taken_year'] == '2021':
+            year = "13 (2020-21)"
+        elif dashboard_filters['survey_taken_year'] == '2020':
+            year = "12 (2019-20)"
+        elif dashboard_filters['survey_taken_year'] == '2019':
+            year = "11 (2018-19)"
+        else:
+            year = "Unknown Year"
+
+        # for i in range(1, 10):  # Change this to range(1, 9) to include all graphs
+            # print("GRAPH IMAGE", context[f'plot{i}'])
+        # print("PLOT NUMBER:", i)
+        if f'plot9' in context and context[f'plot9']:
+            image = Image.open(io.BytesIO(context[f'plot9'].getvalue()))
+      
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp:
+                image.save(temp.name)
+                c.setFont("Helvetica", 12)  # Set the font and size for the graph title
+            
+                c.drawString(70, 550, f"1. Survey response rate over time")  # Draw the graph title
+
+                c.drawImage(temp.name, 70, 360, 320, 170)
+                # y -= 200  # Move down for the next image
+
+        if f'plot1' in context and context[f'plot1']:
+            image = Image.open(io.BytesIO(context[f'plot1'].getvalue()))
+      
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp:
+                image.save(temp.name)
+                c.drawString(70, 340, f"2. State program response rate")  # Draw the graph title                        c.drawString(x, y, f"State program response rate")  # Draw the graph title
+
+                
+                c.drawImage(temp.name, 70, 120, 480, 200)
+                c.setFont("Helvetica", 8)  # Set the font and size for the graph title
+
+                c.drawString(150, 110, f"This figure illustrates the response rates for the Year {year} State Program.")  # Draw the graph title
+
+        #     y -= 240  # Move down for the next image
+
+            c.showPage()
+
+        if f'plot2' in context and context[f'plot2']:
+            image = Image.open(io.BytesIO(context[f'plot2'].getvalue()))
+      
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp:
+                image.save(temp.name)
+                c.setFont("Helvetica", 12)  # Set the font and size for the graph title
+
+                c.drawString(70, 780, f"3. Core Experience Implementation")  # Draw the graph title                        c.drawString(x, y, f"State program response rate")  # Draw the graph title
+                c.drawImage(temp.name, 70, 580, 330, 190)
+                c.setFont("Helvetica", 8)  # Set the font and size for the graph title
+
+                c.drawString(80, 570, f"The graph depicts the implementation of the Core Experience in {dashboard_filters['state_abv']}, categorized by sports, whole school, and leadership.")  # Draw the graph title
+
+        if f'plot3' in context and context[f'plot3']:
+            image = Image.open(io.BytesIO(context[f'plot3'].getvalue()))
+      
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as temp:
+                image.save(temp.name)
+                c.setFont("Helvetica", 12)  # Set the font and size for the graph title
+
+                c.drawString(70, 540, f"4. Implementation Level Over Time")  # Draw the graph title                        c.drawString(x, y, f"State program response rate")  # Draw the graph title
+                c.drawImage(temp.name, 70, 320, 330, 190)
+                c.setFont("Helvetica", 8)  # Set the font and size for the graph title
+
+                c.drawString(90, 310, f"This figure illustrates the implementation levels over time for National vs {dashboard_filters['state_abv']} State Program,")
+                c.drawString(90, 300, f"segmented into national and state emerging, developing, and full implementation.")  # Draw the graph title
+
+                    
+
+                    
+
+                # elif i == 3:
+                #                     c.drawImage(temp.name, x, y, 400, 180)
+
+                # elif i == 4:
+                #                     c.drawImage(temp.name, x, y, 500, 130)
+
+                # elif i == 5:
+                #                     c.drawImage(temp.name, x, y, 500, 130)
+
+                # elif i == 6:
+                #                     c.drawImage(temp.name, x, y, 500, 130)
+
+                # elif i == 7:
+                #                     c.drawImage(temp.name, x, y, 500, 130)
+
+                # elif i == 8:
+                #         c.drawImage(temp.name, x, y, 500, 130)
+
+                
+
+        c.showPage()
+        c.save()
+
+        buffer.seek(0)
+        return buffer
 
 def download_pdf(request):
-    context = cache.get('context')
-    print("CACHE", context)
+   
 
-    pdf = generate_pdf_file(context)
+    pdf = generate_pdf_file(request)
     return FileResponse(pdf, as_attachment=True, filename='report.pdf')
 '''
 Utility functions
@@ -1489,7 +1720,7 @@ def main_query(column_name,filters,key,compareType="default"):
 '''
 LOGIC
 '''
-def implement_unified_sport_activity(dashboard_filters, type="default"):
+def implement_unified_sport_activity(dashboard_filters, type="default", getImage = False):
     response={'sports_sports_teams':{}, 'sports_unified_PE':{},'sports_unified_fitness':{},
              'sports_unified_esports':{},'sports_young_athletes':{},'sports_unified_developmental_sports':{}}
     filters=filter_set(dashboard_filters)
@@ -1519,16 +1750,16 @@ def implement_unified_sport_activity(dashboard_filters, type="default"):
         if response[column_name]['state']:
             print("Found state", response[column_name]['state'])
             emptyGraph = False
-
+    print("SOMETHING!!!!", emptyGraph)
     if emptyGraph:
         return None
     else:
-        return horizontal_bar_graph(response,y_axis,title,state,compare_type=type)
+        return horizontal_bar_graph(response,y_axis,title,state,compare_type=type,getImage=getImage)
     
     
 
 
-def implement_youth_leadership_activity(dashboard_filters, type="default"):
+def implement_youth_leadership_activity(dashboard_filters, type="default", getImage = False):
     response = {'leadership_unified_inclusive_club':{},'leadership_youth_training':{},'leadership_athletes_volunteer':{},
                'leadership_youth_summit':{},'leadership_activation_committe':{}}
     filters=filter_set(dashboard_filters)
@@ -1564,14 +1795,14 @@ def implement_youth_leadership_activity(dashboard_filters, type="default"):
     if emptyGraph:
         return None
     else:
-        return horizontal_bar_graph(response,y_axis,title,state,compare_type=type)
+        return horizontal_bar_graph(response,y_axis,title,state,compare_type=type, getImage= getImage)
     
     # return horizontal_bar_graph(response,y_axis,title,state,compare_type=type)
 
     
 
 
-def implement_school_engagement_activity(dashboard_filters, type="default"):
+def implement_school_engagement_activity(dashboard_filters, type="default", getImage = False):
     response = {'engagement_spread_word_campaign':{},'engagement_fansinstands':{},'engagement_sports_day':{},
                 'engagement_fundraisingevent':{},'engagement_SO_play':{},'engagement_fitness_challenge':{}}
     
@@ -1605,12 +1836,12 @@ def implement_school_engagement_activity(dashboard_filters, type="default"):
     if emptyGraph:
         return None
     else:
-        return horizontal_bar_graph(response,y_axis,title,state,compare_type=type)
+        return horizontal_bar_graph(response,y_axis,title,state,compare_type=type, getImage = getImage)
     
     # return horizontal_bar_graph(response,y_axis,title,state,compare_type=type)
 
 
-def sona_resources_useful(dashboard_filters, type="default"):
+def sona_resources_useful(dashboard_filters, type="default", getImage = False):
     response={'elementary_school_playbook':{},'middle_level_playbook':{},'high_school_playbook':{},'special_olympics_state_playbook':{},'special_olympics_fitness_guide_for_schools':{},'unified_physical_education_resource':{},
               'special_olympics_young_athletes_activity_guide':{},'inclusive_youth_leadership_training_faciliatator_guide':{},'planning_and_hosting_a_youth_leadership_experience':{},'unified_classoom_lessons_and_activities':{},'generation_unified_youtube_channel_or_videos':{},'inclusion_tiles_game_or_facilitator_guide':{}}
     column_names=response.keys()
@@ -1681,8 +1912,9 @@ def sona_resources_useful(dashboard_filters, type="default"):
     title='Percentage of liaisons who found SONA resources useful in State Program {0} vs. National data'.format(dashboard_filters['state_abv'])
     state=dashboard_filters['state_abv']
     # return horizontal_bar_graph(response,y_axis,title,state, compare_type=type)
-    if new_response["state_yes"] or new_response["nation_yes"] or new_response["state_yes_val"] or new_response["nation_yes_val"]:
-        return horizontal_stacked_bar(new_response,y_axis,title,state, compare_type=type)
+    print(new_response)
+    if new_response["state_yes_val"] or new_response["nation_yes_val"]:
+        return horizontal_stacked_bar(new_response,y_axis,title,state, compare_type=type, getImage = getImage)
     else:
         return None
 
@@ -1690,7 +1922,7 @@ def sona_resources_useful(dashboard_filters, type="default"):
 '''   
 CHARTS
 '''
-def horizontal_bar_graph(response,y_axis,heading,state,compare_type="default"):
+def horizontal_bar_graph(response,y_axis,heading,state,compare_type="default", getImage = False):
     # print("horizontal_bar_graph", response, compare_type)
 
     fig = go.Figure()
@@ -1776,8 +2008,16 @@ def horizontal_bar_graph(response,y_axis,heading,state,compare_type="default"):
               )
         
     )
-    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-    return plot_div
+    print("GETIMAGE:", getImage)
+    if getImage:
+        img_bytes = io.BytesIO()
+        py.write_image(fig, img_bytes, format='png')
+        img_bytes.seek(0)
+        print(img_bytes)
+        return img_bytes
+    else:
+        plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+        return plot_div
     
 def get_horizontal_bar_legend_name(data, type="default"):
     match type:
@@ -1823,7 +2063,7 @@ def get_horizontal_bar_legend_name(data, type="default"):
 
 
 
-def horizontal_stacked_bar(response,y_axis,heading,state, compare_type="default"):
+def horizontal_stacked_bar(response,y_axis,heading,state, compare_type="default", getImage = False):
     # print("SONA RESULT", response)
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -1879,7 +2119,12 @@ def horizontal_stacked_bar(response,y_axis,heading,state, compare_type="default"
                     #     print(f"fig {val} Level {level_data.get('implementation_level')}")
 
     fig.update_layout(title=heading,barmode='group',xaxis_range=[0,100], width=1400, height=500)
-
-    plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-    return plot_div
+    if getImage:
+        img_bytes = io.BytesIO()
+        py.write_image(fig, img_bytes, format='png')
+        img_bytes.seek(0)
+        return img_bytes   
+    else:    
+        plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+        return plot_div
 

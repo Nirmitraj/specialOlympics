@@ -77,8 +77,8 @@
                 <div class="container-fluid">
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-                        <a href="{% url 'pdf_view' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                            <i class="fas fa-download fa-sm text-white-50"></i> Generate Report</a>
+                        <!-- <a href="{% url 'pdf_view' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                            <i class="fas fa-download fa-sm text-white-50"></i> Generate Report</a> -->
                     </div>
                     <!-- Page Heading -->
 
@@ -158,7 +158,7 @@
             </div>
         </div>
     </div>
-
+    <iframe name="hiddenFrame" width="0" height="0" border="0" style="display: none;"></iframe>
     <div class="modal fade" id="feedbackModal" tabindex="-1" role="dialog" aria-labelledby="feedbackModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -170,7 +170,7 @@
                 </div>
                 <div class="modal-body">
                     <!-- Feedback form goes here -->
-                    <form method="post" action="{% url 'handle_form_submission' %}">
+                    <form method="post" action="{% url 'handle_form_submission' %}" target="hiddenFrame">
                         <div class="form-group">
                         <div class="form-group">
                             <label for="requestor">Requestor</label>
@@ -201,3 +201,50 @@
 </body>
 
 </html>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<script>
+   $(document).ready(function() {
+    var form = $('#feedbackModal form');  // Store the form in a variable
+
+    form.on('submit', function(e) {
+        e.preventDefault();
+
+        var submitButton = $(this).find('button[type="submit"]');
+        var originalButtonHtml = submitButton.html();  // Save the original button content
+
+        // Show the loader on the submit button
+        submitButton.html('Loading...');
+
+        $.ajax({
+            url: $(this).attr('action'),  // Get the action attribute of the form
+            type: 'POST',
+            data: $(this).serialize(),  // Serialize the form data for the AJAX request
+            success: function(response) {
+                // The request was successful, show a notification
+                if (response === 'Form submitted successfully') {
+                    toastr.success('Feedback sent successfully');
+                    $('#feedbackModal').modal('hide');  // Close the feedback modal
+                } else {
+                    toastr.error('Failed to send feedback');
+                }
+            },
+            error: function() {
+                // The request failed, show an error notification
+                toastr.error('Failed to send feedback');
+            },
+            complete: function() {
+                // Restore the original button content
+                submitButton.html(originalButtonHtml);
+            }
+        });
+    });
+
+    // Clear the form fields when the feedback modal is closed
+    $('#feedbackModal').on('hidden.bs.modal', function(e) {
+        form[0].reset();
+    });
+});
+    </script>

@@ -38,11 +38,18 @@
     });
 </script> -->
 
-<form method="POST" action="{% url 'download_pdf' %}">
-  {% csrf_token %}
-  <button type="submit">Generate Report</button>
-</form>
-
+<!-- <form method="POST" action="{% url 'download_pdf' %}">
+  {% csrf_token %} -->
+  
+  <!-- <button id="generateReportButton" class="btn btn-primary">Generate Report</button> -->
+<!-- </form> -->
+<div class="container-fluid">
+  <div class="d-flex justify-content-end mt-0"> 
+      <button id="generateReportButton" class="btn btn-primary" style="font-size: 0.8rem;"><i class="fas fa-download fa-sm text-white-50"></i>    Generate Report</button> <!-- decrease the font size -->
+  </div>
+</div>
+  <!-- <a href="{% url 'pdf_view' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+              <i class="fas fa-download fa-sm text-white-50"></i> Generate Report</a> -->
 <form action="{% url 'index_graph' %}" method="post">
   {% csrf_token %}
   <div class="container">
@@ -80,6 +87,9 @@ $(document).ready(function() {
 <title>Collapsible Rows</title>
 <style>
   /* Basic styling for the collapsible rows */
+  li {
+        list-style-type: none;  /* This removes the list markers */
+    }
   details {
     /* width: 1200px; */
     margin: 10px;
@@ -908,6 +918,60 @@ $(document).ready(function() {
             }
         });
     });
+
+    $('#generateReportButton').click(function(e) {
+    e.preventDefault();  // Prevent the form from being submitted
+    var originalButtonHtml = $(this).html();  // Save the original button content
+    toastr.info('Generating report. This might take a couple of minutes...');
+
+    $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
+
+    // Get all the filter fields
+    var state_abv = $('#state_drop').val();
+    var survey_taken_year = $('#survey_drop').val();
+    var implementation_level = $('#implementation_drop').val();
+    var locale__startswith = $('#locale_drop').val();
+    var gradeLevel_WithPreschool = $('#gradeLevel_drop').val();
+    var school_county = $('#county_drop').val();
+
+    // Add more fields as needed...
+
+    // Get the CSRF token
+    var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+
+    // Send the POST request
+    $.ajax({
+        url: "{% url 'download_pdf' %}",
+        method: 'POST',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        data: {
+            'csrfmiddlewaretoken': csrftoken,
+            'state_abv': state_abv,
+            'survey_taken_year': survey_taken_year,
+            'implementation_level': implementation_level,
+            'locale__startswith': locale__startswith,
+            'gradeLevel_WithPreschool': gradeLevel_WithPreschool,
+            'school_county': school_county
+            // Add more fields as needed...
+        },
+        success: function(data) {
+            var blob = new Blob([data]);
+            var link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = "report.pdf";
+            link.click();
+            $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+
+        },
+        error: function() {
+            // The request failed, handle the error here
+            $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+
+        }
+    });
+});
 
     });
 
