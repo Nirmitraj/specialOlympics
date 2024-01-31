@@ -188,6 +188,10 @@ $(document).ready(function() {
 #info-button-8 {
   float: right;
 }
+
+#info-button-9 {
+  float: right;
+}
   
   
 </style>
@@ -222,14 +226,12 @@ $(document).ready(function() {
         <summary>{{plot_titles.plot9}}</summary>
         <!-- <div class="dropdown-container" id="dropdown-container-1"> -->
         <div class="select-info-container">
-        <button id="info-button-1" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+        <button id="info-button-9" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
           <i class="fas fa-question-circle"></i>
                 </button>
       </div>
         <!-- Add a spinner element for the loader (hidden by default) -->
-        <div id="loader" style="display: none;">
-          <img src="{% static 'images/loader.gif' %}" alt="Loading...">
-        </div>
+        
         <div class="content">
         <div class="resizable-plot" id="resizable-plot-9"> {{plot9|safe}}</div>
          </div>
@@ -533,7 +535,7 @@ $(document).ready(function() {
 });
 $(document).ready(function() {
     // Assuming your info buttons have ids 'info-button-1', 'info-button-2', etc.
-    $('#info-button-1, #info-button-2, #info-button-3, #info-button-4, #info-button-5, #info-button-6, #info-button-7, #info-button-8').click(function() {
+    $('#info-button-1, #info-button-2, #info-button-3, #info-button-4, #info-button-5, #info-button-6, #info-button-7, #info-button-8, #info-button-9').click(function() {
         var buttonId = $(this).attr('id');
         var message;
         var selectedYear = $('#survey_drop').val();
@@ -560,35 +562,35 @@ $(document).ready(function() {
         // Update the message based on the button id
         switch (buttonId) {
             case 'info-button-1':
-                message = 'This figure illustrates the response rates for the Year ' + year + ' State Program.';
+                message = 'This figure illustrates the response rates for the Year ' + year + ' State Program. <br><br> Note: Special Olympics categorized the implementation levels as follows:<br> Full-implementation Unified Champion Schools are those that implement at least one activity from all three core experiences <br><br>Developing Unified Schools implement activities from Unified Sports and one other core experience <br><br> Emerging Unified Schools implement activities from some other combination of core experiences (i.e., two core experiences but not Unified Sports, or fewer than two core experience).';
                 break;
             case 'info-button-2':
                 message = 'The graph depicts the implementation of the Core Experience in ' + state +', categorized by sports, whole school, and leadership.';
                 break;
             case 'info-button-3':
-                message = 'This figure illustrates the implementation levels over time for National vs ' + state + ' State Program, segmented into national and state emerging, developing, and full implementation.';
+                message = 'This figure illustrates the implementation levels over time for National vs ' + state + ' State Program, segmented into national and state emerging, developing, and full implementation. <br><br> Note: Special Olympics categorized the implementation levels as follows:<br> Full-implementation Unified Champion Schools are those that implement at least one activity from all three core experiences <br><br>Developing Unified Schools implement activities from Unified Sports and one other core experience <br><br> Emerging Unified Schools implement activities from some other combination of core experiences (i.e., two core experiences but not Unified Sports, or fewer than two core experience).';
                 break;
             case 'info-button-4':
                 message = 'The figure displays the percentage of National vs ' + state + '  State Program Core Experience implementation over time, with a breakdown by Unified Sports, Inclusive Leadership, and Whole School Engagement.';
                 break;
             case 'info-button-5':
-                message = 'This figure showcases the percentage of National Data vs ' + state + ' Data schools implementing each Unified Sports activity, categorized into Unified Developmental Sports, Young Athletes, Unified esports, Unified fitness, Unified PE, and Unified Sports Teams.';
+                message = 'This figure showcases the percentage of National Data vs ' + state + ' Data schools implementing each Unified Sports activity, categorized into Unified Developmental Sports, Young Athletes, Unified esports, Unified fitness, Unified PE, and Unified Sports Teams.<br><br> Note: Special Olympics categorized the implementation levels as follows:<br> Full-implementation Unified Champion Schools are those that implement at least one activity from all three core experiences <br><br>Developing Unified Schools implement activities from Unified Sports and one other core experience <br><br> Emerging Unified Schools implement activities from some other combination of core experiences (i.e., two core experiences but not Unified Sports, or fewer than two core experience).';
                 break;
             case 'info-button-6':
-                message = 'This figure displays the percentage of schools participating in each Youth Leadership activity, distinguishing between National Data and ' + state + ' State Program schools. The activities are categorized into Youth Activation Committee, Youth Summit, Young Athletes Volunteers, Inclusive Youth Leadership Training/Class, and Unified/Inclusive Club.';
+                message = 'This figure displays the percentage of schools participating in each Youth Leadership activity, distinguishing between National Data and ' + state + ' State Program schools. The activities are categorized into Youth Activation Committee, Youth Summit, Young Athletes Volunteers, Inclusive Youth Leadership Training/Class, and Unified/Inclusive Club.<br><br> Note: Special Olympics categorized the implementation levels as follows:<br> Full-implementation Unified Champion Schools are those that implement at least one activity from all three core experiences <br><br>Developing Unified Schools implement activities from Unified Sports and one other core experience <br><br> Emerging Unified Schools implement activities from some other combination of core experiences (i.e., two core experiences but not Unified Sports, or fewer than two core experience).';
                 break;
             case 'info-button-7':
-                message = 'This figure illustrates the percentage of schools participating in each Inclusive Whole School Engagement activity, comparing National Data to ' + state + ' State Program schools.';
+                message = 'This figure illustrates the percentage of schools participating in each Inclusive Whole School Engagement activity, comparing National Data to ' + state + ' State Program schools.<br><br> Note: Special Olympics categorized the implementation levels as follows:<br> Full-implementation Unified Champion Schools are those that implement at least one activity from all three core experiences <br><br>Developing Unified Schools implement activities from Unified Sports and one other core experience <br><br> Emerging Unified Schools implement activities from some other combination of core experiences (i.e., two core experiences but not Unified Sports, or fewer than two core experience).';
                 break;
             case 'info-button-8':
                 message = 'This figure illustrates the percentage of Liaisons who found SONA resources useful, comparing State Program ' + state + ' to National Data. ';
                 break;
             default:
-                message = 'Default message.';
+                message = 'This figure illustrates the response rates of ' + state + ' state program over the years.';
         }
 
         // Update the modal text
-        $('#modal-text').text(message);
+        $('#modal-text').html(message);
     });
 });
 
@@ -884,7 +886,7 @@ $(document).ready(function() {
       // $('.form-control').select2();
 
 //     $('#county_drop').select2();
-
+    
     $('#state_drop').change(function() {
         var state = $(this).val();
         console.log(state);
@@ -917,60 +919,62 @@ $(document).ready(function() {
                 };
             }
         });
+        $('#state_drop').trigger('change');
     });
 
     $('#generateReportButton').click(function(e) {
     e.preventDefault();  // Prevent the form from being submitted
-    var originalButtonHtml = $(this).html();  // Save the original button content
-    toastr.info('Generating report. This might take a couple of minutes...');
+    window.print()
+    // var originalButtonHtml = $(this).html();  // Save the original button content
+    // toastr.info('Generating report. This might take a couple of minutes...');
 
-    $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
+    // $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
 
-    // Get all the filter fields
-    var state_abv = $('#state_drop').val();
-    var survey_taken_year = $('#survey_drop').val();
-    var implementation_level = $('#implementation_drop').val();
-    var locale__startswith = $('#locale_drop').val();
-    var gradeLevel_WithPreschool = $('#gradeLevel_drop').val();
-    var school_county = $('#county_drop').val();
+    // // Get all the filter fields
+    // var state_abv = $('#state_drop').val();
+    // var survey_taken_year = $('#survey_drop').val();
+    // var implementation_level = $('#implementation_drop').val();
+    // var locale__startswith = $('#locale_drop').val();
+    // var gradeLevel_WithPreschool = $('#gradeLevel_drop').val();
+    // var school_county = $('#county_drop').val();
 
-    // Add more fields as needed...
+    // // Add more fields as needed...
 
-    // Get the CSRF token
-    var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+    // // Get the CSRF token
+    // var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
 
-    // Send the POST request
-    $.ajax({
-        url: "{% url 'download_pdf' %}",
-        method: 'POST',
-        xhrFields: {
-            responseType: 'blob'
-        },
-        data: {
-            'csrfmiddlewaretoken': csrftoken,
-            'state_abv': state_abv,
-            'survey_taken_year': survey_taken_year,
-            'implementation_level': implementation_level,
-            'locale__startswith': locale__startswith,
-            'gradeLevel_WithPreschool': gradeLevel_WithPreschool,
-            'school_county': school_county
-            // Add more fields as needed...
-        },
-        success: function(data) {
-            var blob = new Blob([data]);
-            var link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = "report.pdf";
-            link.click();
-            $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+    // // Send the POST request
+    // $.ajax({
+    //     url: "{% url 'download_pdf' %}",
+    //     method: 'POST',
+    //     xhrFields: {
+    //         responseType: 'blob'
+    //     },
+    //     data: {
+    //         'csrfmiddlewaretoken': csrftoken,
+    //         'state_abv': state_abv,
+    //         'survey_taken_year': survey_taken_year,
+    //         'implementation_level': implementation_level,
+    //         'locale__startswith': locale__startswith,
+    //         'gradeLevel_WithPreschool': gradeLevel_WithPreschool,
+    //         'school_county': school_county
+    //         // Add more fields as needed...
+    //     },
+    //     success: function(data) {
+    //         var blob = new Blob([data]);
+    //         var link = document.createElement('a');
+    //         link.href = window.URL.createObjectURL(blob);
+    //         link.download = "report.pdf";
+    //         link.click();
+    //         $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
 
-        },
-        error: function() {
-            // The request failed, handle the error here
-            $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+    //     },
+    //     error: function() {
+    //         // The request failed, handle the error here
+    //         $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
 
-        }
-    });
+    //     }
+    // });
 });
 
     });

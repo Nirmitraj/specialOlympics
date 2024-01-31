@@ -69,18 +69,20 @@ def percentage_values(total_values):
 def school_locale_graph(dashboard_filters):
     state_name=dashboard_filters['state_abv']
     locale_data = school_locale_data(dashboard_filters)
-    print("locale graph", locale_data)
+    # print("locale graph", locale_data)
     locale_statecount={'Rural':0,'Town':0,'Suburb':0,'City':0}
     for val in locale_data:
-        key  = val[0].split(':')[0]
-        if key in locale_statecount.keys():
-            locale_statecount[key] +=1
+        if isinstance(val[0], str):
 
-    print("locale graph 1", locale_statecount)
+            key  = val[0].split(':')[0]
+            if key in locale_statecount.keys():
+                locale_statecount[key] +=1
+
+    # print("locale graph 1", locale_statecount)
 
     
     locale_state = percentage_values(locale_statecount)
-    print("locale graph 2", locale_state)
+    # print("locale graph 2", locale_state)
 
     
     # filters=dashboard_filters
@@ -90,11 +92,15 @@ def school_locale_graph(dashboard_filters):
     if "county" in filters:
         filters.pop("county")
     total_locale_data=school_locale_data(filters)
+    # print(total_locale_data)
+
     locale_nationcount={'Rural':0,'Town':0,'Suburb':0,'City':0}
     for val in total_locale_data:
-        key = val[0].split(':')[0]
-        if key in locale_statecount.keys():#same keys both national and state
-            locale_nationcount[key] +=1
+        if isinstance(val[0], str):
+
+            key = val[0].split(':')[0]
+            if key in locale_statecount.keys():#same keys both national and state
+                locale_nationcount[key] +=1
 
     locale_nation = percentage_values(locale_nationcount)
 
@@ -123,7 +129,7 @@ def school_level_graph(dashboard_filters):
     national_level=school_level_data(filters)#sending no state filters gives national data
     school_level=percentage_values(school_level)
     national_level=percentage_values(national_level)
-    print('School level',school_level,national_level)
+    # print('School level',school_level,national_level)
     state_name=dashboard_filters['state_abv']
     '''
     1.00==Elementary
@@ -152,7 +158,7 @@ def school_student_enrollment(dashboard_filters):
     student_enroll_nation = school_enrollment_data(filters)
     student_enroll_state = percentage_values(student_enroll_state)
     student_enroll_nation = percentage_values(student_enroll_nation)
-    print(student_enroll_state,student_enroll_nation)
+    print("Student enrolment", student_enroll_state,student_enroll_nation)
     state_name=dashboard_filters['state_abv']
     '''
     1.00==< 500
@@ -270,7 +276,7 @@ def main_query(column_name,filters,key):
             filters.pop('state_abv__in')
         print('MAIN QUERY',filters)
     data = dict(SchoolDetails.objects.values_list(column_name).filter(**filters).annotate(total = Count(column_name)))
-    print(data)
+    # print(data)
     #test query to run in terminal: dict(SchoolDetails.objects.values_list('sports_sports_teams').filter(state_abv='sca',survey_taken_year=2022).annotate(total = Count('sports_sports_teams')))
     return data
 
@@ -335,9 +341,13 @@ def tables(request):
       
     if request.method=='POST':
         state = state_choices(state)
-        dropdown = Filters(state,request.POST)
+        post_data = request.POST.copy()  # Make a mutable copy of the POST data
+        post_data['school_county'] = 'all'
+
+        dropdown = Filters(state,post_data)
         print(dropdown)
         if dropdown.is_valid():
+
             dashboard_filters = dropdown.cleaned_data
             context = load_dashboard(dashboard_filters,dropdown)
             

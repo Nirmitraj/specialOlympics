@@ -140,6 +140,52 @@ def survey_years():
     return list(survey_years)
 
 
+def core_experience_year_raw_data(dashboard_filters):
+    survey_year= survey_years()
+    response = {'sports':[],'leadership':[],'whole_school':[],'survey_year':survey_year,'state_sports':[],'state_leadership':[],'state_whole_school':[]}
+    for year in survey_year:
+        response['sports'].append(core_experience_year_raw_data_values(dashboard_filters,'sports',survey_year=year,range='national'))
+        response['leadership'].append(core_experience_year_raw_data_values(dashboard_filters,'leadership',survey_year=year,range='national'))
+        response['whole_school'].append(core_experience_year_raw_data_values(dashboard_filters,'whole_school',survey_year=year,range='national'))
+        response['state_sports'].append(core_experience_year_raw_data_values(dashboard_filters,'sports',survey_year=year,range='state'))
+        response['state_leadership'].append(core_experience_year_raw_data_values(dashboard_filters,'leadership',survey_year=year,range='state'))
+        response['state_whole_school'].append(core_experience_year_raw_data_values(dashboard_filters,'whole_school',survey_year=year,range='state'))            
+
+    return response
+
+def core_experience_year_raw_data_values(dashboard_filters, key, range, survey_year=None):
+
+    select_names = {
+        'sports': 'unified_sports_component',
+        'leadership': 'youth_leadership_component',
+        'whole_school': 'whole_school_component'
+    }
+    
+    filters = filter_set(dashboard_filters)
+    filters_national = filter_set(dashboard_filters)
+    
+    if survey_year:
+        filters["survey_taken_year"] = survey_year
+        national_sum, state_sum = core_exp_percentage(state=filters['state_abv'], year=survey_year)
+    
+    if range == 'national':
+        filters_national["survey_taken_year"] = survey_year
+        filters_national.pop('state_abv')
+        filters_national.pop('county', None)
+        filters = filters_national
+    
+    filters_national = add_in_forFilters(filters_national)
+    filters = add_in_forFilters(filters)
+    
+    if key:  # key value for selectnames dictionary
+        data = dict(SchoolDetails.objects.values_list(select_names[key]).filter(**filters).annotate(total=Count(select_names[key])))
+        data = data.get(True, 0)  # considering only participated people
+        
+        return data  # Return the raw value directly
+    else:
+        return 0
+
+
 def core_experience_year_data(dashboard_filters):
     survey_year= survey_years()
     # print("survey_year", survey_year)
@@ -313,11 +359,12 @@ def implementation_level_percentages(response):
                      response[val][i]=0
 
     return response
+import copy
 
 def implementation_level(dashboard_filters, getImage = False):
     raw_data=implementation_level_data(dashboard_filters)
     print(raw_data, "===========RAW DATA==============")
-    data = implementation_level_percentages(raw_data)
+    data = implementation_level_percentages(copy.deepcopy(raw_data))
     # colors = ['rgba(200, 200, 220, 0.8)', 'rgba(168, 184, 134, 0.8)', 'rgba(170, 180, 200, 0.8)', 'rgba(109, 154, 168, 0.8)', 'rgba(120, 130, 160, 0.8)', 'rgba(140, 138, 173, 0.8)']     # Define your colors here with opacity
     print(data, "===========data==============")
 
@@ -327,16 +374,35 @@ def implementation_level(dashboard_filters, getImage = False):
 
     print('SURVEY YEAR',(df == 0).all())
     print("end")
+    print(raw_data, "CHECK RAW DATA")
     # fig = px.line(df, x=df['survey_year'], y=df['emerging'], labels={"survey_year":"year","emerging":"Implementation Level"})#color???
     fig = go.Figure()
     # hovertemplate='Year: %{x}<br>Emerging: %{y}%<br>Raw Data: %{customdata}<extra></extra>'
-    fig.add_scatter(x=df['survey_year'],y=df['state_emerging'], name="{0} Emerging".format(dashboard_filters['state_abv']))   
-    fig.add_scatter(x=df['survey_year'],y=df['state_developing'], name="{0} Developing".format((dashboard_filters['state_abv'])))   
-    fig.add_scatter(x=df['survey_year'],y=df['state_full_implement'], name="{0} Full Implementation".format(dashboard_filters['state_abv']))
+    fig.add_scatter(x=df['survey_year'],y=df['state_emerging'].round(0), customdata=raw_data['state_emerging'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="{0} Emerging".format(dashboard_filters['state_abv']))   
+    fig.add_scatter(x=df['survey_year'],y=df['state_developing'].round(0),customdata=raw_data['state_developing'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="{0} Developing".format((dashboard_filters['state_abv'])))   
+    fig.add_scatter(x=df['survey_year'],y=df['state_full_implement'].round(0), customdata=raw_data['state_full_implement'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="{0} Full Implementation".format(dashboard_filters['state_abv']))
 
-    fig.add_scatter(x=df['survey_year'],y=df['emerging'], name="Emerging (National)", visible='legendonly')
-    fig.add_scatter(x=df['survey_year'],y=df['developing'], name="Developing (National)" , visible='legendonly')#color="developing")
-    fig.add_scatter(x=df['survey_year'],y=df['full_implement'], name="Full Implementation (National)".format(dashboard_filters['state_abv']), visible='legendonly')#,color="full_implemention")
+    fig.add_scatter(x=df['survey_year'],y=df['emerging'].round(0), customdata=raw_data['emerging'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="Emerging (National)", visible='legendonly')
+    fig.add_scatter(x=df['survey_year'],y=df['developing'].round(0), customdata=raw_data['developing'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="Developing (National)" , visible='legendonly')#color="developing")
+    fig.add_scatter(x=df['survey_year'],y=df['full_implement'].round(0), customdata=raw_data['full_implement'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="Full Implementation (National)".format(dashboard_filters['state_abv']), visible='legendonly')#,color="full_implemention")
     title_name = 'Implementation level over time,<br> National vs. {0} State Program'.format(dashboard_filters['state_abv'])
 
 # for i in range(0,len(response['survey_year'])):
@@ -373,6 +439,10 @@ def implementation_level(dashboard_filters, getImage = False):
         tickmode='linear',
         tick0 = min(df['survey_year']),
         dtick=1
+    ),
+    yaxis = dict (
+        range=[0,100],
+        title="Percentage value (%)",  # Add this line
     ),
     margin=dict(
         t=100
@@ -487,16 +557,21 @@ def school_suvery_school_data(dashboard_filters, isAdmin):
 def school_survey_year(dashboard_filters, isAdmin = False):
     school_surveys = school_suvery_school_year_data(dashboard_filters, isAdmin)
     data_json={}
+    data_json_value={}
+
     totals = {}
     print(school_surveys)
     for val in school_surveys:
         if val['school_state'] not in data_json.keys():
             data_json[val['school_state']] = {}
+            data_json_value[val['school_state']] = {}
         if str(val['survey_taken']) not in data_json[val['school_state']].keys():
             data_json[val['school_state']][str(val['survey_taken'])] = {}
+            data_json_value[val['school_state']][str(val['survey_taken'])] = {}
             totals[(val['school_state'], str(val['survey_taken']))] = 0
 
         data_json[val['school_state']][str(val['survey_taken'])][val['survey_taken_year']] = val['total']
+        data_json_value[val['school_state']][str(val['survey_taken'])][val['survey_taken_year']] = val['total']
         totals[(val['school_state'], str(val['survey_taken']))] += val['total']
     
     print("========RESULT========")
@@ -505,7 +580,8 @@ def school_survey_year(dashboard_filters, isAdmin = False):
     for state, surveys in data_json.items():
         for survey, grades in surveys.items():
             for grade, total in grades.items():
-                data_json[state][survey][grade] = round((total / totals[(state, survey)]) * 100, 2)
+                data_json[state][survey][grade] = round((total / totals[(state, survey)]) * 100, 0)
+                data_json_value[state][survey][grade] = total
                 print(data_json)
             
         school_state = list(data_json.keys())
@@ -516,6 +592,12 @@ def school_survey_year(dashboard_filters, isAdmin = False):
     survey_4 = []
     survey_5 = []
     survey_6 = []
+    survey_1_value = []
+    survey_2_value = []
+    survey_3_value = []
+    survey_4_value = []
+    survey_5_value = []
+    survey_6_value = []
     for state in school_state:
         # Get the data for each group, or default to 0 if the group doesn't exist
 
@@ -525,16 +607,22 @@ def school_survey_year(dashboard_filters, isAdmin = False):
         survey_4.append(data_json[state].get('True', {}).get(2021, 0))
         survey_5.append(data_json[state].get('True', {}).get(2022, 0))
         survey_6.append(data_json[state].get('True', {}).get(2023, 0))
+        survey_1_value.append(data_json_value[state].get('True', {}).get(2018, 0))
+        survey_2_value.append(data_json_value[state].get('True', {}).get(2019, 0))
+        survey_3_value.append(data_json_value[state].get('True', {}).get(2020, 0))
+        survey_4_value.append(data_json_value[state].get('True', {}).get(2021, 0))
+        survey_5_value.append(data_json_value[state].get('True', {}).get(2022, 0))
+        survey_6_value.append(data_json_value[state].get('True', {}).get(2023, 0))
         print(survey_5)
       
 
     traces = [
-    {"x": school_state, "y": survey_1, "name": '2018 (Yes)', "trace": None},
-    {"x": school_state, "y": survey_2, "name": '2019 (Yes)', "trace": None},
-    {"x": school_state, "y": survey_3, "name": '2020 (Yes)', "trace": None},
-    {"x": school_state, "y": survey_4, "name": '2021 (Yes)', "trace": None},
-    {"x": school_state, "y": survey_5, "name": '2022 (Yes)', "trace": None},
-    {"x": school_state, "y": survey_6, "name": '2023 (Yes)', "trace": None}
+    {"x": school_state, "y": survey_1, "name": '2018', "trace": None, "custom_data": survey_1_value},
+    {"x": school_state, "y": survey_2, "name": '2019', "trace": None, "custom_data": survey_2_value},
+    {"x": school_state, "y": survey_3, "name": '2020', "trace": None, "custom_data": survey_3_value},
+    {"x": school_state, "y": survey_4, "name": '2021', "trace": None, "custom_data": survey_4_value},
+    {"x": school_state, "y": survey_5, "name": '2022', "trace": None, "custom_data": survey_5_value},
+    {"x": school_state, "y": survey_6, "name": '2023', "trace": None, "custom_data": survey_6_value}
 
     ]
 
@@ -543,7 +631,8 @@ def school_survey_year(dashboard_filters, isAdmin = False):
 
     # Create the actual traces
     for i, trace in enumerate(traces):
-        trace["trace"] = go.Bar(x=trace["x"], y=trace["y"], name=trace["name"], offsetgroup=1,     marker=dict(color=colors[i])  # Use the colors list here
+        trace["trace"] = go.Bar(x=trace["x"], y=trace["y"], name=trace["name"], customdata=trace["custom_data"],
+            hovertemplate='%{y}%, %{customdata} schools, %{x}', offsetgroup=1,     marker=dict(color=colors[i])  # Use the colors list here
 )
 
     traces.sort(key=lambda x: sum(x["y"]), reverse=True)
@@ -594,22 +683,27 @@ def school_survey_school_level(dashboard_filters, isAdmin = False):
     #         data_json[val['school_state__in']][str(val['survey_taken__in'])]=val['total']
     # else:
     totals = {}
+    data_json_value={}
 
     for val in school_surveys:
         if val['school_state'] not in data_json.keys():
             data_json[val['school_state']] = {}
+            data_json_value[val['school_state']] = {}
         if str(val['survey_taken']) not in data_json[val['school_state']].keys():
             data_json[val['school_state']][str(val['survey_taken'])] = {}
+            data_json_value[val['school_state']][str(val['survey_taken'])] = {}
             totals[(val['school_state'], str(val['survey_taken']))] = 0
 
         data_json[val['school_state']][str(val['survey_taken'])][val['gradeLevel_WithPreschool']] = val['total']
+        data_json_value[val['school_state']][str(val['survey_taken'])][val['gradeLevel_WithPreschool']] = val['total']
         totals[(val['school_state'], str(val['survey_taken']))] += val['total']
 
     # Convert to percentages
     for state, surveys in data_json.items():
         for survey, grades in surveys.items():
             for grade, total in grades.items():
-                data_json[state][survey][grade] = round((total / totals[(state, survey)]) * 100, 2)
+                data_json[state][survey][grade] = round((total / totals[(state, survey)]) * 100, 0)
+                data_json_value[state][survey][grade] = total 
         school_state = list(data_json.keys())
         # school_state =(list(data_json.keys()))[0]
 
@@ -620,6 +714,10 @@ def school_survey_school_level(dashboard_filters, isAdmin = False):
     survey_2 = []
     survey_3 = []
     survey_4 = []
+    survey_1_value = []
+    survey_2_value = []
+    survey_3_value = []
+    survey_4_value = []
 
     # Iterate over each state
     for state in school_state:
@@ -628,7 +726,10 @@ def school_survey_school_level(dashboard_filters, isAdmin = False):
         survey_2.append(data_json[state].get('True', {}).get('2.00', 0))
         survey_3.append(data_json[state].get('True', {}).get('3.00', 0))
         survey_4.append(data_json[state].get('True', {}).get('4.00', 0))
-
+        survey_1_value.append(data_json_value[state].get('True', {}).get('1.00', 0))
+        survey_2_value.append(data_json_value[state].get('True', {}).get('2.00', 0))
+        survey_3_value.append(data_json_value[state].get('True', {}).get('3.00', 0))
+        survey_4_value.append(data_json_value[state].get('True', {}).get('4.00', 0))
         # survey_none.append(data_json[state].get('False', {}).get(None, 0))
 
     # Create the traces for the plot
@@ -638,10 +739,10 @@ def school_survey_school_level(dashboard_filters, isAdmin = False):
     # trace_none = go.Bar(x=school_state, y=survey_none, name='None')
 
     traces = [
-    {"x": school_state, "y": survey_1, "name": 'Elementary (Yes)', "trace": None},
-    {"x": school_state, "y": survey_2, "name": 'High (Yes)', "trace": None},
-    {"x": school_state, "y": survey_3, "name": 'Middle (Yes)', "trace": None},
-    {"x": school_state, "y": survey_4, "name": 'Preschool (Yes)', "trace": None}
+    {"x": school_state, "y": survey_1, "name": 'Elementary', "trace": None, "custom_data": survey_1_value},
+    {"x": school_state, "y": survey_2, "name": 'High', "trace": None, "custom_data": survey_2_value},
+    {"x": school_state, "y": survey_3, "name": 'Middle', "trace": None, "custom_data": survey_3_value},
+    {"x": school_state, "y": survey_4, "name": 'Preschool', "trace": None, "custom_data": survey_4_value}
 
     ]
 
@@ -650,7 +751,8 @@ def school_survey_school_level(dashboard_filters, isAdmin = False):
 
     # Create the actual traces
     for i, trace in enumerate(traces):
-        trace["trace"] = go.Bar(x=trace["x"], y=trace["y"], name=trace["name"], offsetgroup=1,     marker=dict(color=colors[i])  # Use the colors list here
+        trace["trace"] = go.Bar(x=trace["x"], y=trace["y"], name=trace["name"], customdata=trace["custom_data"],
+            hovertemplate='%{y}%, %{customdata} schools, %{x}', offsetgroup=1,     marker=dict(color=colors[i])  # Use the colors list here
 )
 
     traces.sort(key=lambda x: sum(x["y"]), reverse=True)
@@ -700,22 +802,29 @@ def school_survey_locale_level(dashboard_filters, isAdmin = False):
     #         data_json[val['school_state__in']][str(val['survey_taken__in'])]=val['total']
     # else:
     totals = {}
+    data_json_value = {}
 
     for val in school_surveys:
         if val['school_state'] not in data_json.keys():
             data_json[val['school_state']] = {}
+            data_json_value[val['school_state']] = {}
+
         if str(val['survey_taken']) not in data_json[val['school_state']].keys():
             data_json[val['school_state']][str(val['survey_taken'])] = {}
+            data_json_value[val['school_state']][str(val['survey_taken'])] = {}
+
             totals[(val['school_state'], str(val['survey_taken']))] = 0
 
         data_json[val['school_state']][str(val['survey_taken'])][val['grouped_locale']] = val['total']
+        data_json_value[val['school_state']][str(val['survey_taken'])][val['grouped_locale']] = val['total']
         totals[(val['school_state'], str(val['survey_taken']))] += val['total']
 
     # Convert to percentages
     for state, surveys in data_json.items():
         for survey, locales in surveys.items():
             for locale, total in locales.items():
-                data_json[state][survey][locale] = round((total / totals[(state, survey)]) * 100, 2)
+                data_json_value[state][survey][locale] = total 
+                data_json[state][survey][locale] = round((total / totals[(state, survey)]) * 100, 0)
     
     school_state = list(data_json.keys())
         # school_state =(list(data_json.keys()))[0]
@@ -728,6 +837,10 @@ def school_survey_locale_level(dashboard_filters, isAdmin = False):
     survey_3 = []
     survey_4 = []
     survey_none = []
+    survey_1_value = []
+    survey_2_value = []
+    survey_3_value = [] 
+    survey_4_value = [] 
 
     # Iterate over each state
     for state in school_state:
@@ -736,7 +849,10 @@ def school_survey_locale_level(dashboard_filters, isAdmin = False):
         survey_2.append(data_json[state].get('True', {}).get('Rural', 0))
         survey_3.append(data_json[state].get('True', {}).get('Suburb', 0))
         survey_4.append(data_json[state].get('True', {}).get('Town', 0))
-
+        survey_1_value.append(data_json_value[state].get('True', {}).get('City', 0))
+        survey_2_value.append(data_json_value[state].get('True', {}).get('Rural', 0))
+        survey_3_value.append(data_json_value[state].get('True', {}).get('Suburb', 0))
+        survey_4_value.append(data_json_value[state].get('True', {}).get('Town', 0))
         # survey_none.append(data_json[state].get('False', {}).get(None, 0))
 
     # Create the traces for the plot
@@ -746,19 +862,19 @@ def school_survey_locale_level(dashboard_filters, isAdmin = False):
     # trace_none = go.Bar(x=school_state, y=survey_none, name='None')
 
     traces = [
-    {"x": school_state, "y": survey_1, "name": 'City (Yes)', "trace": None},
-    {"x": school_state, "y": survey_2, "name": 'Rural (Yes)', "trace": None},
-    {"x": school_state, "y": survey_3, "name": 'Suburb (Yes)', "trace": None},
-    {"x": school_state, "y": survey_4, "name": 'Town (Yes)', "trace": None}
-
-    ]
+    {"x": school_state, "y": [round(val) for val in survey_1], "name": 'City', "trace": None, "custom_data": survey_1_value},
+    {"x": school_state, "y": [round(val) for val in survey_2], "name": 'Rural', "trace": None, "custom_data": survey_2_value},
+    {"x": school_state, "y": [round(val) for val in survey_3], "name": 'Suburb', "trace": None, "custom_data": survey_3_value},
+    {"x": school_state, "y": [round(val) for val in survey_4], "name": 'Town', "trace": None, "custom_data": survey_4_value}
+]
 
     # Sort the traces based on their total values
     colors = ['rgba(200, 200, 220, 0.8)', 'rgba(168, 184, 134, 0.8)', 'rgba(170, 180, 200, 0.8)', 'rgba(109, 154, 168, 0.8)', 'rgba(120, 130, 160, 0.8)', 'rgba(140, 138, 173, 0.8)']     # Define your colors here with opacity
 
     # Create the actual traces
     for i, trace in enumerate(traces):
-        trace["trace"] = go.Bar(x=trace["x"], y=trace["y"], name=trace["name"], offsetgroup=1,     marker=dict(color=colors[i])  # Use the colors list here
+        trace["trace"] = go.Bar(x=trace["x"], y=trace["y"], name=trace["name"], customdata=trace["custom_data"],
+            hovertemplate='%{y}%, %{customdata} schools, %{x}', offsetgroup=1,     marker=dict(color=colors[i])  # Use the colors list here
 )
 
 
@@ -814,23 +930,29 @@ def school_survey_implementation_level(dashboard_filters, isAdmin = False):
     #         data_json[val['school_state__in']][str(val['survey_taken__in'])]=val['total']
     # else:
     totals = {}
-
+    data_json_value = {}
     for val in school_surveys:
         if val['school_state'] not in data_json.keys():
             data_json[val['school_state']] = {}
+            data_json_value[val['school_state']] = {}
         if str(val['survey_taken']) not in data_json[val['school_state']].keys():
             data_json[val['school_state']][str(val['survey_taken'])] = {}
+            data_json_value[val['school_state']][str(val['survey_taken'])] = {}
+
             totals[(val['school_state'], str(val['survey_taken']))] = 0
 
         data_json[val['school_state']][str(val['survey_taken'])][val['implementation_level']] = val['total']
+        data_json_value[val['school_state']][str(val['survey_taken'])][val['implementation_level']] = val['total']
         totals[(val['school_state'], str(val['survey_taken']))] += val['total']
 
     # Convert to percentages
     for state, surveys in data_json.items():
         for survey, levels in surveys.items():
             for level, total in levels.items():
-                # data_json[state][survey][level] = round((total / totals[(state, survey)]) * 100, 2)
-                  data_json[state][survey][level] = total
+                data_json_value[state][survey][level] = total
+
+                data_json[state][survey][level] = round((total / totals[(state, survey)]) * 100, 0)
+        # data_json_value = list(data_json_value.keys())
         school_state = list(data_json.keys())
             # school_state =(list(data_json.keys()))[0]
 
@@ -843,6 +965,10 @@ def school_survey_implementation_level(dashboard_filters, isAdmin = False):
     survey_1 = []
     survey_2 = []
     survey_3 = []
+    survey_1_value = []
+    survey_2_value = []
+    survey_3_value = []
+
     survey_none = []
 
     # Iterate over each state
@@ -852,6 +978,10 @@ def school_survey_implementation_level(dashboard_filters, isAdmin = False):
         survey_2.append(data_json[state].get('True', {}).get('2', 0))
         survey_3.append(data_json[state].get('True', {}).get('3', 0))
         # survey_none.append(data_json[state].get('False', {}).get(None, 0))
+        survey_1_value.append(data_json_value[state].get('True', {}).get('1', 0))
+        survey_2_value.append(data_json_value[state].get('True', {}).get('2', 0))
+        survey_3_value.append(data_json_value[state].get('True', {}).get('3', 0))
+
 
     # Create the traces for the plot
     # trace_1 = go.Bar(x=school_state, y=survey_1, name='Emerging (Yes)')
@@ -860,9 +990,9 @@ def school_survey_implementation_level(dashboard_filters, isAdmin = False):
     # trace_none = go.Bar(x=school_state, y=survey_none, name='None')
 
     traces = [
-    {"x": school_state, "y": survey_1, "name": 'Emerging (Yes)', "trace": None},
-    {"x": school_state, "y": survey_2, "name": 'Developing (Yes)', "trace": None},
-    {"x": school_state, "y": survey_3, "name": 'Full Implementation (Yes)', "trace": None}
+    {"x": school_state, "y": survey_1, "name": 'Emerging', "trace": None, "custom_data": survey_1_value},
+    {"x": school_state, "y": survey_2, "name": 'Developing', "trace": None, "custom_data": survey_2_value},
+    {"x": school_state, "y": survey_3, "name": 'Full Implementation', "trace": None, "custom_data": survey_3_value}
     ]
 
     # Sort the traces based on their total values
@@ -877,6 +1007,9 @@ def school_survey_implementation_level(dashboard_filters, isAdmin = False):
         trace["trace"] = go.Bar(
             x=trace["x"], 
             y=trace["y"], 
+            customdata=trace["custom_data"],
+            hovertemplate='%{y}%, %{customdata} schools, %{x}',
+
             name=trace["name"],
             offsetgroup=1, 
             base=i*0.1,
@@ -960,13 +1093,13 @@ def school_survey(dashboard_filters, isAdmin, getImage=False):
     survey_true = [data_json[i].get('True',0) for i in school_state]
     survey_false =[data_json[i].get('False',0) for i in school_state]
     print("survey_true", survey_true)
-
+    survey_true = [round(value) for value in survey_true]
     trace = [go.Bar(
         x= school_state,
         y = survey_true,
         customdata=survey_true_val,
-        hovertemplate='%{y}%, %{customdata}, %{x}',
-        name='Yes',
+        hovertemplate='%{y}%, %{customdata} schools, %{x}',
+        name='',
         marker=dict(color='rgba(109, 154, 168, 0.8)'))]
     year = dashboard_filters['survey_taken_year']
     # print('YEAR',year)
@@ -980,7 +1113,9 @@ def school_survey(dashboard_filters, isAdmin, getImage=False):
         # year = year[0]    
     layout = dict(
         title='Year {0} ({1}) State Program response rate'.format(int(year)-2008,(str(int(year)-1)+'-'+str(year)[-2:])),
-        yaxis = dict(range=[0, 100]),
+        yaxis = dict(
+        title="Percentage Value (%)",
+        range=[0, 100]),
         barmode='group',
     )
 
@@ -1022,7 +1157,7 @@ def school_survey_over_time(dashboard_filters, getImage = False):
     # hovertemplate='Year: %{x}<br>Emerging: %{y}%<br>Raw Data: %{customdata}<extra></extra>'
     fig.add_scatter(
         x=df['survey_year'],
-        y=df['state'],
+        y=df['state'].round(0),
         name="{0} response".format(dashboard_filters['state_abv']),
         customdata=raw_data['state_yes'],
         hovertemplate=(
@@ -1069,6 +1204,10 @@ def school_survey_over_time(dashboard_filters, getImage = False):
         tick0 = min(df['survey_year']),
         dtick=1
     ),
+     yaxis = dict (
+        range=[0,100],
+        title="Percentage value (%)",  # Add this line
+    ),
     margin=dict(
         t=100
     ),
@@ -1086,6 +1225,7 @@ def school_survey_over_time(dashboard_filters, getImage = False):
         if (df == 0).all().all():
             return None
         return plot_div
+import numpy as np
 
 def core_experience(dashboard_filters, getImage = False):
     # survey_year=SchoolDetails.objects.aggregate(Max('survey_taken_year'))
@@ -1100,11 +1240,12 @@ def core_experience(dashboard_filters, getImage = False):
     # print(sports,leadership,wholeschool)
     # print("final filters:", filters)
     colors = ['rgba(170, 180, 200, 0.8)', 'rgba(109, 154, 168, 0.8)', 'rgba(120, 130, 160, 0.8)']  # Define your colors here with opacity
-
     core_exp_df = pd.DataFrame(dict(
-        lables = ['Sports','Leadership','Wholeschool'],
+        lables = ['Unified Sports','Inclusive Youth Leadership','Whole School Engagement'],
         values = [sports,leadership,wholeschool]
     ))
+
+    print
     filters = add_in_forFilters(filters)
     fig = Figure(data=[Pie(labels=core_exp_df['lables'], 
                         values=core_exp_df['values'], 
@@ -1136,23 +1277,42 @@ def core_experience(dashboard_filters, getImage = False):
 
 def core_experience_yearly(dashboard_filters, getImage = False):
     filters = filter_set(dashboard_filters)
+    raw_data = core_experience_year_raw_data(dashboard_filters)
     # print("core_experience_yearly filters", filters)
     data = core_experience_year_data(dashboard_filters)
 
     # print("CORE_EXP_YEAR:",data)
 
     #{'sports': [6370, 3461], 'leadership': [3914, 2560], 'whole_school': [5132, 3361], 'survey_year': [2021, 2022], 'state_sports': [47, 21], 'state_leadership': [18, 12], 'state_whole_school': [26, 18]}
-            
+    print(raw_data, "CORE EPEXRIENCE RAW DATA")
     df = pd.DataFrame(data)
     print("CORE EXP SURVEY YEAR",(df))
     fig = go.Figure()
-    fig.add_scatter(x=df['survey_year'],y=df['state_leadership'], name="{state} Inclusive Youth Leadership".format(state=filters['state_abv']))
-    fig.add_scatter(x=df['survey_year'],y=df['state_sports'], name="{state} Unified Sports".format(state=filters['state_abv']))
-    fig.add_scatter(x=df['survey_year'],y=df['state_whole_school'], name="{state} School Engagement".format(state=filters['state_abv']))
+    fig.add_scatter(x=df['survey_year'],y=df['state_leadership'].round(0), customdata=raw_data['state_leadership'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="{state} Inclusive Youth Leadership".format(state=filters['state_abv']))
+    fig.add_scatter(x=df['survey_year'],y=df['state_sports'].round(0), customdata=raw_data['state_sports'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="{state} Unified Sports".format(state=filters['state_abv']))
+    fig.add_scatter(x=df['survey_year'],y=df['state_whole_school'].round(0), customdata=raw_data['state_whole_school'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="{state} School Engagement".format(state=filters['state_abv']))
 
-    fig.add_scatter(x=df['survey_year'],y=df['sports'], name="Unified Sports (National)",  visible='legendonly' )
-    fig.add_scatter(x=df['survey_year'],y=df['whole_school'], name="Whole School Engagement (National)",  visible='legendonly')
-    fig.add_scatter(x=df['survey_year'],y=df['leadership'], name="Inclusive Youth Leadership (National)",  visible='legendonly')
+    fig.add_scatter(x=df['survey_year'],y=df['sports'].round(0), customdata=raw_data['sports'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="Unified Sports (National)",  visible='legendonly' )
+    fig.add_scatter(x=df['survey_year'],y=df['whole_school'].round(0),customdata=raw_data['whole_school'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ),  name="Whole School Engagement (National)",  visible='legendonly')
+    fig.add_scatter(x=df['survey_year'],y=df['leadership'].round(0), customdata=raw_data['leadership'],
+        hovertemplate=(
+        "%{x}, %{y}%, %{customdata} schools"
+         ), name="Inclusive Youth Leadership (National)",  visible='legendonly')
     title_name = "Percentage of Core experience implementation over time,<br> National vs {0} State program <br><br>".format(filters['state_abv'])
     
     fig.update_layout( 
@@ -1175,6 +1335,10 @@ def core_experience_yearly(dashboard_filters, getImage = False):
         tick0 = min(df['survey_year']),
         dtick=1
     ),
+    yaxis = dict (
+        range=[0,100],
+        title="Percentage value (%)",  # Add this line
+    ),
       margin=dict(
         t=100  # Increase the top margin (adjust the value as needed)
     )
@@ -1194,15 +1358,15 @@ def core_experience_yearly(dashboard_filters, getImage = False):
 
 def load_dashboard(dashboard_filters,dropdown,isAdmin=False, getImage = False):
         # print("This is it", dashboard_filters, dropdown)
-        plot1 = school_survey(dashboard_filters, isAdmin, getImage)
-        plot2 = core_experience(dashboard_filters, getImage)
-        plot3 = implementation_level(dashboard_filters, getImage)
-        plot4 = core_experience_yearly(dashboard_filters, getImage)
-        plot5 = implement_unified_sport_activity(dashboard_filters, getImage)
-        plot6 = implement_youth_leadership_activity(dashboard_filters, getImage)
-        plot7 = implement_school_engagement_activity(dashboard_filters, getImage)
-        plot8 = sona_resources_useful(dashboard_filters, getImage)
-        plot9 = school_survey_over_time(dashboard_filters, getImage)
+        plot1 = school_survey(dashboard_filters, isAdmin, getImage=getImage)
+        plot2 = core_experience(dashboard_filters, getImage=getImage)
+        plot3 = implementation_level(dashboard_filters, getImage=getImage)
+        plot4 = core_experience_yearly(dashboard_filters, getImage=getImage)
+        plot5 = implement_unified_sport_activity(dashboard_filters, getImage=getImage)
+        plot6 = implement_youth_leadership_activity(dashboard_filters, getImage=getImage)
+        plot7 = implement_school_engagement_activity(dashboard_filters, getImage=getImage)
+        plot8 = sona_resources_useful(dashboard_filters, getImage=getImage)
+        plot9 = school_survey_over_time(dashboard_filters, getImage=getImage)
 
         context={
             # 'plot1':school_survey(dashboard_filters),
@@ -1660,6 +1824,7 @@ op sample:# {'sports_sports_teams': {'national': {'No': 2094, None: 0, 'Yes': 20
 
 '''
 def main_query(column_name,filters,key,compareType="default"): 
+    print("FILTERS NEW:", filters, column_name)
     if key=='state':
         filters=filters
     if key=='all':
@@ -1710,7 +1875,7 @@ def main_query(column_name,filters,key,compareType="default"):
             data = (SchoolDetails.objects.values(column_name, "survey_taken_year").filter(**filters).annotate(total = Count(column_name)))
             # print("RESULT DATA:", data)
     
-    # print("MAIN QUERY PRINT", compareType, data)
+    print("MAIN QUERY PRINT", compareType, data)
     #test query to run in terminal: dict(SchoolDetails.objects.values_list('sports_sports_teams').filter(state_abv='sca',survey_taken_year=2022).annotate(total = Count('sports_sports_teams')))
     return data
 
@@ -1932,16 +2097,17 @@ def horizontal_bar_graph(response,y_axis,heading,state,compare_type="default", g
     if compare_type == "default":
         fig.add_trace(go.Bar(
         y=y_axis,
-        x=[response[val]['national'].get('1',{}).get('percent_val',0) for val in response if response],
+        x=[round(response[val]['national'].get('1',{}).get('percent_val',0)) for val in response if response],
         name='National',
         customdata=[response[val]['national'].get('1',{}).get('value',0) for val in response if response],
         orientation='h',
-        hovertemplate='%{x}%, %{customdata}, %{y}',
+        hovertemplate='%{x}%, %{customdata} schools, %{y}',
 
         visible = "legendonly",
         marker=dict(
             color='rgba(246, 78, 139, 0.6)',
             line=dict(color='rgba(246, 78, 139, 1.0)', width=0)
+            
                   )
             ))
         # print("fig 1")
@@ -1949,12 +2115,12 @@ def horizontal_bar_graph(response,y_axis,heading,state,compare_type="default", g
         # print("PRINT DEFAULT")
         fig.add_trace(go.Bar(
         y=y_axis,
-        x=[response[val]['state'].get('1',{}).get('percent_val',0) for val in response if response ],
+        x=[round(response[val]['state'].get('1',{}).get('percent_val',0)) for val in response if response ],
         customdata=[response[val]['state'].get('1',{}).get('value',0) for val in response if response],
 
         name=state,
         orientation='h',
-        hovertemplate='%{x}%, %{customdata}, %{y}',
+        hovertemplate='%{x}%, %{customdata} schools, %{y}',
 
         marker=dict(
             color='rgba(58, 71, 80, 0.6)',
@@ -1974,11 +2140,11 @@ def horizontal_bar_graph(response,y_axis,heading,state,compare_type="default", g
                         # print("horizontal_graph_level_data", level_data, y_axis[i], i)
                         fig.add_trace(go.Bar(
                             y=[y_axis[i]],
-                            x=[level_data.get('percentage', 0)],
+                            x=[round(level_data.get('percentage', 0))],
                             name=f"{state} {y_axis[i]} Level {get_horizontal_bar_legend_name(level_data, compare_type)} ",
                             orientation='h',
                             offsetgroup=1,
-                            hovertemplate=f"{level_data.get('percentage', 0)}%, {level_data.get('total', 0)}, Level {get_horizontal_bar_legend_name(level_data, compare_type)}",
+                            hovertemplate=f"{round(level_data.get('percentage', 0))}%, {level_data.get('total', 0)} schools, Level {get_horizontal_bar_legend_name(level_data, compare_type)}",
                             width=0.5,
                             # base=j*1.1,  # Shift each bar slightly
                             # Add this line to increase the width of the bars
@@ -1999,10 +2165,10 @@ def horizontal_bar_graph(response,y_axis,heading,state,compare_type="default", g
             # 'xanchor': 'center',  # Ensure the title doesn't move
         },
         barmode='group',
-        xaxis_range=[0,100],
+       
         height=500,  # Adjust the height of the graph
         # margin=dict(l=100, r=50, b=100, t=100, pad=4),
-        # yaxis=dict(autorange="reversed"),  # This line is added to reverse the order of categories on y-axis
+        xaxis=dict(title="Percentage value (%)"),  # This line is added to reverse the order of categories on y-axis
          legend=dict(
              traceorder='reversed'
               )
@@ -2068,11 +2234,11 @@ def horizontal_stacked_bar(response,y_axis,heading,state, compare_type="default"
     fig = go.Figure()
     fig.add_trace(go.Bar(
         y=y_axis,
-        x=response['nation_yes'],
+        x=[round(val) for val in response['nation_yes']],
         customdata=response['nation_yes_val'],
         name='National',
         visible = "legendonly",
-        hovertemplate='%{x}%, %{customdata}, %{y}',
+        hovertemplate='%{x}%, %{customdata} schools, %{y}',
         orientation='h',
         marker=dict(
             color='rgba(99, 110, 250, 0.8)',
@@ -2082,10 +2248,10 @@ def horizontal_stacked_bar(response,y_axis,heading,state, compare_type="default"
     if compare_type == "default":
         fig.add_trace(go.Bar(
             y=y_axis,
-            x=response['state_yes'],
+            x=[round(val) for val in response['state_yes']],
             customdata=response['state_yes_val'],
             name=state,
-            hovertemplate='%{x}%, %{customdata}, %{y}',
+            hovertemplate='%{x}%, %{customdata} schools, %{y}',
             orientation='h',
             marker=dict(
                 color='rgba(139, 144, 209, 0.8)',
@@ -2118,7 +2284,7 @@ def horizontal_stacked_bar(response,y_axis,heading,state, compare_type="default"
                     #     )))
                     #     print(f"fig {val} Level {level_data.get('implementation_level')}")
 
-    fig.update_layout(title=heading,barmode='group',xaxis_range=[0,100], width=1400, height=500)
+    fig.update_layout(title=heading,barmode='group',xaxis_range=[0,100], xaxis_title="Percentage value (%)", width=1400, height=500)
     if getImage:
         img_bytes = io.BytesIO()
         py.write_image(fig, img_bytes, format='png')

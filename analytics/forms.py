@@ -3,6 +3,7 @@ from django_select2 import forms as s2forms
 from analytics.models import SchoolDetails
 from django_select2.forms import Select2Widget
 from collections import OrderedDict
+from authenticate.models import CustomUser
 
 STATE_CHOICES_RAW= list(
 SchoolDetails.objects.values_list('state_abv','school_state').distinct())
@@ -12,6 +13,7 @@ for val  in STATE_CHOICES_RAW:
     if val[0]!='-99':
         STATE_CHOICES.append(val)
 STATE_CHOICES.append(('all','all'))
+
 
 
 implementationlevel = {'all':'All',
@@ -160,6 +162,9 @@ class Filters(forms.Form):
         #     widget=forms.Select(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'state_drop'}),
         #     choices=state
         # )
+        counties = SchoolDetails.objects.filter(state_abv=state[0][0]).values_list('school_county', flat=True)
+        county_dict = {'all': 'All'}  
+        county_dict.update({county: county for county in counties if county != '-99' and county != '' and county != '#N/A' and not county.isupper() and '†' not in county})
         
         self.fields['school_county'] = forms.ChoiceField(
             label='County', 
@@ -175,7 +180,6 @@ class FeedbackForm(forms.Form):
             ('feature_request', 'Feature Request'),
             ('problem', 'Problem'),
             ('question', 'Question'),
-            ('refund', 'Refund'),
         ]
 
         request_type = forms.ChoiceField(choices=REQUEST_TYPES, label='Request type')
