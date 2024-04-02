@@ -71,7 +71,7 @@ AUTH_USER_MODEL = 'authenticate.CustomUser'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates'),os.path.join(BASE_DIR, 'content/templates')],
+        'DIRS': [os.path.join('specialolympics','templates'), os.path.join(BASE_DIR, 'templates'),os.path.join(BASE_DIR, 'content/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,6 +79,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'authenticate.context_processors.user_state',  # Add this line
+
             ],
         },
     },

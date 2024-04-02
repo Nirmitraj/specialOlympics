@@ -4,15 +4,16 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm, Password
 from django.contrib import messages 
 from .forms import SignUpForm, EditProfileForm
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 # Create your views here.
 def home(request): 
-	return redirect('/auth/login')
+	return redirect('/index_graph/')
 
 def login_user(request):
 	if request.method == 'POST': #if someone fills out form , Post it 
-		username = request.POST['username']
-		password = request.POST['password']
+		username = request.POST.get('username')
+		password = request.POST.get('password')
 		user = authenticate(request, username=username, password=password)
 		if user is not None:# if user exist
 			login(request, user)
@@ -36,7 +37,7 @@ def register_user(request):
 		profile_form=UserProfileForm(request.POST)
 		print(form,profile_form)
 		if form.is_valid() and profile_form.is_valid():
-			userform=form.save()
+			userform=form.save(commit=False)
 			userform.refresh_from_db()#making sure values are store in user table
 			profile_form = UserProfileForm(request.POST, instance=userform)#was trying form.profile
 			username = form.cleaned_data['username']

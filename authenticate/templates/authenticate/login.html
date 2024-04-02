@@ -5,7 +5,7 @@
 <h2 class="text-center">Login</h2>
 
 <div class="col-md-6 offset-md-3">
-    <form id="loginForm" method="POST">
+    <form id="loginForm" method="POST" data-login-url="{% url 'login' %}">
         {% csrf_token %}
         <div class="form-group">
             <input type="text" class="form-control" placeholder="Enter Username" name="username">
@@ -19,15 +19,56 @@
             Loading...
         </button>
     </form>
-    <a href="/auth/change_password/">change password</a>
+    <!-- <a href="/auth/change_password/">change password</a> -->
 </div>
 
 <script>
 $(document).ready(function() {
     $('#loginForm').submit(function(e) {
+        // e.preventDefault(); // Prevent the default form submission
+        // var loginUrl = $(this).data('login-url'); // Get the URL from the data attribute
+
 		console.log("WORKING!!")
         $('#loginButton').hide();  // Hide the login button
         $('#loadingButton').show();  // Show the loading button
+
+//          // Fetch the CSRF token from the hidden input field
+//          var csrftoken = $('[name=csrfmiddlewaretoken]').val();
+//          console.log(loginUrl)
+
+// // Prepare the form data to be sent
+// var formData = {
+//     'username': $('input[name=username]').val(),
+//     'password': $('input[name=password]').val(),
+// };
+
+// // Perform the AJAX request
+// $.ajax({
+//     url: loginUrl, // Update this URL to your login endpoint
+//     type: 'POST',
+//     data: formData,
+//     headers: {
+//         'X-CSRFToken': csrftoken, // Include the CSRF token in the request header
+//     },
+//     success: function(response) {
+//         // Handle success
+//         console.log('Login successful:', response);
+//         $('#loginButton').hide();  // Hide the login button
+//         $('#loadingButton').show();  // Show the loading button
+
+//         // Redirect or update UI as needed
+//         window.location.href = '/index_graph';
+
+        
+//     },
+//     error: function(xhr, status, error) {
+//         // Handle error
+//         console.log("ERROR!!!")
+//         console.error('Login failed:', error);
+//         // $('#loginButton').show();  // Show the login button again
+//         // $('#loadingButton').hide();  // Hide the loading button
+//     }
+//         });
     });
 });
 </script>

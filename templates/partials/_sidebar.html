@@ -125,6 +125,16 @@
             <span>Walkthrough</span>
         </a>
     </li>
+    {% if user_state == 'all' %}
+    <li class="nav-item">
+        <a class="nav-link" href="../list_users">
+            <i class="fas fa-fw fa-users"></i>
+            <span>Users</span>
+        </a>
+    </li>
+    {% endif %}
+
+
 
   
     <!-- Sidebar Message -->

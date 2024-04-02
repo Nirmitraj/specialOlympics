@@ -13,7 +13,7 @@ class EditProfileForm(UserChangeForm):
         fields = ('username', 'first_name', 'last_name', 'email','password',)
         
 STATE_CHOICES_RAW= list(
-SchoolDetails.objects.values_list('state_abv','school_state').distinct())
+SchoolDetails.objects.values_list('school_state','state_abv').distinct())
 STATE_CHOICES = []
 
 for val in STATE_CHOICES_RAW:

@@ -168,7 +168,7 @@ class Filters(forms.Form):
         
         self.fields['school_county'] = forms.ChoiceField(
             label='County', 
-            widget=Select2Widget(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'county_drop'}),
+            widget=Select2Widget(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'county_drop', 'name':"county_drop"}),
             choices=county_dict.items()
         )
     # state_abv= forms.CharField(label='State', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))

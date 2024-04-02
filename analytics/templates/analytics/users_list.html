@@ -1,0 +1,80 @@
+{%  extends 'base.html' %}
+{% load static %}
+{% block content %}
+{% load widget_tweaks %}  <!-- load widget_tweaks -->
+
+{% block extrahead %}
+    {{ form.media.css }}
+{% endblock %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>List of Users</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">List of Users</h1>
+        <table class="table table-striped table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Is Active</th>
+                    <th>Date Joined</th>
+                    <th>Program</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.is_active }}</td>
+                        <td>{{ user.date_joined|date:"Y-m-d" }}</td>
+                        <td>
+                            {% if user.state == "all" %}
+                            ADMIN
+                        {% else %}
+                            {{ user.state }}
+                        {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'admin_password_change' %}" class="btn btn-sm btn-change-password">Change Password</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .table {
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .thead-dark th {
+        background-color: #343a40;
+        color: #ffffff;
+    }
+    .btn-change-password {
+        background-color: transparent; /* Keeps background transparent */
+        border: none; /* Removes the border */
+        color: #6c757d; /* Sets text color to grey */
+        transition: color 0.3s ease-in-out; /* Smooth transition for text color */
+    }
+    .btn-change-password:hover {
+        color: #000000; /* Changes text color to black on hover */
+        text-decoration: none; /* Prevents underlining the text */
+    }
+</style>
+
+{% endblock %}
+{{ form.media.js }}

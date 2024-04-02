@@ -18,10 +18,8 @@
 <script src="{% static 'django_select2/django_select2.js' %}"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script> 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.12/css/select2.min.css"></script> 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"></script>
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
-
 </head>
 <body>
 <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
@@ -220,292 +218,255 @@ $(document).ready(function() {
   </div>
   <ul id="rowList">
     <li>
-      {% if plot9 %}
       <details open>
-
         <summary>{{plot_titles.plot9}}</summary>
-        <!-- <div class="dropdown-container" id="dropdown-container-1"> -->
         <div class="select-info-container">
-        <button id="info-button-9" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
-          <i class="fas fa-question-circle"></i>
-                </button>
-      </div>
-        <!-- Add a spinner element for the loader (hidden by default) -->
-        
-        <div class="content">
-        <div class="resizable-plot" id="resizable-plot-9"> {{plot9|safe}}</div>
-         </div>
+            <button id="info-button-9" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+                <i class="fas fa-question-circle"></i>
+            </button>
         </div>
-
-      </details>
-      
-      {% else %}
-      <details open>
-          <summary>{{plot_titles.plot9}}</summary>
-          <div class="content" style="padding: 10px; text-align: center;">
-            <p style="color: grey;">No data available to display</p>
-          </div>
-      </details>
-  {% endif %}
+        <div class="content">
+            <!-- Always include this div, but it starts empty if there's no initial plot9 -->
+            <div class="resizable-plot" id="resizable-plot-9">
+                {% if plot9 %}
+                    {{plot9|safe}}
+                {% else %}
+                    <!-- You can put a loader here or leave it empty to fill with AJAX -->
+                    <p style="color: grey; text-align: center;">Loading graph...</p>
+                {% endif %}
+            </div>
+        </div>
+    </details>
 
     </li>
     <li>
-      {% if plot1 %}
       <details open>
-
         <summary>{{plot_titles.plot1}}</summary>
         <div class="dropdown-container" id="dropdown-container-1">
-        <div class="select-info-container">
-        <select class="compare-by" id="compare-by-1">
-          <option value="">Compare By...</option>
-          <option value="imp_level">Implementation Level</option>
-          <option value="locale">Locale</option>
-          <option value="school_level">School Level</option>
-          <option value="survey_taken_year">Survey Year</option>
-
-          <!-- Add more options as needed -->
-        </select>
-        <button id="reset-button-1" class="btn btn-secondary">Reset</button>
-        <button id="info-button-1" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
-          <i class="fas fa-question-circle"></i>
+            <div class="select-info-container">
+                <select class="compare-by" id="compare-by-1">
+                    <option value="">Compare By...</option>
+                    <option value="imp_level">Implementation Level</option>
+                    <option value="locale">Locale</option>
+                    <option value="school_level">School Level</option>
+                    <option value="survey_taken_year">Survey Year</option>
+                    <!-- Add more options as needed -->
+                </select>
+                <button id="reset-button-1" class="btn btn-secondary">Reset</button>
+                <button id="info-button-1" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+                    <i class="fas fa-question-circle"></i>
                 </button>
-      </div>
-        <!-- Add a spinner element for the loader (hidden by default) -->
-        <div id="loader" style="display: none;">
-          <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+            </div>
+            <!-- Add a spinner element for the loader (hidden by default) -->
+            <div id="loader" style="display: none;">
+                <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+            </div>
+            <div class="content">
+                <!-- This div is always present to serve as a container for plot1 -->
+                <div class="resizable-plot" id="resizable-plot-1">
+                    {% if plot1 %}
+                        {{plot1|safe}}
+                    {% else %}
+                        <!-- Initially show a placeholder or loader -->
+                        <p style="color: grey; text-align: center;">Loading graph...</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </details>
+    
+
+    </li>
+    <li>
+      <details open>
+        <summary>{{plot_titles.plot2}}</summary>
+        <button id="info-button-2" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+            <i class="fas fa-question-circle"></i>
+        </button>
+        <div class="content">
+            <!-- This div is always present to serve as a container for plot2 -->
+            <div class="resizable-plot" id="resizable-plot-2">
+                {% if plot2 %}
+                    {{plot2|safe}}
+                {% else %}
+                    <!-- Initially show a placeholder or loader -->
+                    <p style="color: grey; text-align: center;">Loading graph...</p>
+                {% endif %}
+            </div>
+        </div>
+    </details>
+    
+    </li>
+    <li>
+      <details open>
+        <summary>{{plot_titles.plot3}}</summary>
+        <button id="info-button-3" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+            <i class="fas fa-question-circle"></i>
+        </button>
+        <div class="content">
+            <!-- This div is always present to serve as a container for plot3 -->
+            <div class="resizable-plot" id="resizable-plot-3">
+                {% if plot3 %}
+                    {{plot3|safe}}
+                {% else %}
+                    <!-- Initially show a placeholder or loader -->
+                    <p style="color: grey; text-align: center;">Loading graph...</p>
+                {% endif %}
+            </div>
+        </div>
+    </details>
+    
+
+    </li>
+    <li>
+      <details open>
+        <summary>{{plot_titles.plot4}}</summary>
+        <button id="info-button-4" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+            <i class="fas fa-question-circle"></i>
+        </button>
+        <div class="content">
+            <!-- This div is always present to serve as a container for plot4 -->
+            <div class="resizable-plot" id="resizable-plot-4">
+                {% if plot4 %}
+                    {{plot4|safe}}
+                {% else %}
+                    <!-- Initially show a placeholder or loader -->
+                    <p style="color: grey; text-align: center;">Loading graph...</p>
+                {% endif %}
+            </div>
+        </div>
+    </details>
+    
+
+
+    </li>
+    <li>
+      <details open>
+        <summary>{{plot_titles.plot5}}</summary>
+        <div class="dropdown-container" id="dropdown-container-2">
+            <select class="compare-by" id="compare-by-2">
+                <option value="">Compare By...</option>
+                <option value="imp_level">Implementation Level</option>
+                <option value="locale">Locale</option>
+                <option value="school_level">School Level</option>
+                <option value="survey_taken_year">Survey Year</option>
+                <!-- Add more options as needed -->
+            </select>
+            <button id="info-button-5" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <button id="reset-button-2" class="btn btn-secondary">Reset</button>
+            <!-- Add a spinner element for the loader (hidden by default) -->
+            <div id="loader-5" style="display: none;">
+                <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+            </div>
         </div>
         <div class="content">
-        <div class="resizable-plot" id="resizable-plot-1"> {{plot1|safe}}</div>
-         </div>
+            <!-- This div is always present to serve as a container for plot5 -->
+            <div class="resizable-plot" id="resizable-plot-5">
+                {% if plot5 %}
+                    {{plot5|safe}}
+                {% else %}
+                    <!-- Initially show a placeholder or loader -->
+                    <p style="color: grey; text-align: center;">Loading graph...</p>
+                {% endif %}
+            </div>
         </div>
+    </details>
+    
 
-      </details>
-      
-      {% else %}
+    </li>
+    <li>
       <details open>
-          <summary>{{plot_titles.plot1}}</summary>
-          <div class="content" style="padding: 10px; text-align: center;">
-            <p style="color: grey;">No data available to display</p>
-          </div>
-      </details>
-  {% endif %}
+        <summary>{{plot_titles.plot6}}</summary>
+        <div class="dropdown-container" id="dropdown-container-3">
+            <select class="compare-by" id="compare-by-3">
+                <option value="">Compare By...</option>
+                <option value="imp_level">Implementation Level</option>
+                <option value="locale">Locale</option>
+                <option value="school_level">School Level</option>
+                <option value="survey_taken_year">Survey Year</option>
+                <!-- Add more options as needed -->
+            </select>
+            <button id="info-button-6" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <button id="reset-button-3" class="btn btn-secondary">Reset</button>
+            <!-- Add a spinner element for the loader (hidden by default) -->
+            <div id="loader-6" style="display: none;">
+                <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+            </div>
+        </div>
+        <div class="content">
+            <!-- This div is always present to serve as a container for plot6 -->
+            <div class="resizable-plot" id="resizable-plot-6">
+                {% if plot6 %}
+                    {{plot6|safe}}
+                {% else %}
+                    <!-- Initially show a placeholder or loader -->
+                    <p style="color: grey; text-align: center;">Loading graph...</p>
+                {% endif %}
+            </div>
+        </div>
+    </details>
+    
 
     </li>
     <li>
-      {% if plot2 %}
-
-        <details open>
-            <summary>{{plot_titles.plot2}}</summary>
-            <button id="info-button-2" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
-              <i class="fas fa-question-circle"></i>
-            </button>
-            <div class="content">
-            <div class="resizable-plot"> {{plot2|safe}}</div>
-            </div>
-          </details>
-          {% else %}
-          <details open>
-              <summary>{{plot_titles.plot2}}</summary>
-              <div class="content" style="padding: 10px; text-align: center;">
-                <p style="color: grey;">No data available to display</p>
-              </div>
-          </details>
-      {% endif %}
-
-    </li>
-    <li>
-      {% if plot3 %}
-
-        <details open>
-            <summary>{{plot_titles.plot3}}</summary>
-            <button id="info-button-3" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
-              <i class="fas fa-question-circle"></i>
-            </button>
-        
-            <div class="content">
-            <div class="resizable-plot"> {{plot3|safe}}</div>
-            </div>
-          </details>
-          {% else %}
-          <details open>
-              <summary>{{plot_titles.plot3}}</summary>
-              <div class="content" style="padding: 10px; text-align: center;">
-                <p style="color: grey;">No data available to display</p>
-              </div>
-          </details>
-      {% endif %}
-
-    </li>
-    <li>
-      {% if plot4 %}
-
-        <details open>
-            <summary>{{plot_titles.plot4}}</summary>
-            <button id="info-button-4" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
-              <i class="fas fa-question-circle"></i>
-            </button>
-            <div class="content">
-            <div class="resizable-plot"> {{plot4|safe}}</div>
-            </div>
-          </details>
-          {% else %}
       <details open>
-          <summary>{{plot_titles.plot4}}</summary>
-          <div class="content" style="padding: 10px; text-align: center;">
-            <p style="color: grey;">No data available to display</p>
-          </div>
-      </details>
-  {% endif %}
-
-
-    </li>
-    <li>
-      {% if plot5 %}
-        <details open>
-            <summary>{{plot_titles.plot5}}</summary>
-            <div class="dropdown-container" id="dropdown-container-2">
-              <select class="compare-by" id="compare-by-2">
+        <summary>{{plot_titles.plot7}}</summary>
+        <div class="dropdown-container" id="dropdown-container-4">
+            <select class="compare-by" id="compare-by-4">
                 <option value="">Compare By...</option>
                 <option value="imp_level">Implementation Level</option>
                 <option value="locale">Locale</option>
                 <option value="school_level">School Level</option>
                 <option value="survey_taken_year">Survey Year</option>
-
                 <!-- Add more options as needed -->
-              </select>
-              <button id="info-button-5" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+            </select>
+            <button id="info-button-7" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
                 <i class="fas fa-question-circle"></i>
-              </button>
-              <button id="reset-button-2" class="btn btn-secondary">Reset</button>
-      
-              <!-- Add a spinner element for the loader (hidden by default) -->
-              <div id="loader" style="display: none;">
+            </button>
+            <button id="reset-button-4" class="btn btn-secondary">Reset</button>
+            <!-- Add a spinner element for the loader (hidden by default) -->
+            <div id="loader-7" style="display: none;">
                 <img src="{% static 'images/loader.gif' %}" alt="Loading...">
-              </div>
-            <div class="content">
-            <div class="resizable-plot" id="resizable-plot-2"> {{plot5|safe}}</div>
             </div>
-          </details>
-          {% else %}
-          <details open>
-              <summary>{{plot_titles.plot5}}</summary>
-              <div class="content" style="padding: 10px; text-align: center;">
-                <p style="color: grey;">No data available to display</p>
-              </div>
-          </details>
-      {% endif %}
+        </div>
+        <div class="content">
+            <!-- This div is always present to serve as a container for plot7 -->
+            <div class="resizable-plot" id="resizable-plot-7">
+                {% if plot7 %}
+                    {{plot7|safe}}
+                {% else %}
+                    <!-- Initially show a placeholder or loader -->
+                    <p style="color: grey; text-align: center;">Loading graph...</p>
+                {% endif %}
+            </div>
+        </div>
+    </details>
+    
 
     </li>
     <li>
-      {% if plot6 %}
-
-        <details open>
-            <summary>{{plot_titles.plot6}}</summary>
-            <div class="dropdown-container" id="dropdown-container-3">
-              <select class="compare-by" id="compare-by-3">
-                <option value="">Compare By...</option>
-                <option value="imp_level">Implementation Level</option>
-                <option value="locale">Locale</option>
-                <option value="school_level">School Level</option>
-                <option value="survey_taken_year">Survey Year</option>
-
-                <!-- Add more options as needed -->
-              </select>
-              <button id="info-button-6" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
-                <i class="fas fa-question-circle"></i>
-              </button>
-              <button id="reset-button-3" class="btn btn-secondary">Reset</button>
-      
-              <!-- Add a spinner element for the loader (hidden by default) -->
-              <div id="loader" style="display: none;">
-                <img src="{% static 'images/loader.gif' %}" alt="Loading...">
-              </div>
-            <div class="content">
-            <div class="resizable-plot" id="resizable-plot-3"> {{plot6|safe}}</div>
+      <details open>
+        <summary>{{plot_titles.plot8}}</summary>
+        <button id="info-button-8" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+            <i class="fas fa-question-circle"></i>
+        </button>
+        <div class="content">
+            <!-- This div is always present to serve as a container for plot8 -->
+            <div class="resizable-plot" id="resizable-plot-8">
+                {% if plot8 %}
+                    {{plot8|safe}}
+                {% else %}
+                    <!-- Initially show a placeholder or loader -->
+                    <p style="color: grey; text-align: center;">Loading graph...</p>
+                {% endif %}
             </div>
-          </details>
-          {% else %}
-          <details open>
-              <summary>{{plot_titles.plot6}}</summary>
-              <div class="content" style="padding: 10px; text-align: center;">
-                <p style="color: grey;">No data available to display</p>
-              </div>
-          </details>
-      {% endif %}
-
-    </li>
-    <li>
-      {% if plot7 %}
-
-        <details open>
-            <summary>{{plot_titles.plot7}}</summary>
-            <div class="dropdown-container" id="dropdown-container-4">
-              <select class="compare-by" id="compare-by-4">
-                <option value="">Compare By...</option>
-                <option value="imp_level">Implementation Level</option>
-                <option value="locale">Locale</option>
-                <option value="school_level">School Level</option>
-                <option value="survey_taken_year">Survey Year</option>
-
-                <!-- Add more options as needed -->
-              </select>
-              <button id="info-button-7" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
-                <i class="fas fa-question-circle"></i>
-              </button>
-              <button id="reset-button-4" class="btn btn-secondary">Reset</button>
-      
-              <!-- Add a spinner element for the loader (hidden by default) -->
-              <div id="loader" style="display: none;">
-                <img src="{% static 'images/loader.gif' %}" alt="Loading...">
-              </div>
-            <div class="content">
-            <div class="resizable-plot" id="resizable-plot-4"> {{plot7|safe}}</div>
-            </div>
-          </details>
-          {% else %}
-          <details open>
-              <summary>{{plot_titles.plot7}}</summary>
-              <div class="content" style="padding: 10px; text-align: center;">
-                <p style="color: grey;">No data available to display</p>
-              </div>
-          </details>
-      {% endif %}
-
-    </li>
-    <li>
-      {% if plot8 %}
-
-        <details open>
-            <summary>{{plot_titles.plot8}}</summary>
-            <!-- <div class="dropdown-container" id="dropdown-container-4">
-              <select class="compare-by" id="compare-by-5">
-                <option value="">Compare By...</option>
-                <option value="imp_level">Implementation Level</option>
-                <option value="locale">Locale</option>
-                <option value="school_level">School Level</option> -->
-                <!-- Add more options as needed -->
-              <!-- </select>
-              <button id="reset-button-5" class="btn btn-secondary">Reset</button>
-       -->
-              <!-- Add a spinner element for the loader (hidden by default) -->
-              <!-- <div id="loader" style="display: none;">
-                <img src="{% static 'images/loader.gif' %}" alt="Loading...">
-              </div> -->
-              <button id="info-button-8" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
-                <i class="fas fa-question-circle"></i>
-              </button>
-            <div class="content">
-              <div class="resizable-plot" id="resizable-plot-5"> {{plot8|safe}}</div>
-            </div>
-          </details>
-          {% else %}
-          <details open>
-              <summary>{{plot_titles.plot8}}</summary>
-              <div class="content" style="padding: 10px; text-align: center;">
-                <p style="color: grey;">No data available to display</p>
-              </div>
-          </details>
-      {% endif %}
+        </div>
+    </details>
+    
 
     </li>
   </ul>
@@ -516,6 +477,57 @@ $(document).ready(function() {
 //     $('#state_drop').select2();
 //     $('#county_drop').select2();
 // });
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to load a graph
+
+    $('#loader').show();
+  var state_abv = $('#state_drop').val();
+  var survey_taken_year = $('#survey_drop').val();
+  console.log(state_abv,survey_taken_year)
+  loadGraph(1, 'resizable-plot-1');
+  loadGraph(2, 'resizable-plot-2');
+  loadGraph(3, 'resizable-plot-3');
+  loadGraph(4, 'resizable-plot-4');
+  loadGraph(5, 'resizable-plot-5');
+  loadGraph(6, 'resizable-plot-6');
+  loadGraph(7, 'resizable-plot-7');
+  loadGraph(8, 'resizable-plot-8');
+  loadGraph(9, 'resizable-plot-9');
+});
+
+function loadGraph(graphNo, containerId) {
+  var state_abv = $('#state_drop').val();
+  var survey_taken_year = $('#survey_drop').val();
+  var implementation_level =  $('#implementation_drop').val();
+  var locale = $('#locale_drop').val();
+  var school_level = $('#gradeLevel_drop').val();
+  var county = $('#county_drop').val();
+  console.log(county)
+  // Make the AJAX request
+  $.ajax({
+    url: "{% url 'get_graph' %}",
+    data: {
+      'state_abv': state_abv,
+      'survey_taken_year': survey_taken_year,
+      'implementation_level': implementation_level,
+      'gradeLevel_WithPreschool': school_level,
+      'locale__startswith': locale,
+      'county': county,
+      'type': 'reset',
+      'graph_no': graphNo
+    },
+    traditional: true,
+    success: function(data) {
+      // Hide the loader if you have one
+      console.log("Graph loaded: ", containerId,data.plot_div);
+      
+      // Replace the content of the plot with the received data
+      $('#loader').hide();
+
+      $(`#${containerId}`).html(data.plot_div);    }
+  });
+}
 
 function generatePDF() {
     html2canvas(document.body).then(function(canvas) {
@@ -668,7 +680,7 @@ $(document).ready(function() {
                 // print("YOO NEW DATA", data)
                   // Replace the content of the plot with the received data
                   // You might need to adjust this part to match your actual data and plot element
-                  $('#resizable-plot-2').html(data.plot_div);
+                  $('#resizable-plot-5').html(data.plot_div);
               }
           });
       }
@@ -695,7 +707,7 @@ $(document).ready(function() {
                 // print("YOO NEW DATA", data)
                   // Replace the content of the plot with the received data
                   // You might need to adjust this part to match your actual data and plot element
-                  $('#resizable-plot-3').html(data.plot_div);
+                  $('#resizable-plot-6').html(data.plot_div);
               }
           });
       }
@@ -722,7 +734,7 @@ $(document).ready(function() {
                 // print("YOO NEW DATA", data)
                   // Replace the content of the plot with the received data
                   // You might need to adjust this part to match your actual data and plot element
-                  $('#resizable-plot-4').html(data.plot_div);
+                  $('#resizable-plot-7').html(data.plot_div);
               }
           });
       }
@@ -750,7 +762,7 @@ $(document).ready(function() {
                   console.log(data)
                   // Replace the content of the plot with the received data
                   // You might need to adjust this part to match your actual data and plot element
-                  $('#resizable-plot-5').html(data.plot_div);
+                  $('#resizable-plot-8').html(data.plot_div);
               }
           });
       }
@@ -795,7 +807,7 @@ $('#reset-button-2').click(function() {
   // Show the loader
   $('#loader').show();
   var state_abv = $('#state_drop').val();
-      var survey_taken_year = $('#survey_drop').val();
+  var survey_taken_year = $('#survey_drop').val();
 
 
   // Make the AJAX request
@@ -817,7 +829,7 @@ $('#reset-button-2').click(function() {
       $('#compare-by-2').val('');
 
       // Replace the content of the plot with the received data
-      $('#resizable-plot-2').html(data.plot_div);
+      $('#resizable-plot-5').html(data.plot_div);
     }
   });
 });
@@ -846,7 +858,7 @@ $('#reset-button-3').click(function() {
       $('#compare-by-3').val('');
 
       // Replace the content of the plot with the received data
-      $('#resizable-plot-3').html(data.plot_div);
+      $('#resizable-plot-6').html(data.plot_div);
     }
   });
 });
@@ -874,19 +886,24 @@ $('#reset-button-4').click(function() {
       $('#compare-by-4').val('');
 
       // Replace the content of the plot with the received data
-      $('#resizable-plot-4').html(data.plot_div);
+      $('#resizable-plot-7').html(data.plot_div);
     }
   });
 });
 
-
+$(document).ready(function() {
+    $('#county_drop').select2();
+    $('#county_drop').on('select2:select', function(e) {
+        console.log($(this).val()); // Check if the value changes with Select2
+    });
+});
 
 $(document).ready(function() {
       // $('#state_drop').select2();
       // $('.form-control').select2();
 
 //     $('#county_drop').select2();
-    
+
     $('#state_drop').change(function() {
         var state = $(this).val();
         console.log(state);
@@ -917,10 +934,17 @@ $(document).ready(function() {
                 for (let [key, value] of entries) {
                     $('<option>').val(value).text(value).appendTo(select);
                 };
+                
+                $('#county_drop').select2(); // Re-initialize Select2 for the updated select element
+                
+
+                
             }
         });
-        $('#state_drop').trigger('change');
+        // $('#state_drop').trigger('change');
     });
+
+    
 
     $('#generateReportButton').click(function(e) {
     e.preventDefault();  // Prevent the form from being submitted

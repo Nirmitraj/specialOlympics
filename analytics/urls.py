@@ -1,5 +1,5 @@
 from django.urls import path
-from analytics import views,tables,index_graph, index_table, get_counties
+from analytics import admin_password_change, views,tables,index_graph, index_table, list_users 
 from authenticate import views as auth_views
 from analytics.dash_apps.finished_apps import surveys_taken,surveys_dup
 from django.urls import path
@@ -23,6 +23,8 @@ urlpatterns=[
     path('index_table/',index_table.tables,name='index_table'),
     path('download_pdf/', index_graph.download_pdf, name='download_pdf'),
 
+    path('list_users/', list_users.list_users, name='list_users'),
+    path('admin_password_change/', admin_password_change.admin_password_change, name='admin_password_change'),
 
     # path('welcome.html/',views.index,name='homepage'),
     # path('tables.html/',tables.tables,name='tablespage'),

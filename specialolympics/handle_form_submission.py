@@ -1,10 +1,8 @@
 from django.core.mail import send_mail
 from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import EmailMultiAlternatives
 from authenticate.models import CustomUser
 
-@csrf_exempt
 def handle_form_submission(request):
     if request.method == 'POST':
         title = request.POST.get('feedbackTitle')

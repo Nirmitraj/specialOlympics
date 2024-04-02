@@ -1424,7 +1424,30 @@ def index(request):
         if state=='all':
             filter_state = 'AK'# on inital load some data has to be displayed so defaulting to ma
             admin = True
-        context = load_dashboard(dashboard_filters={'state_abv': filter_state,'survey_taken_year': '2022'},dropdown=Filters(state=state_choices(state)), isAdmin=admin)
+            context = {
+            # 'plot1':school_survey(dashboard_filters),
+            # 'plot2':core_experience(dashboard_filters),
+            # 'plot3':implementation_level(dashboard_filters),
+            # 'plot4':core_experience_yearly(dashboard_filters),
+            # 'plot5':implement_unified_sport_activity(dashboard_filters),
+            # 'plot6':implement_youth_leadership_activity(dashboard_filters),
+            # 'plot7':implement_school_engagement_activity(dashboard_filters),
+            # 'plot8':sona_resources_useful(dashboard_filters),
+            'form':Filters(state=state_choices(state)),
+            'plot_titles': {
+            'plot1': "State Program response rate",
+            'plot2': "Core Experience implementation",
+            'plot3': "Implementation level over time",
+            'plot4': "Percentage of Core experience implementation over time",
+            'plot5': "Percentage of schools implementing each Unified Sports activity",
+            'plot6': "Percentage of schools implementing each Inclusive Youth Leadership activity",
+            'plot7': "Percentage of schools implementing each Whole School Engagement activity",
+            'plot8': "Percentage of liaisons who found SONA resources useful",
+            'plot9': "Survey response rate over time",
+
+            }
+            }
+        # context = load_dashboard(dashboard_filters={'state_abv': filter_state,'survey_taken_year': '2022'},dropdown=Filters(state=state_choices(state)), isAdmin=admin)
     
     if request.method=='POST':
         print(request)
@@ -1441,7 +1464,7 @@ def index(request):
         if not dropdown.is_valid():
             post_data['school_county'] = 'all'
             dropdown = Filters(state,post_data)
-
+        
 
 
         # if not isinstance(dropdown.cleaned_data.get('school_county'), str):
@@ -1455,9 +1478,33 @@ def index(request):
             #print('heloooooo')
             dashboard_filters = dropdown.cleaned_data
             print("==State==", dashboard_filters)
+            print("========DROPDOWN========", dropdown)
 
             # print("@@@@@@@@@@@@", dashboard_filters)
-            context = load_dashboard(dashboard_filters,dropdown, isAdmin=admin)
+            context = {
+            # 'plot1':school_survey(dashboard_filters),
+            # 'plot2':core_experience(dashboard_filters),
+            # 'plot3':implementation_level(dashboard_filters),
+            # 'plot4':core_experience_yearly(dashboard_filters),
+            # 'plot5':implement_unified_sport_activity(dashboard_filters),
+            # 'plot6':implement_youth_leadership_activity(dashboard_filters),
+            # 'plot7':implement_school_engagement_activity(dashboard_filters),
+            # 'plot8':sona_resources_useful(dashboard_filters),
+            'form':dropdown,
+            'plot_titles': {
+            'plot1': "State Program response rate",
+            'plot2': "Core Experience implementation",
+            'plot3': "Implementation level over time",
+            'plot4': "Percentage of Core experience implementation over time",
+            'plot5': "Percentage of schools implementing each Unified Sports activity",
+            'plot6': "Percentage of schools implementing each Inclusive Youth Leadership activity",
+            'plot7': "Percentage of schools implementing each Whole School Engagement activity",
+            'plot8': "Percentage of liaisons who found SONA resources useful",
+            'plot9': "Survey response rate over time",
+
+            }
+            }
+            # context = load_dashboard(dashboard_filters,dropdown, isAdmin=admin)
 
                         # Create a new PDF in memory
             
@@ -1480,8 +1527,11 @@ def get_graph(request):
     dashboard_filters.pop('graph_no')
     if state=='all':
         admin = True
+
     # print("NEW FUNCTION:", dashboard_filters, type, graph_no)
-    if graph_no is '1':
+    if graph_no is '9':
+        plot_div = school_survey_over_time(dashboard_filters)
+    elif graph_no is '1':
         # print("NEW FUNCTION2:", graph_no)
         match type:
             case 'locale':
@@ -1497,6 +1547,12 @@ def get_graph(request):
                 plot_div = school_survey(dashboard_filters, isAdmin = admin)
             case '':
                 plot_div = school_survey(dashboard_filters, isAdmin = admin)
+    elif graph_no is '2':
+          plot_div = core_experience(dashboard_filters)
+    elif graph_no is '3':
+          plot_div = implementation_level(dashboard_filters)
+    elif graph_no is '4':
+          plot_div = core_experience_yearly(dashboard_filters)
     elif graph_no is '5':
             if type == 'reset':
                 plot_div = implement_unified_sport_activity(dashboard_filters=dashboard_filters, type="default")
