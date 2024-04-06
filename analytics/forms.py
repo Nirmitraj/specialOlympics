@@ -166,11 +166,11 @@ class Filters(forms.Form):
         county_dict = {'all': 'All'}  
         county_dict.update({county: county for county in counties if county != '-99' and county != '' and county != '#N/A' and not county.isupper() and '†' not in county})
         
-        self.fields['school_county'] = forms.ChoiceField(
-            label='County', 
-            widget=Select2Widget(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'county_drop', 'name':"county_drop"}),
-            choices=county_dict.items()
-        )
+        self.fields['school_county'] = forms.CharField(
+                    label='County', 
+                    widget=forms.Select(choices=county_dict.items(), attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'county_drop', 'name':"county_drop"}),
+                    
+                )
     # state_abv= forms.CharField(label='State', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
 
 
