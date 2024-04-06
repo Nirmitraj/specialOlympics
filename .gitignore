@@ -8,3 +8,5 @@ analytics/dash_apps/finished_apps/__pycache__/surveys_taken.cpython-311.pyc
 content
 *.pyc
 excel_data/
+venv/
+backup31Janv1.sql
