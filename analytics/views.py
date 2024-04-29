@@ -450,7 +450,7 @@ def implement_school_engagement_activity(dashboard_filters,image=False):
     return horizontal_bar_graph(response,y_axis,title,state,image)
 
 
-def sona_resources_useful(dashboard_filters):
+def sona_resources_useful(dashboard_filters,image=False):
     response={'elementary_school_playbook':{},'middle_level_playbook':{},'high_school_playbook':{},'special_olympics_state_playbook':{},'special_olympics_fitness_guide_for_schools':{},'unified_physical_education_resource':{},
               'special_olympics_young_athletes_activity_guide':{},'inclusive_youth_leadership_training_faciliatator_guide':{},'planning_and_hosting_a_youth_leadership_experience':{},'unified_classoom_lessons_and_activities':{},'generation_unified_youtube_channel_or_videos':{},'inclusion_tiles_game_or_facilitator_guide':{}}
     column_names=response.keys()
@@ -491,7 +491,7 @@ def sona_resources_useful(dashboard_filters):
     
     title='Percentage of liaisons who found SONA resources useful in State Program {0} vs. national data'.format(dashboard_filters['state_abv'])
     state=dashboard_filters['state_abv']
-    return horizontal_stacked_bar(new_response,y_axis,title,state)
+    return horizontal_stacked_bar(new_response,y_axis,title,state,image)
 
 
 '''   
@@ -541,7 +541,7 @@ def horizontal_bar_graph(response,y_axis,heading,state,image):
     return plot_div
     
 
-def horizontal_stacked_bar(response,y_axis,heading,state):
+def horizontal_stacked_bar(response,y_axis,heading,state,image):
     print(response)
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -549,7 +549,7 @@ def horizontal_stacked_bar(response,y_axis,heading,state):
         x=response['nation_yes'],
         name='National',
         orientation='h',
-        visible = "legendonly",
+        # visible = "legendonly",
         marker=dict(
             color='rgba(99, 110, 250, 0.8)',
             line=dict(color='rgba(99, 110, 250, 1.0)', width=0)
@@ -569,4 +569,6 @@ def horizontal_stacked_bar(response,y_axis,heading,state):
     fig.update_layout(title=heading,barmode='group',xaxis_range=[0,100], width=1400, height=500)
 
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+    if image==True:
+        return generate_graph_image(fig)
     return plot_div

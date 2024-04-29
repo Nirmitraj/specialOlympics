@@ -1,5 +1,5 @@
 from docx import Document
-from analytics.views import implement_unified_sport_activity,implement_youth_leadership_activity,implement_school_engagement_activity
+from analytics.views import implement_unified_sport_activity,implement_youth_leadership_activity,implement_school_engagement_activity,sona_resources_useful
 from report_generator.helpers import state_full_name
 
 STATE='ma'
@@ -17,6 +17,7 @@ def fill_placeholders():
         '<<Figure4>>':'image',
         '<<Figure5>>':'image',
         '<<Figure6>>':'image',
+        '<<Figure11>>':'image'
 
     }
 
@@ -39,7 +40,11 @@ def fill_placeholders():
                 elif placeholder=='<<Figure6>>':
                     plot_image_6=implement_school_engagement_activity(dashboard_filters,image=True)
                     run.add_picture(plot_image_6,width=width_,height=height_)     
-                    # paragraph.text = paragraph.text.replace(placeholder, '')  #if you remove this ikage is getting removed           
+                    # paragraph.text = paragraph.text.replace(placeholder, '')  #if you remove this ikage is getting removed     
+                elif placeholder=='<<Figure11>>':
+                    plot_image_11=sona_resources_useful(dashboard_filters,image=True)
+                    run.add_picture(plot_image_11,width=width_+2,height=height_)     
+                    # paragraph.text = paragraph.text.replace(placeholder, '')  #if you remove this ikage is getting removed         
                 else:
                     paragraph.text = paragraph.text.replace(placeholder, data)
 
