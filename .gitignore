@@ -12,3 +12,5 @@ Dockerfile
 README.Docker.md
 compose.yaml
 .dockerignore
+venv/
+backup31Janv1.sql

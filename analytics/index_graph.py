@@ -1408,12 +1408,14 @@ def index(request):
     state = CustomUser.objects.values('state').filter(username=request.user)[0]
     state=state.get('state','None')
     admin = False
+    context = {}
     if request.method=='GET':
         filter_state = state
         if state=='all':
             filter_state = 'AK'# on inital load some data has to be displayed so defaulting to ma
             admin = True
-            context = {
+        
+        context = {
             # 'plot1':school_survey(dashboard_filters),
             # 'plot2':core_experience(dashboard_filters),
             # 'plot3':implementation_level(dashboard_filters),
@@ -1853,16 +1855,20 @@ def percentage_values(total_values, column_name = "", compare_type = "default"):
     
 def state_choices(state):#used for drop down in filters
     STATE_CHOICES = []
+    print(state)
     STATE_CHOICES_RAW= list(SchoolDetails.objects.values_list('state_abv','school_state').distinct())
+    print(STATE_CHOICES_RAW)
+
     if state =='all' or state== STATE_CHOICES_RAW:
         for val in STATE_CHOICES_RAW:
             if val[0]!='-99':
+                print(val)
                 STATE_CHOICES.append(val)
                 STATE_CHOICES.sort()
         return STATE_CHOICES
     else:
         for val in STATE_CHOICES_RAW:
-            if val[0]==state:
+            if val[1]==state:
                 return [(val[0],val[1])]
     return None
 '''

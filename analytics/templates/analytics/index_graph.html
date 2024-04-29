@@ -504,6 +504,7 @@ function loadGraph(graphNo, containerId) {
   var school_level = $('#gradeLevel_drop').val();
   var county = $('#county_drop').val();
   console.log(county)
+  console.log(state_abv)
   // Make the AJAX request
   $.ajax({
     url: "{% url 'get_graph' %}",
@@ -513,7 +514,7 @@ function loadGraph(graphNo, containerId) {
       'implementation_level': implementation_level,
       'gradeLevel_WithPreschool': school_level,
       'locale__startswith': locale,
-      'county': county,
+      'school_county': county,
       'type': 'reset',
       'graph_no': graphNo
     },
