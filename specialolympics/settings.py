@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'analytics.apps.AnalyticsConfig',
     'authenticate.apps.AuthenticateConfig',
+    'report_generator.apps.ReportGeneratorConfig',
     'django_plotly_dash.apps.DjangoPlotlyDashConfig',
     'channels',
     'channels_redis',

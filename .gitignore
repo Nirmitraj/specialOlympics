@@ -8,3 +8,7 @@ analytics/dash_apps/finished_apps/__pycache__/surveys_taken.cpython-311.pyc
 content
 *.pyc
 excel_data/
+Dockerfile
+README.Docker.md
+compose.yaml
+.dockerignore

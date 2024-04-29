@@ -2,6 +2,8 @@ from django.shortcuts import render
 from plotly.offline import plot
 import plotly.graph_objects as go
 import plotly.express as px
+from io import BytesIO
+import plotly.io as py
 from django.http import HttpResponseRedirect
 from django.db.models import Sum,Count,Max
 from .forms import Filters
@@ -410,7 +412,7 @@ def main_query(column_name,filters,key):
 '''
 LOGIC
 '''
-def implement_unified_sport_activity(dashboard_filters):
+def implement_unified_sport_activity(dashboard_filters,image=False):
     response={'sports_sports_teams':{}, 'sports_unified_PE':{},'sports_unified_fitness':{},
              'sports_unified_esports':{},'sports_young_athletes':{},'sports_unified_developmental_sports':{}}
     filters=filter_set(dashboard_filters)
@@ -420,9 +422,9 @@ def implement_unified_sport_activity(dashboard_filters):
     y_axis = ['Unified Sports Teams', 'Unified PE', 'Unified fitness','Unified esports', 'Young athletes(participants)', 'Unified Developmental Sports']
     title='Percentage of schools implementing each <br> Unified Sports activity in {0} vs. National data'.format(dashboard_filters['state_abv'])
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
-    return horizontal_bar_graph(response,y_axis,title,state)
+    return horizontal_bar_graph(response,y_axis,title,state,image)
 
-def implement_youth_leadership_activity(dashboard_filters):
+def implement_youth_leadership_activity(dashboard_filters,image=False):
     response = {'leadership_unified_inclusive_club':{},'leadership_youth_training':{},'leadership_athletes_volunteer':{},
                'leadership_youth_summit':{},'leadership_activation_committe':{}}
     filters=filter_set(dashboard_filters)
@@ -432,9 +434,9 @@ def implement_youth_leadership_activity(dashboard_filters):
     y_axis=['Unifed/Inclusive Club','Inclusive Youth Leadership Training/Class','Young Athletes Volunteers','Youth summit','Youth Activation Committee']
     title='Percentage of schools implementing each <br>  Youth Leadership activity in Program {0} vs. national data'.format(dashboard_filters['state_abv'])
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
-    return horizontal_bar_graph(response,y_axis,title,state)
+    return horizontal_bar_graph(response,y_axis,title,state,image)
 
-def implement_school_engagement_activity(dashboard_filters):
+def implement_school_engagement_activity(dashboard_filters,image=False):
     response = {'engagement_spread_word_campaign':{},'engagement_fansinstands':{},'engagement_sports_day':{},
                 'engagement_fundraisingevent':{},'engagement_SO_play':{},'engagement_fitness_challenge':{}}
     
@@ -445,7 +447,7 @@ def implement_school_engagement_activity(dashboard_filters):
     y_axis=['Spread the word'+'<br>'+'Inclusion/Respect/Disability' +'<br>'+'Awareness Campaign','Unified Sports pep Rally','Unified Sports Day/Festival','Fundraising events /activities','Special Olympics play/performance','Unified Fitness Challenge']
     title='Percentage of schools implementing each <br> Inclusive Whole School Engagement activity in Program {0} vs. national Data'.format(dashboard_filters['state_abv'])
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
-    return horizontal_bar_graph(response,y_axis,title,state)
+    return horizontal_bar_graph(response,y_axis,title,state,image)
 
 
 def sona_resources_useful(dashboard_filters):
@@ -495,15 +497,21 @@ def sona_resources_useful(dashboard_filters):
 '''   
 CHARTS
 '''
-def horizontal_bar_graph(response,y_axis,heading,state):
-    print(response)
+
+def generate_graph_image(fig):
+    img_bytes = BytesIO()
+    py.write_image(fig, img_bytes, format='png')
+    img_bytes.seek(0)
+    return img_bytes
+
+def horizontal_bar_graph(response,y_axis,heading,state,image):
     fig = go.Figure()
     fig.add_trace(go.Bar(
         y=y_axis,
         x=[response[val]['national'].get('1',{}).get('percent_val',0) for val in response if response],
         name='National',
         orientation='h',
-        visible = "legendonly",
+        # visible = "legendonly",
         marker=dict(
             color='rgba(246, 78, 139, 0.6)',
             line=dict(color='rgba(246, 78, 139, 1.0)', width=0)
@@ -528,6 +536,8 @@ def horizontal_bar_graph(response,y_axis,heading,state):
     },barmode='group',xaxis_range=[0,100])
 
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
+    if image==True:
+        return generate_graph_image(fig)
     return plot_div
     
 

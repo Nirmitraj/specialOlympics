@@ -948,57 +948,57 @@ $(document).ready(function() {
 
     $('#generateReportButton').click(function(e) {
     e.preventDefault();  // Prevent the form from being submitted
-    window.print()
-    // var originalButtonHtml = $(this).html();  // Save the original button content
-    // toastr.info('Generating report. This might take a couple of minutes...');
+    // window.print()
+    var originalButtonHtml = $(this).html();  // Save the original button content
+    toastr.info('Generating report. This might take a couple of minutes...');
 
-    // $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
+    $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
 
-    // // Get all the filter fields
-    // var state_abv = $('#state_drop').val();
-    // var survey_taken_year = $('#survey_drop').val();
-    // var implementation_level = $('#implementation_drop').val();
-    // var locale__startswith = $('#locale_drop').val();
-    // var gradeLevel_WithPreschool = $('#gradeLevel_drop').val();
-    // var school_county = $('#county_drop').val();
+    // Get all the filter fields
+    var state_abv = $('#state_drop').val();
+    var survey_taken_year = $('#survey_drop').val();
+    var implementation_level = $('#implementation_drop').val();
+    var locale__startswith = $('#locale_drop').val();
+    var gradeLevel_WithPreschool = $('#gradeLevel_drop').val();
+    var school_county = $('#county_drop').val();
 
-    // // Add more fields as needed...
+    // Add more fields as needed...
 
-    // // Get the CSRF token
-    // var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+    // Get the CSRF token
+    var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
 
-    // // Send the POST request
-    // $.ajax({
-    //     url: "{% url 'download_pdf' %}",
-    //     method: 'POST',
-    //     xhrFields: {
-    //         responseType: 'blob'
-    //     },
-    //     data: {
-    //         'csrfmiddlewaretoken': csrftoken,
-    //         'state_abv': state_abv,
-    //         'survey_taken_year': survey_taken_year,
-    //         'implementation_level': implementation_level,
-    //         'locale__startswith': locale__startswith,
-    //         'gradeLevel_WithPreschool': gradeLevel_WithPreschool,
-    //         'school_county': school_county
-    //         // Add more fields as needed...
-    //     },
-    //     success: function(data) {
-    //         var blob = new Blob([data]);
-    //         var link = document.createElement('a');
-    //         link.href = window.URL.createObjectURL(blob);
-    //         link.download = "report.pdf";
-    //         link.click();
-    //         $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+    // Send the POST request
+    $.ajax({
+        url: "{% url 'download_pdf' %}",
+        method: 'POST',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        data: {
+            'csrfmiddlewaretoken': csrftoken,
+            'state_abv': state_abv,
+            'survey_taken_year': survey_taken_year,
+            'implementation_level': implementation_level,
+            'locale__startswith': locale__startswith,
+            'gradeLevel_WithPreschool': gradeLevel_WithPreschool,
+            'school_county': school_county
+            // Add more fields as needed...
+        },
+        success: function(data) {
+            var blob = new Blob([data]);
+            var link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = "report.pdf";
+            link.click();
+            $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
 
-    //     },
-    //     error: function() {
-    //         // The request failed, handle the error here
-    //         $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+        },
+        error: function() {
+            // The request failed, handle the error here
+            $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
 
-    //     }
-    // });
+        }
+    });
 });
 
     });

@@ -1,36 +1,41 @@
+import io
+import tempfile
+from PIL import Image
+from io import BytesIO
+from collections.abc import Iterable
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.db.models import (
+    Case,
+    CharField,
+    Count,
+    Max,
+    QuerySet,
+    Sum,
+    Value,
+    When,
+)
+from django.http import FileResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
-from plotly.offline import plot
-import plotly.graph_objects as go
+from django.utils.safestring import mark_safe
+from django.views import View
+
+import pandas as pd
 import plotly.express as px
-from django.http import HttpResponseRedirect
-from django.db.models import Sum,Count,Max
+import plotly.graph_objects as go
+import plotly.io as py
+from plotly.offline import plot
+from plotly.graph_objects import Figure, Pie
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.pdfmetrics import stringWidth
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+
 from .forms import Filters
+
 from analytics.models import SchoolDetails
 from authenticate.models import CustomUser
-import pandas as pd
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.views import View
-from collections.abc import Iterable
-from django.utils.safestring import mark_safe
-from django.db.models import Case, When, Value, CharField
-from django.db.models import QuerySet
-from plotly.graph_objects import Figure, Pie
-from io import BytesIO
-from reportlab.pdfgen import canvas
-from django.http import FileResponse
-import imgkit
-import plotly.io as pio
-from reportlab.lib.pagesizes import letter, landscape
-from django.core.cache import cache
-import plotly.io as py
-import io
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase.pdfmetrics import stringWidth
-from PIL import Image
-import tempfile
-
 state_abv_ = 'sc'
     
 ''' This sends filters in to django querys 
@@ -134,8 +139,6 @@ def core_experience_data(dashboard_filters,key,range,survey_year=None):
         return 0
 
 def survey_years():
-
-
     survey_years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct().order_by('survey_taken_year')
     return list(survey_years)
 
@@ -1245,7 +1248,6 @@ def core_experience(dashboard_filters, getImage = False):
         values = [sports,leadership,wholeschool]
     ))
 
-    print
     filters = add_in_forFilters(filters)
     fig = Figure(data=[Pie(labels=core_exp_df['lables'], 
                         values=core_exp_df['values'], 
@@ -1268,6 +1270,7 @@ def core_experience(dashboard_filters, getImage = False):
         py.write_image(fig, img_bytes, format='png')
         img_bytes.seek(0)
         return img_bytes
+
     else:
         if sports or leadership or wholeschool:
             return plot_div
@@ -1392,24 +1395,10 @@ def load_dashboard(dashboard_filters,dropdown,isAdmin=False, getImage = False):
         }
         }
         
-        if plot1 is not None:
-            context['plot1'] = plot1
-        if plot2 is not None:
-            context['plot2'] = plot2
-        if plot3 is not None:
-            context['plot3'] = plot3
-        if plot4 is not None:
-          context['plot4'] = plot4
-        if plot5 is not None:
-            context['plot5'] = plot5
-        if plot6 is not None:
-            context['plot6'] = plot6
-        if plot7 is not None:
-            context['plot7'] = plot7
-        if plot8 is not None:
-            context['plot8'] = plot8
-        if plot9 is not None:
-            context['plot9'] = plot9
+        plots = [plot1, plot2, plot3, plot4, plot5, plot6, plot7, plot8, plot9]
+        for i, plot in enumerate(plots, start=1):
+            if plot is not None:
+                context[f'plot{i}'] = plot
         return context
 
 
@@ -1651,7 +1640,11 @@ def generate_pdf_file(request):
         
         c.setFont("Helvetica-Bold", 16)
         c.drawString(50, 760, "Filters Used")
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(50,760,"II. Introduction")
 
+        c.setFont("Helvetica-Bold",12)
+        c.drawString(50,760,"\nEach year, the Center for Social Development\n and Education at the University of Massachusetts Boston conducts an evaluation\n of Special Olympics Unified Champion Schools (UCS), providing data to Special Olympics North America and the U. S. Department of Education. \nFor over a decade, UCS has been assessed through a comprehensive annual survey of UCS school “liaisons,” the school staff person responsible for overseeing UCS implementation and reporting at each school. Liaisons provide key insights into the implementation and impact of UCS both nationally and on a state-by-state basis. The following report synthesizes UCS Liaison Survey data from Unified Champion Schools across the <<no_of_survey_taken_schools_in_special_olympics_for_state>> participating State Special Olympics Programs in the 2021-22 school year. The purpose of the following report is to provide insight into the implementation of Unified Champion Schools in each state and to provide each State Program with data that can be used to assess its own Unified Champion Schools programming, within the context of your State Program goals and the national context. To that end, this year’s report includes information about school demographics, program implementation, leadership and sustainability, COVID-19 rebounding, implementation support, and program impact.")
 
         # Set the font and size
         # dashboard_filter = {'implementation_level': 'all', 'locale__startswith': 'all', 'gradeLevel_WithPreschool': 'all', 'survey_taken_year': '2022', 'state_abv': 'AK', 'school_county': 'all'}
