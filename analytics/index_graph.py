@@ -34,6 +34,7 @@ from reportlab.pdfgen import canvas
 
 from .forms import Filters
 
+
 from analytics.models import SchoolDetails
 from authenticate.models import CustomUser
 state_abv_ = 'sc'
@@ -117,7 +118,7 @@ def core_experience_data(dashboard_filters,key,range,survey_year=None):
         # print('working this one?')
         data = dict(SchoolDetails.objects.values_list(select_names[key]).filter(**filters).annotate(total = Count(select_names[key])))
         data = data.get(True,0) #considering only participated people
-        print(data)
+        # print(data)
         if survey_year:
             if filters.get('state_abv',False):
                 try:
@@ -140,6 +141,7 @@ def core_experience_data(dashboard_filters,key,range,survey_year=None):
 
 def survey_years():
     survey_years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct().order_by('survey_taken_year')
+    print("SURVEY YEARS", survey_years)
     return list(survey_years)
 
 
@@ -236,7 +238,7 @@ def survey_response_year_data(dashboard_filters):
 
         index+=1
 
-    print(response)
+    # print(response)
 
     index = 0
     filters_state = filter_set(dashboard_filters)
@@ -247,7 +249,7 @@ def survey_response_year_data(dashboard_filters):
     for year in survey_year:
         filters_state['survey_taken_year'] = year
         state_data = SchoolDetails.objects.values('survey_taken', 'survey_taken_year').filter(**filters_state).exclude(school_state='-99').annotate(total=Count('survey_taken')).order_by('survey_taken_year')
-        print("=====TEST1=====", state_data,filters_state)
+        # print("=====TEST1=====", state_data,filters_state)
 
         for val in state_data:
             if val['survey_taken']:
@@ -256,7 +258,7 @@ def survey_response_year_data(dashboard_filters):
                 response["state_no"][index] = val.get('total',0)
         index+=1
     
-    print(response)
+    # print(response)
 
     # # print('implementation_level_data',response)
     national_sum=''
@@ -304,7 +306,7 @@ def implementation_level_data(dashboard_filters):
         filters['survey_taken_year'] = year
         # print(filters)
         national_data = SchoolDetails.objects.values('implementation_level','survey_taken_year').filter(**filters).annotate(total = Count('implementation_level')).order_by('implementation_level')
-        print("=========TEST=======", national_data,filters)
+        # print("=========TEST=======", national_data,filters)
         for val in national_data:
             if val['implementation_level'] in ['1','1.00']:
                 response["emerging"][index] = val.get('total',0)
@@ -312,7 +314,8 @@ def implementation_level_data(dashboard_filters):
                 response["developing"][index] = val.get('total',0)
             elif val['implementation_level'] in ['3','3.00']:
                 response["full_implement"][index] = val.get('total',0)
-                response["survey_year"][index] = val.get('survey_taken_year',0)
+                
+            response["survey_year"][index] = val.get('survey_taken_year',0)
         index+=1
 
     index = 0
@@ -406,29 +409,12 @@ def implementation_level(dashboard_filters, getImage = False):
         hovertemplate=(
         "%{x}, %{y}%, %{customdata} schools"
          ), name="Full Implementation (National)".format(dashboard_filters['state_abv']), visible='legendonly')#,color="full_implemention")
-    title_name = 'Implementation level over time,<br> National vs. {0} State Program'.format(dashboard_filters['state_abv'])
+    title_name = 'Implementation level over time'.format(dashboard_filters['state_abv'])
 
-# for i in range(0,len(response['survey_year'])):
-#             total=0
-#             for val in ['emerging','developing','full_implement']:
-#                 total += response[val][i]
-#             for val in ['emerging','developing','full_implement']:
-#                 # print(total)
-#                 try:
-#                     response[val][i]=round((response[val][i]/total)*100,2)
-#                 except ZeroDivisionError:
-#                     response[val][i]=0
 
-#     for i in range(0,len(response['survey_year'])):
-#             total=0
-#             for val in ['state_emerging','state_developing','state_full_implement']:
-#                 total += response[val][i]
-#             for val in ['state_emerging','state_developing','state_full_implement']:
     fig.update_layout( 
     title={
         'text': title_name,
-        # 'y': 0.95,  # Adjust the y position of the title (0 - bottom, 1 - top)
-        # 'x': 0.5  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
 
         "x": 0.5,  # Adjust the x position of the title (0 - left, 0.5 - center, 1 - right)
         "y": 0.9,  # Adjust the y position of the title (0 - bottom, 1 - top)
@@ -453,7 +439,6 @@ def implementation_level(dashboard_filters, getImage = False):
 
     )
     plot_div = plot(fig, output_type='div', include_plotlyjs=False)
-    # print("imp level yoo?")
     if getImage:
         img_bytes = io.BytesIO()
         py.write_image(fig, img_bytes, format='png')
@@ -563,7 +548,7 @@ def school_survey_year(dashboard_filters, isAdmin = False):
     data_json_value={}
 
     totals = {}
-    print(school_surveys)
+    # print(school_surveys)
     for val in school_surveys:
         if val['school_state'] not in data_json.keys():
             data_json[val['school_state']] = {}
@@ -577,15 +562,15 @@ def school_survey_year(dashboard_filters, isAdmin = False):
         data_json_value[val['school_state']][str(val['survey_taken'])][val['survey_taken_year']] = val['total']
         totals[(val['school_state'], str(val['survey_taken']))] += val['total']
     
-    print("========RESULT========")
-    print(data_json)
-    print(totals)
+    # print("========RESULT========")
+    # print(data_json)
+    # print(totals)
     for state, surveys in data_json.items():
         for survey, grades in surveys.items():
             for grade, total in grades.items():
                 data_json[state][survey][grade] = round((total / totals[(state, survey)]) * 100, 0)
                 data_json_value[state][survey][grade] = total
-                print(data_json)
+                # print(data_json)
             
         school_state = list(data_json.keys())
     
@@ -616,7 +601,7 @@ def school_survey_year(dashboard_filters, isAdmin = False):
         survey_4_value.append(data_json_value[state].get('True', {}).get(2021, 0))
         survey_5_value.append(data_json_value[state].get('True', {}).get(2022, 0))
         survey_6_value.append(data_json_value[state].get('True', {}).get(2023, 0))
-        print(survey_5)
+        # print(survey_5)
       
 
     traces = [
@@ -648,7 +633,7 @@ def school_survey_year(dashboard_filters, isAdmin = False):
     # Create the figure and add the traces
     # Note: The total trace should be added first so that it's behind the other bars
     year = dashboard_filters['survey_taken_year']
-    print('YEAR',year)
+    # print('YEAR',year)
     # years_str = ', '.join(map(str, year))  # convert the array to a string
     # years_minus_2008 = [int(year1) - 2008 for year1 in year]  # subtract 2008 from each year
     # formatted_year_str = ', '.join(map(str, years_minus_2008))
@@ -768,7 +753,7 @@ def school_survey_school_level(dashboard_filters, isAdmin = False):
     # Create the figure and add the traces
     # Note: The total trace should be added first so that it's behind the other bars
     year = dashboard_filters['survey_taken_year']
-    print('YEAR',year)
+    # print('YEAR',year)
     # years_str = ', '.join(map(str, year))  # convert the array to a string
     # years_minus_2008 = [int(year1) - 2008 for year1 in year]  # subtract 2008 from each year
     # formatted_year_str = ', '.join(map(str, years_minus_2008))
@@ -959,7 +944,7 @@ def school_survey_implementation_level(dashboard_filters, isAdmin = False):
         school_state = list(data_json.keys())
             # school_state =(list(data_json.keys()))[0]
 
-    print("school_state", school_state, dashboard_filters, data_json)
+    # print("school_state", school_state, dashboard_filters, data_json)
   
         # survey_true_val = [data_json[i].get('True',0) for i in school_state]
 
@@ -1033,7 +1018,7 @@ def school_survey_implementation_level(dashboard_filters, isAdmin = False):
     # Create the figure and add the traces
     # Note: The total trace should be added first so that it's behind the other bars
     year = dashboard_filters['survey_taken_year']
-    print('YEAR',year)
+    # print('YEAR',year)
     # years_str = ', '.join(map(str, year))  # convert the array to a string
     # years_minus_2008 = [int(year1) - 2008 for year1 in year]  # subtract 2008 from each year
     # formatted_year_str = ', '.join(map(str, years_minus_2008))
@@ -1089,13 +1074,13 @@ def school_survey(dashboard_filters, isAdmin, getImage=False):
     for state in school_state:
         # print(state)
         total = data_json[state].get('True',0) + data_json[state].get('False',0)
-        print("HERE IS THE TOTAL", total)
+        # print("HERE IS THE TOTAL", total)
         data_json[state]['True'] = round((data_json[state].get('True',0)/total)*100,2)
         data_json[state]['False'] = round((data_json[state].get('False',0)/total)*100,2)
 
     survey_true = [data_json[i].get('True',0) for i in school_state]
     survey_false =[data_json[i].get('False',0) for i in school_state]
-    print("survey_true", survey_true)
+    # print("survey_true", survey_true)
     survey_true = [round(value) for value in survey_true]
     trace = [go.Bar(
         x= school_state,
@@ -1139,20 +1124,20 @@ def school_survey(dashboard_filters, isAdmin, getImage=False):
 def school_survey_over_time(dashboard_filters, getImage = False):
     # print("core_experience_yearly filters", filters)
     raw_data = survey_response_year_data(dashboard_filters)
-    print(raw_data, "===========RAW DATA==============")
+    # print(raw_data, "===========RAW DATA==============")
 
     data = survey_response_year_percentage_data(raw_data.copy())
     # print("CORE_EXP_YEAR:",data)
 
-    print(data, "===========data==============")
+    # print(data, "===========data==============")
 
     # print("IMPLEVEL:",data)
     df = pd.DataFrame(data)
-    print(df, "===========df==============")
+    # print(df, "===========df==============")
 
     print('SURVEY YEAR',(df == 0).all())
     print("end")
-    print(raw_data, "===========RAW DATA1==============")
+    # print(raw_data, "===========RAW DATA1==============")
 
     
     # fig = px.line(df, x=df['survey_year'], y=df['emerging'], labels={"survey_year":"year","emerging":"Implementation Level"})#color???
@@ -1170,7 +1155,7 @@ def school_survey_over_time(dashboard_filters, getImage = False):
         hovertemplate=(
         "%{x}, %{y}%, %{customdata} schools"
          ) )
-    title_name = 'Survey response rate over time,<br> National vs. {0} State Program'.format(dashboard_filters['state_abv'])
+    title_name = 'Survey response rate over time'.format(dashboard_filters['state_abv'])
 
 # for i in range(0,len(response['survey_year'])):
 #             total=0
@@ -1287,9 +1272,9 @@ def core_experience_yearly(dashboard_filters, getImage = False):
     # print("CORE_EXP_YEAR:",data)
 
     #{'sports': [6370, 3461], 'leadership': [3914, 2560], 'whole_school': [5132, 3361], 'survey_year': [2021, 2022], 'state_sports': [47, 21], 'state_leadership': [18, 12], 'state_whole_school': [26, 18]}
-    print(raw_data, "CORE EPEXRIENCE RAW DATA")
+    # print(raw_data, "CORE EPEXRIENCE RAW DATA")
     df = pd.DataFrame(data)
-    print("CORE EXP SURVEY YEAR",(df))
+    # print("CORE EXP SURVEY YEAR",(df))
     fig = go.Figure()
     fig.add_scatter(x=df['survey_year'],y=df['state_leadership'].round(0), customdata=raw_data['state_leadership'],
         hovertemplate=(
@@ -1441,7 +1426,7 @@ def index(request):
         # context = load_dashboard(dashboard_filters={'state_abv': filter_state,'survey_taken_year': '2022'},dropdown=Filters(state=state_choices(state)), isAdmin=admin)
     
     if request.method=='POST':
-        print(request)
+        # print(request)
         getState = CustomUser.objects.values('state').filter(username=request.user)[0]
         getState=getState.get('state','None')
         admin = False
@@ -1460,16 +1445,16 @@ def index(request):
 
         # if not isinstance(dropdown.cleaned_data.get('school_county'), str):
         #         dropdown.cleaned_data['school_county'] = 'all'
-        print("===================",dropdown)
-        print("==State==", dropdown.is_valid())
+        # print("===================",dropdown)
+        # print("==State==", dropdown.is_valid())
         if not dropdown.is_valid():
             print(dropdown.errors)
 
         if dropdown.is_valid():
             #print('heloooooo')
             dashboard_filters = dropdown.cleaned_data
-            print("==State==", dashboard_filters)
-            print("========DROPDOWN========", dropdown)
+            # print("==State==", dashboard_filters)
+            # print("========DROPDOWN========", dropdown)
 
             # print("@@@@@@@@@@@@", dashboard_filters)
             context = {
@@ -1584,7 +1569,117 @@ def get_counties(request):
 
     # print(county_dict)
     return JsonResponse(county_dict, safe=False)
+import base64
+from reportlab.lib.utils import ImageReader  # Import ImageReader
+from docx import Document
+from report_generator.helpers import state_full_name
+import os
+from django.conf import settings
+from django.http import HttpResponse
+from docx.shared import Inches
+from openai import OpenAI
+import requests
+import json
 
+api_key = "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"
+STATE='ma'
+width_=6*914400 #image width in inches
+height_=4*914400#image height in inches
+def receive_graph_images(request):
+    template_path = os.path.join(settings.BASE_DIR, 'static', 'generate_report_template.docx')
+    doc = Document(template_path)
+    # print("THE REQUEST", request)
+    # data = request.POST.getlist  # This is key because you're sending JSON data
+    # print("THE REQUEST DATA", data)
+    # graphs = data  # This contains all your graph data
+    data = json.loads(request.body)
+    print("THE DATA", data['graphs'])
+
+    graphs = data['graphs']  # Access the graphs data
+
+    # live_data = {
+    #     '<<state>>': 'MA',
+    #     '<<Figure1>>': 'image',
+    #     '<<Figure2>>': 'image',
+    #     '<<Figure3>>': 'image',
+    #     # '<<Figure4>>': 'image',
+    #     # '<<Figure5>>': 'image',
+    #     # '<<Figure6>>': 'image',
+    #     # '<<Figure7>>': 'image',
+    #     # '<<Figure8>>': 'image',
+
+    # }
+
+    headers = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer sk-proj-PzPinLj1gmof4aDedOegT3BlbkFJRxBrDjAug2o3EU1zCT15"
+    }
+    placeholders = [f"<<Figure{i}>>" for i in range(1, 10)]  # Adjust the range if more placeholders
+    print(placeholders)
+    for graph, placeholder in zip(graphs, placeholders):
+            
+            found_image_placeholder = False
+            for paragraph in doc.paragraphs:
+                    if placeholder in paragraph.text:
+                            # print("Analyze and give the report of the data in the graph from the data given:",  image_data,". Give the result in such a way that it can be direclty used in a report file. Dont mention these legends data:", disabled_legends,". keep the description professional, include percentage values too. ")
+
+
+                            image_data_img = graph['image_data_img']
+                            disabled_legends = graph['disabled_legends']
+                            image_data = graph['image_data']
+                            paragraph.text = paragraph.text.replace(placeholder, '')
+
+                            if image_data_img:
+                                format, imgstr = image_data_img.split(';base64,')
+                                image_bytes = base64.b64decode(imgstr)
+                                image_stream = BytesIO(image_bytes)
+
+                                # Debug: Print the size of the image stream
+                                # print("Image stream size:", len(image_bytes))
+
+                                run = paragraph.add_run()
+                                # run.text = run.text.replace(placeholder, '')
+
+                                # image_stream.seek(0)  # Ensure the stream is at the start
+                                run.add_picture(image_stream, width=Inches(7), height=Inches(4))
+                                payload = {
+                                    "model": "gpt-4o",
+                                    "messages": [
+                                        {
+                                            "role": "user",
+                                            "content": f"Analyze and give the summary report of the data in the graph from the data given:  {image_data}. Give the result in such a way that it can be direclty used in a docx report file. Ignore these name from the data: {disabled_legends}. keep the description professional, include numeical and percentage values. Don't use any bold or header tags."
+                                        }
+                                    ],
+                                    "max_tokens": 2000
+                                    }
+                                print("Image added to document.", payload)
+                                response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+                                print(response.json())
+                                content = response.json()['choices'][0]['message']['content']
+                                text_run = paragraph.add_run()
+                                text_run.text = content
+
+                                
+                                found_image_placeholder = True
+                    
+
+    if found_image_placeholder:
+        output_path = os.path.join(settings.BASE_DIR, 'static', 'test.docx')
+        doc.save(output_path)
+        print("Document saved to:", output_path)
+        with open(output_path, 'rb') as docx_file:
+            response = HttpResponse(docx_file.read(), content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            response['Content-Disposition'] = 'attachment; filename="graph_analysis_report.docx"'
+            return response
+    else:
+        print("No image placeholder found in document.")
+
+        return HttpResponse("No placeholders were processed.", content_type='text/plain')
+
+        
+
+    # If not POST or other error, return error response
+    return JsonResponse({'status': 'error'}, status=400)
 
 def generate_pdf_file(request):
 
@@ -1817,7 +1912,7 @@ return list of percent values or returns nested dict with value and percent
 op sample :'state': {None: {'value': 0, 'percent_val': 0.0}, 'Yes': {'value': 4, 'percent_val': 7.0}, 'No': {'value': 53, 'percent_val': 93.0}}}
 '''
 def percentage_values(total_values, column_name = "", compare_type = "default"):
-    print("percentage_values", column_name, total_values, compare_type)
+    # print("percentage_values", column_name, total_values, compare_type)
     if type(total_values) == list:
         values = total_values
         return [round(((i/sum(values))*100),2) for i in values]
@@ -1879,7 +1974,7 @@ op sample:# {'sports_sports_teams': {'national': {'No': 2094, None: 0, 'Yes': 20
 
 '''
 def main_query(column_name,filters,key,compareType="default"): 
-    print("FILTERS NEW:", filters, column_name)
+    # print("FILTERS NEW:", filters, column_name)
     if key=='state':
         filters=filters
     if key=='all':
@@ -1930,7 +2025,7 @@ def main_query(column_name,filters,key,compareType="default"):
             data = (SchoolDetails.objects.values(column_name, "survey_taken_year").filter(**filters).annotate(total = Count(column_name)))
             # print("RESULT DATA:", data)
     
-    print("MAIN QUERY PRINT", compareType, data)
+    # print("MAIN QUERY PRINT", compareType, data)
     #test query to run in terminal: dict(SchoolDetails.objects.values_list('sports_sports_teams').filter(state_abv='sca',survey_taken_year=2022).annotate(total = Count('sports_sports_teams')))
     return data
 
@@ -1961,16 +2056,16 @@ def implement_unified_sport_activity(dashboard_filters, type="default", getImage
         response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all')) 
         response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state', compareType=type), column_name, compare_type=type)
     y_axis = ['Unified Sports Teams', 'Unified PE', 'Unified fitness','Unified esports', 'Young athletes(participants)', 'Unified Developmental Sports']
-    title='Percentage of schools implementing each <br> Unified Sports activity in {0} vs. National data {1}'.format(dashboard_filters['state_abv'], comparedBy)
+    title='Percentage of schools implementing each <br> Unified Sports activity'.format(dashboard_filters['state_abv'], comparedBy)
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
     emptyGraph = True
     print("implement_unified_sport_activity state", response)
 
     for column_name in response.keys():
         if response[column_name]['state']:
-            print("Found state", response[column_name]['state'])
+            # print("Found state", response[column_name]['state'])
             emptyGraph = False
-    print("SOMETHING!!!!", emptyGraph)
+    # print("SOMETHING!!!!", emptyGraph)
     if emptyGraph:
         return None
     else:
@@ -1984,7 +2079,7 @@ def implement_youth_leadership_activity(dashboard_filters, type="default", getIm
                'leadership_youth_summit':{},'leadership_activation_committe':{}}
     filters=filter_set(dashboard_filters)
     filters = add_in_forFilters(filters)
-    print("===========THE TYPE:", type)
+    # print("===========THE TYPE:", type)
     comparedBy = ""
     match type:
         case 'imp_level':
@@ -2000,16 +2095,16 @@ def implement_youth_leadership_activity(dashboard_filters, type="default", getIm
         response[column_name]['national']=percentage_values(main_query(column_name,filters,key='all')) 
         response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state', compareType=type), column_name, compare_type=type)
     y_axis=['Unifed/Inclusive Club','Inclusive Youth Leadership Training/Class','Young Athletes Volunteers','Youth summit','Youth Activation Committee']
-    title='Percentage of schools implementing each <br>  Youth Leadership activity in Program {0} vs. National data {1}'.format(dashboard_filters['state_abv'], comparedBy)
+    title='Percentage of schools implementing each <br>  Youth Leadership activity'.format(dashboard_filters['state_abv'], comparedBy)
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
     
     
     emptyGraph = True
-    print("implement_unified_sport_activity state", response)
+    # print("implement_unified_sport_activity state", response)
 
     for column_name in response.keys():
         if response[column_name]['state']:
-            print("Found state", response[column_name]['state'])
+            # print("Found state", response[column_name]['state'])
             emptyGraph = False
 
     if emptyGraph:
@@ -2043,14 +2138,14 @@ def implement_school_engagement_activity(dashboard_filters, type="default", getI
         response[column_name]['state']=percentage_values(main_query(column_name,filters,key='state',compareType=type), column_name, compare_type=type)
     y_axis=['Spread the word'+'<br>'+'Inclusion/Respect/Disability' +'<br>'+'Awareness Campaign','Unified Sports pep Rally','Unified Sports Day/Festival','Fundraising events /activities','Special Olympics play/performance','Unified Fitness Challenge']
     # print("STATE ABV CHECK", dashboard_filters['state_abv'])
-    title='Percentage of schools implementing each <br> Inclusive Whole School Engagement activity in Program {0} vs. National Data {1}'.format(dashboard_filters['state_abv'], comparedBy)
+    title='Percentage of schools implementing each <br> Inclusive Whole School Engagement activity'.format(dashboard_filters['state_abv'], comparedBy)
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
     emptyGraph = True
-    print("implement_unified_sport_activity state", response)
+    # print("implement_unified_sport_activity state", response)
 
     for column_name in response.keys():
         if response[column_name]['state']:
-            print("Found state", response[column_name]['state'])
+            # print("Found state", response[column_name]['state'])
             emptyGraph = False
 
     if emptyGraph:
@@ -2124,15 +2219,15 @@ def sona_resources_useful(dashboard_filters, type="default", getImage = False):
                     #saves time to avoid writing down all column yes names and then verifying
                     # state_yes.append(response[val]['state'].get(key,{}).get('percent_val',0))
     new_response = {'state_yes':state_yes,'nation_yes':nation_yes, 'state_yes_val': state_yes_val, 'nation_yes_val': nation_yes_val}
-    print("SONA RESPONSE", new_response)
+    # print("SONA RESPONSE", new_response)
     y_axis=['Elementary School Playbook: A Guide for Grades K-5','Middle Level Playbook: A Guide for Grades 5-8','High School Playbook','Special Olympics State Playbook','Special Olympics Fitness Guide for Schools','Unified Physical Education Resource',
             'Special Olympics Young Athletes Activity Guide','Inclusive Youth Leadership Training: Faciliatator Guide','Planning and Hosting a Youth Leadership Experience','Unified Classoom lessons and activities','Generation Unified Youtube channel or videos',
             'Inclusion Tiles game or facilitator guide']
     
-    title='Percentage of liaisons who found SONA resources useful in State Program {0} vs. National data'.format(dashboard_filters['state_abv'])
+    title='Percentage of liaisons who found SONA resources useful'.format(dashboard_filters['state_abv'])
     state=dashboard_filters['state_abv']
     # return horizontal_bar_graph(response,y_axis,title,state, compare_type=type)
-    print(new_response)
+    # print(new_response)
     if new_response["state_yes_val"] or new_response["nation_yes_val"]:
         return horizontal_stacked_bar(new_response,y_axis,title,state, compare_type=type, getImage = getImage)
     else:

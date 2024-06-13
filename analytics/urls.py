@@ -22,6 +22,7 @@ urlpatterns=[
 
     path('index_table/',index_table.tables,name='index_table'),
     path('download_pdf/', index_graph.download_pdf, name='download_pdf'),
+    path('receive_graph_images/', index_graph.receive_graph_images, name='receive_graph_images'),
 
     path('list_users/', list_users.list_users, name='list_users'),
     path('admin_password_change/', admin_password_change.admin_password_change, name='admin_password_change'),

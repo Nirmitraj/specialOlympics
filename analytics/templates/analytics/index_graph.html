@@ -20,6 +20,8 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-beta.1/dist/js/select2.min.js"></script> 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"></script>
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
 </head>
 <body>
 <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
@@ -477,6 +479,7 @@ $(document).ready(function() {
 //     $('#state_drop').select2();
 //     $('#county_drop').select2();
 // });
+var graphDataStore = {};
 
 document.addEventListener('DOMContentLoaded', function() {
     // Function to load a graph
@@ -521,11 +524,27 @@ function loadGraph(graphNo, containerId) {
     traditional: true,
     success: function(data) {
       // Hide the loader if you have one
-      console.log("Graph loaded: ", containerId,data.plot_div);
-      
+      console.log("Graph loaded: ", containerId, data.plot_div);
+      // if (containerId == "resizable-plot-5") {
+      graphDataStore[containerId] = data.plot_div;
+      console.log(containerId)
+      if( containerId == "resizable-plot-4") {
+        console.log(data.plot_div)
+      }
+        
+      //  }
+      //  if (containerId == "resizable-plot-6") {
+      //   graphDataStore[containerId] = data.plot_div;
+      //  }
+      //  if (containerId == "resizable-plot-7") {
+      //   graphDataStore[containerId] = data.plot_div;
+      //  }
+
+
       // Replace the content of the plot with the received data
       $('#loader').hide();
-
+     
+    
       $(`#${containerId}`).html(data.plot_div);    }
   });
 }
@@ -681,6 +700,9 @@ $(document).ready(function() {
                 // print("YOO NEW DATA", data)
                   // Replace the content of the plot with the received data
                   // You might need to adjust this part to match your actual data and plot element
+                  graphDataStore["resizable-plot-5"] = data.plot_div;
+                  console.log(data.plot_div)
+
                   $('#resizable-plot-5').html(data.plot_div);
               }
           });
@@ -708,6 +730,8 @@ $(document).ready(function() {
                 // print("YOO NEW DATA", data)
                   // Replace the content of the plot with the received data
                   // You might need to adjust this part to match your actual data and plot element
+                  graphDataStore["resizable-plot-6"] = data.plot_div;
+
                   $('#resizable-plot-6').html(data.plot_div);
               }
           });
@@ -735,6 +759,8 @@ $(document).ready(function() {
                 // print("YOO NEW DATA", data)
                   // Replace the content of the plot with the received data
                   // You might need to adjust this part to match your actual data and plot element
+                  graphDataStore["resizable-plot-7"] = data.plot_div;
+
                   $('#resizable-plot-7').html(data.plot_div);
               }
           });
@@ -830,6 +856,8 @@ $('#reset-button-2').click(function() {
       $('#compare-by-2').val('');
 
       // Replace the content of the plot with the received data
+      graphDataStore["resizable-plot-5"] = data.plot_div;
+      console.log(data.plot_div)
       $('#resizable-plot-5').html(data.plot_div);
     }
   });
@@ -859,6 +887,8 @@ $('#reset-button-3').click(function() {
       $('#compare-by-3').val('');
 
       // Replace the content of the plot with the received data
+      graphDataStore["resizable-plot-6"] = data.plot_div;
+
       $('#resizable-plot-6').html(data.plot_div);
     }
   });
@@ -887,6 +917,8 @@ $('#reset-button-4').click(function() {
       $('#compare-by-4').val('');
 
       // Replace the content of the plot with the received data
+      graphDataStore["resizable-plot-7"] = data.plot_div;
+
       $('#resizable-plot-7').html(data.plot_div);
     }
   });
@@ -945,64 +977,218 @@ $(document).ready(function() {
         // $('#state_drop').trigger('change');
     });
 
+ 
+
     
 
     $('#generateReportButton').click(function(e) {
     e.preventDefault();  // Prevent the form from being submitted
-    // window.print()
     var originalButtonHtml = $(this).html();  // Save the original button content
     toastr.info('Generating report. This might take a couple of minutes...');
 
     $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
 
-    // Get all the filter fields
-    var state_abv = $('#state_drop').val();
-    var survey_taken_year = $('#survey_drop').val();
-    var implementation_level = $('#implementation_drop').val();
-    var locale__startswith = $('#locale_drop').val();
-    var gradeLevel_WithPreschool = $('#gradeLevel_drop').val();
-    var school_county = $('#county_drop').val();
+    // window.print()
+    // var graph = document.getElementById('resizable-plot-8');
+    // var divs = graph.querySelectorAll('div');
 
-    // Add more fields as needed...
+    // console.log(divs[1].id)
+    // console.log(graphDataStore["resizable-plot-8"])
+    // var graphDiv = document.getElementById(divs[1].id);
+    // var graphs = {{ plot1|safe}};
+    // console.log(graphDiv)
 
-    // Get the CSRF token
-    var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
 
-    // Send the POST request
-    $.ajax({
-        url: "{% url 'download_pdf' %}",
-        method: 'POST',
-        xhrFields: {
-            responseType: 'blob'
-        },
-        data: {
-            'csrfmiddlewaretoken': csrftoken,
-            'state_abv': state_abv,
-            'survey_taken_year': survey_taken_year,
-            'implementation_level': implementation_level,
-            'locale__startswith': locale__startswith,
-            'gradeLevel_WithPreschool': gradeLevel_WithPreschool,
-            'school_county': school_county
-            // Add more fields as needed...
-        },
-        success: function(data) {
-            var blob = new Blob([data]);
-            var link = document.createElement('a');
-            link.href = window.URL.createObjectURL(blob);
-            link.download = "report.pdf";
-            link.click();
-            $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+    let promises = [];
+    let imageData = [];
 
-        },
-        error: function() {
-            // The request failed, handle the error here
-            $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+    // Loop over each key in graphDataStore to find and process each graph
+    Object.keys(graphDataStore).forEach(key => {
+        let graph = document.getElementById(key); // Get the graph element by its ID
+        var divs = graph.querySelectorAll('div');
 
+        // console.log(divs[1].id)
+        // console.log(graphDataStore["resizable-plot-5"])
+        var graphDiv = document.getElementById(divs[1].id);
+ 
+
+  
+
+
+        if (graphDiv) { // Check if the element exists
+            let promise = Plotly.toImage(graphDiv, { format: 'png', scale: 2 })
+                .then(function(dataUrl) {
+                    // Collect data for each graph
+                    const legendTraces = graphDiv.querySelectorAll('.legend .traces');
+        const disabledLegends = [];
+
+        // Iterate over each trace group to check its opacity
+        legendTraces.forEach(trace => {
+            // Get the opacity style of the trace group
+            const opacity = trace.style.opacity;
+
+            // If opacity is less than 1 (e.g., 0.5), consider it as disabled
+            if (opacity < 1) {
+                // Find the legend text element within the trace group
+                const legendText = trace.querySelector('.legendtext');
+                if (legendText) {
+                    // Extract and store the text content of the disabled legend
+                    disabledLegends.push(legendText.textContent);
+                }
+            }
+        });
+
+        const content = graphDataStore[key]
+
+        const arrayRegex = /\[(\{.*?\})\s*(,\s*\{.*?\})*\]/s;
+        const match = content.match(arrayRegex);
+        extractedData = {};
+
+        const titleRegex = /"title"\s*:\s*\{\s*"text"\s*:\s*"([^"]+)"/;
+    const titleMatch = content.match(titleRegex);
+    var titleGraph = ""
+    if (titleMatch && titleMatch[1]) {
+      titleGraph = titleMatch[1];
+    }
+
+        if (match) {
+            const jsonArray = match[0];
+            console.log(jsonArray) 
+            console.log(JSON.parse(jsonArray));
+            extractedData = JSON.parse(jsonArray).map(item => ({
+            name: item.name,
+            x: item.x,
+            y: item.y,
+            type: item.type,
+            hovertemplate: item.hovertemplate,
+            titleGraph: titleGraph,
+            numericalData: item.customdata || item.values
+    }));
+    console.log(extractedData)
+
+    }
+                    imageData.push({
+                        id: key,
+                        image_data_img: dataUrl,
+                        disabled_legends: disabledLegends,
+                        image_data: extractedData  // Additional data from the store
+                    });
+                })
+                .catch(function(error) {
+                    console.error('Error extracting image from graph', key, ':', error);
+                    $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+
+                });
+            promises.push(promise);
+        } else {
+            console.warn("Graph element not found for key:", key);
         }
     });
+    var csrftoken = $('input[name=csrfmiddlewaretoken]').val(); // If the token is in a hidden input field
+
+    Promise.all(promises).then(() => {
+        // All images have been processed, send them to the server
+        // console.log("IMAGE DATA:", imageData)
+
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'receive_graph_images' %}",
+            // data: {
+              contentType: 'application/json', // Set the content type to JSON
+              data: JSON.stringify({
+               'graphs': imageData,
+              }),
+              // dataType: 'json', // Expect JSON response from the server
+              headers: {
+               'X-CSRFToken': csrftoken  // Set the CSRF token in the header
+              },
+              xhrFields: {
+                responseType: 'blob' // Set the response type to blob
+            },
+            // },
+           
+            success: function(response) {
+ // Create a link element
+ var link = document.createElement('a');
+ var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        
+        // Create a link element
+        var link = document.createElement('a');
+        
+        // Create a blob URL representing the object URL
+        var url = window.URL.createObjectURL(blob);
+        
+        // Set the link's href to the blob URL
+        link.href = url;
+        
+        // Set the download attribute with a filename
+        link.download = 'graph_analysis_report.docx';
+        
+        // Append the link to the body
+        document.body.appendChild(link);
+        
+        // Programmatically trigger a click on the link
+        link.click();
+        
+        // Remove the link from the document
+        document.body.removeChild(link);
+        
+        // Revoke the object URL to free up memory
+        window.URL.revokeObjectURL(url);
+
+        console.log("Documents generated successfully:", response);
+        $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+
+         },
+            error: function(xhr, status, error) {
+                console.error("Failed to send graphs data:", status, error);
+                $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+
+            }
+        });
+    });
+    // Plotly.toImage(graphDiv, {
+    //     format: 'png'
+    // })
+    // .then(function(dataUrl) {
+    //     // Create a new image element
+    //     console.log("THE IMAGE", dataUrl)
+    //             // Formulate an AJAX POST request to send the image to the backend
+    //     $.ajax({
+    //         type: 'POST',
+    //         url: "{% url 'receive_graph_images' %}",  // Change to your actual URL
+    //         data: {
+    //             'image_data_img': dataUrl,
+    //             'image_html': graphDiv.outerHTML,
+    //             'image_data': graphDataStore["resizable-plot-8"],
+    //             // 'graph_index': index,
+    //             'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+    //         },
+    //         success: function(data) {
+    //               console.log("DOCUMENT:", data)
+    //               var blob = new Blob([data]);
+    //               var link = document.createElement('a');
+    //               link.href = window.URL.createObjectURL(blob);
+    //               link.download = "report.pdf";
+    //               link.click();
+    //               // $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+
+    //     },
+    //     error: function() {
+    //         // The request failed, handle the error here
+    //         // $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+
+    //     }
+    //             });
+    // })
+    // .catch(function(error) {
+    //     console.error('Error extracting image:', error);
+    // });
+   
 });
 
     });
+
 
 
   </script>

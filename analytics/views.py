@@ -422,6 +422,8 @@ def implement_unified_sport_activity(dashboard_filters,image=False):
     y_axis = ['Unified Sports Teams', 'Unified PE', 'Unified fitness','Unified esports', 'Young athletes(participants)', 'Unified Developmental Sports']
     title='Percentage of schools implementing each <br> Unified Sports activity in {0} vs. National data'.format(dashboard_filters['state_abv'])
     state=dashboard_filters['state_abv']#adding state to the response for graph lables
+    print("For Chat GPT:", response)
+
     return horizontal_bar_graph(response,y_axis,title,state,image)
 
 def implement_youth_leadership_activity(dashboard_filters,image=False):
