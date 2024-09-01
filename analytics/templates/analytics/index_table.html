@@ -227,9 +227,18 @@
                     console.log(data)
                     let entries = Object.entries(data);  // Convert the dictionary to an array of [key, value] pairs
                     entries = entries
-                    .map(([key, value]) => [key, value.replace(/†/g, "")])
-                    .filter(([key, value]) => value !== value.toUpperCase())
-                    .sort();
+    .map(([key, value]) => {
+        if (value && typeof value === 'string') {
+            return [key, value.replace(/†/g, "")];
+        } else {
+            return [key, value];  // If value is null, undefined, or not a string, return it as is
+        }
+    })
+    .filter(([key, value]) => {
+        // Ensure value is a string before calling toUpperCase
+        return value && typeof value === 'string' && value !== value.toUpperCase() && value !== "" && value !== "#N/A";
+    })
+    .sort();
                     if (entries.length > 0) {
                         let lastElement = entries.pop();  // Remove the last element from the array
                         entries.unshift(lastElement);  // Add the removed element to the beginning of the array

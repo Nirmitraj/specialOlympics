@@ -160,7 +160,14 @@ class Filters(forms.Form):
 
     def __init__(self, state, *args, **kwargs):
         print('==STATE',state)
-        self.state = state
+        if (state == None ):
+            self.state = CustomUser.objects.values('state').filter(username=request.user)[0]
+
+        else:
+            self.state = state
+
+        
+
         super().__init__(*args)
 
         self.fields['state_abv'] = forms.CharField(label='State Program', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'state_drop'}))

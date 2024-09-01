@@ -376,18 +376,20 @@ def percentage_values(total_values):
 
 def state_choices(state):#used for drop down in filters
     STATE_CHOICES = []
+    # print(state)
     STATE_CHOICES_RAW= list(SchoolDetails.objects.values_list('state_abv','school_state').distinct())
-    STATE_CHOICES_RAW = [val for val in STATE_CHOICES_RAW if val[0] is not None and val[1] is not None]
+    # print(STATE_CHOICES_RAW)
 
     if state =='all' or state== STATE_CHOICES_RAW:
         for val in STATE_CHOICES_RAW:
-            if val[0]!='-99':
+            if val[0]!='-99' and None not in val:
+                # print(val)
                 STATE_CHOICES.append(val)
-        STATE_CHOICES.sort()
+                STATE_CHOICES.sort()
         return STATE_CHOICES
     else:
         for val in STATE_CHOICES_RAW:
-            if val[0]==state:
+            if val[1]==state:
                 return [(val[0],val[1])]
     return None
 '''

@@ -55,24 +55,9 @@ from django.db.models import Count, Case, When, IntegerField
 
 def school_enrollment_data(dashboard_filters, state_abv_=None):
     filters = filter_set(dashboard_filters)
-    
-    data = SchoolDetails.objects.filter(**filters).annotate(
-        category=Case(
-            When(student_enrollment_range__lt=500, then=1),
-            When(student_enrollment_range__gte=500, student_enrollment_range__lte=1000, then=2),
-            When(student_enrollment_range__gte=1001, student_enrollment_range__lte=1500, then=3),
-            When(student_enrollment_range__gte=1501, student_enrollment_range__lte=2000, then=4),
-            When(student_enrollment_range__gt=2000, then=5),
-            default=0,
-            output_field=IntegerField()
-        )
-    ).values('category').annotate(total=Count('student_enrollment_range'))
-
-    # data = SchoolDetails.objects.values_list('student_enrollment_range').filter(**filters).annotate(total = Count('student_enrollment_range'))
-
-    
+    data = SchoolDetails.objects.values_list('student_enrollment_range').filter(**filters).annotate(total = Count('student_enrollment_range'))
     print("SCHOOL ENROLLMENT", data)
-    result = {str(entry['category']): entry['total'] for entry in data if entry['total'] > 0}
+    return {str(key):val for key,val in data}
 
 def school_lunch_data(dashboard_filters,state_abv_=None):
     filters = filter_set(dashboard_filters)
@@ -185,32 +170,41 @@ def school_level_graph(dashboard_filters):
 def school_student_enrollment(dashboard_filters):
     print("DASHBOARD FILTERS", dashboard_filters)
     
+    # Get state-specific enrollment data
     student_enroll_state = school_enrollment_data(dashboard_filters, dashboard_filters.get('state_abv'))
+    print("STUDENT ENROLL STATE", student_enroll_state)
     if student_enroll_state is None:
         print("DEBUG: student_enroll_state is None")
+        student_enroll_state = {}  # Ensure it's an empty dictionary if None
     else:
         print("DEBUG: student_enroll_state", student_enroll_state)
     
+    # Remove 'state_abv' and 'county' from filters for national data
     filters = copy.copy(dashboard_filters)
     filters.pop('state_abv', None)
-    if "county" in filters:
-        filters.pop("county")
-        
+    filters.pop('county', None)
+    
+    # Get national enrollment data
     student_enroll_nation = school_enrollment_data(filters)
     if student_enroll_nation is None:
         print("DEBUG: student_enroll_nation is None")
+        student_enroll_nation = {}  # Ensure it's an empty dictionary if None
     else:
         print("DEBUG: student_enroll_nation", student_enroll_nation)
     
-    student_enroll_state = percentage_values(student_enroll_state) if student_enroll_state else {}
-    student_enroll_nation = percentage_values(student_enroll_nation) if student_enroll_nation else {}
+    # Calculate percentage values
+    student_enroll_state = percentage_values(student_enroll_state)
+    student_enroll_nation = percentage_values(student_enroll_nation)
+    print("student_enroll_state", student_enroll_state)
+    print("student_enroll_nation", student_enroll_nation)
 
-    state_name = dashboard_filters['state_abv']
+    state_name = dashboard_filters.get('state_abv', 'State')
     categories = ['< 500', '500-1000', '1001-1500', '1501-2000', '> 2000']
-    category_keys = ['1.00', '2.00', '3.00', '4.00', '5.00']
+    category_keys = ['1.00', '2.00', '3.00', '4.00', '5.00']  # Use integers, matching the earlier annotation
 
+    # Create the table with Plotly
     fig3 = go.Figure(data=[go.Table(
-        header=dict(values=['Student enrollment', f'{state_name} {dashboard_filters["survey_taken_year"]} %', f'National {dashboard_filters["survey_taken_year"]} %']),
+        header=dict(values=['Student enrollment', f'{state_name} {dashboard_filters.get("survey_taken_year", "Year")} %', f'National {dashboard_filters.get("survey_taken_year", "Year")} %']),
         cells=dict(values=[
             categories,
             [student_enroll_state.get(key, {}).get('percent_val', 0) for key in category_keys],
@@ -218,7 +212,10 @@ def school_student_enrollment(dashboard_filters):
         ])
     )])
 
-    fig3.update_layout(width=900, height=350, font_size=15, title=f'Percentage of schools at each student enrollment level <br> in {dashboard_filters["survey_taken_year"]}, for the State Program {dashboard_filters["state_abv"]}')
+    # Update layout
+    fig3.update_layout(width=900, height=350, font_size=15, title=f'Percentage of schools at each student enrollment level <br> in {dashboard_filters.get("survey_taken_year", "Year")}, for the State Program {state_name}')
+    
+    # Generate the plot as a div
     plot_div = plot(fig3, output_type='div', include_plotlyjs=False)
     return plot_div
 
@@ -386,13 +383,15 @@ def tables(request):
         filter_state = state
         if state=='all':
             filter_state = 'AK'# on inital load some data has to be displayed so defaulting to ma
+        print("TABLES 0", state)
+
         context = load_dashboard(dashboard_filters={'state_abv':filter_state,'survey_taken_year':'2023'},dropdown=Filters(state=state_choices(state)))
       
     if request.method=='POST':
         state = state_choices(state)
         post_data = request.POST.copy()  # Make a mutable copy of the POST data
         post_data['school_county'] = 'all'
-
+        print("TABLES 1", state)
         dropdown = Filters(state,post_data)
         print(dropdown)
         if dropdown.is_valid():

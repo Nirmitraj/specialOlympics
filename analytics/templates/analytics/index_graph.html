@@ -38,8 +38,7 @@
     });
 </script> -->
 
-<!-- <form method="POST" action="{% url 'download_pdf' %}">
-  {% csrf_token %} -->
+
   
   <!-- <button id="generateReportButton" class="btn btn-primary">Generate Report</button> -->
 <!-- </form> -->
@@ -1176,6 +1175,7 @@ $(document).ready(function() {
 //     $('#county_drop').select2();
 
     $('#state_drop').change(function() {
+      
         var state = $(this).val();
         console.log(state);
         $.ajax({
@@ -1190,9 +1190,19 @@ $(document).ready(function() {
                 console.log(data)
                 let entries = Object.entries(data);  // Convert the dictionary to an array of [key, value] pairs
                 entries = entries
-                .map(([key, value]) => [key, value.replace(/†/g, "")])
-                .filter(([key, value]) => value !== value.toUpperCase())
-                .sort();
+    .map(([key, value]) => {
+        if (value && typeof value === 'string') {
+            return [key, value.replace(/†/g, "")];
+        } else {
+            return [key, value];  // If value is null, undefined, or not a string, return it as is
+        }
+    })
+    .filter(([key, value]) => {
+        // Ensure value is a string before calling toUpperCase
+        return value && typeof value === 'string' && value !== value.toUpperCase() && value !== "" && value !== "#N/A";
+    })
+    .sort();
+
                 if (entries.length > 0) {
                     let lastElement = entries.pop();  // Remove the last element from the array
                     entries.unshift(lastElement);  // Add the removed element to the beginning of the array
@@ -1375,53 +1385,10 @@ $(document).ready(function() {
             }
         });
     });
-    // Plotly.toImage(graphDiv, {
-    //     format: 'png'
-    // })
-    // .then(function(dataUrl) {
-    //     // Create a new image element
-    //     console.log("THE IMAGE", dataUrl)
-    //             // Formulate an AJAX POST request to send the image to the backend
-    //     $.ajax({
-    //         type: 'POST',
-    //         url: "{% url 'receive_graph_images' %}",  // Change to your actual URL
-    //         data: {
-    //             'image_data_img': dataUrl,
-    //             'image_html': graphDiv.outerHTML,
-    //             'image_data': graphDataStore["resizable-plot-8"],
-    //             // 'graph_index': index,
-    //             'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
-    //         },
-    //         success: function(data) {
-    //               console.log("DOCUMENT:", data)
-    //               var blob = new Blob([data]);
-    //               var link = document.createElement('a');
-    //               link.href = window.URL.createObjectURL(blob);
-    //               link.download = "report.pdf";
-    //               link.click();
-    //               // $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
-
-    //     },
-    //     error: function() {
-    //         // The request failed, handle the error here
-    //         // $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
-
-    //     }
-    //             });
-    // })
-    // .catch(function(error) {
-    //     console.error('Error extracting image:', error);
-    // });
-   
 });
-
-    });
-
-
-
+});
   </script>
 </body>
-</html>
 
 {% endblock %}
 {{ form.media.js }}
