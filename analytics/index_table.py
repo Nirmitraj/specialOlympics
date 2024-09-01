@@ -36,14 +36,48 @@ def school_level_data(dashboard_filters,state_abv_=None):
     # print("Grade Level in Preschool:",data)
     return data #{str(key):val for key,val in data}
 
-def school_enrollment_data(dashboard_filters,state_abv_=None):
+def categorize_enrollment(enrollment):
+    if enrollment is None:
+        return 'NULL'
+    elif enrollment < 500:
+        return '< 500'
+    elif 500 <= enrollment <= 1000:
+        return '500-1000'
+    elif 1001 <= enrollment <= 1500:
+        return '1001-1500'
+    elif 1501 <= enrollment <= 2000:
+        return '1501-2000'
+    else:
+        return '> 2000'
+
+
+from django.db.models import Count, Case, When, IntegerField
+
+def school_enrollment_data(dashboard_filters, state_abv_=None):
     filters = filter_set(dashboard_filters)
-    data = SchoolDetails.objects.values_list('student_enrollment_range').filter(**filters).annotate(total = Count('student_enrollment_range'))
-    return {str(key):val for key,val in data}
+    
+    data = SchoolDetails.objects.filter(**filters).annotate(
+        category=Case(
+            When(student_enrollment_range__lt=500, then=1),
+            When(student_enrollment_range__gte=500, student_enrollment_range__lte=1000, then=2),
+            When(student_enrollment_range__gte=1001, student_enrollment_range__lte=1500, then=3),
+            When(student_enrollment_range__gte=1501, student_enrollment_range__lte=2000, then=4),
+            When(student_enrollment_range__gt=2000, then=5),
+            default=0,
+            output_field=IntegerField()
+        )
+    ).values('category').annotate(total=Count('student_enrollment_range'))
+
+    # data = SchoolDetails.objects.values_list('student_enrollment_range').filter(**filters).annotate(total = Count('student_enrollment_range'))
+
+    
+    print("SCHOOL ENROLLMENT", data)
+    result = {str(entry['category']): entry['total'] for entry in data if entry['total'] > 0}
 
 def school_lunch_data(dashboard_filters,state_abv_=None):
     filters = filter_set(dashboard_filters)
     data = SchoolDetails.objects.values_list('student_free_reduced_lunch').filter(**filters).annotate(total = Count('student_free_reduced_lunch'))
+    print("School lunch", data)
     return {str(key):val for key,val in data}
 
 def school_minority_data(dashboard_filters,state_abv_=None):
@@ -149,31 +183,45 @@ def school_level_graph(dashboard_filters):
     return plot_div
 
 def school_student_enrollment(dashboard_filters):
-    print("DASHBOARD FILTERS",dashboard_filters)
-    student_enroll_state = school_enrollment_data(dashboard_filters,dashboard_filters['state_abv'])
-    filters =copy.copy(dashboard_filters)
-    filters.pop('state_abv')
+    print("DASHBOARD FILTERS", dashboard_filters)
+    
+    student_enroll_state = school_enrollment_data(dashboard_filters, dashboard_filters.get('state_abv'))
+    if student_enroll_state is None:
+        print("DEBUG: student_enroll_state is None")
+    else:
+        print("DEBUG: student_enroll_state", student_enroll_state)
+    
+    filters = copy.copy(dashboard_filters)
+    filters.pop('state_abv', None)
     if "county" in filters:
         filters.pop("county")
+        
     student_enroll_nation = school_enrollment_data(filters)
-    student_enroll_state = percentage_values(student_enroll_state)
-    student_enroll_nation = percentage_values(student_enroll_nation)
-    print("Student enrolment", student_enroll_state,student_enroll_nation)
-    state_name=dashboard_filters['state_abv']
-    '''
-    1.00==< 500
-    2.00==501-1000
-    3.00==501-1000
-    4.00==501-1000
-    '''
-    fig3 = go.Figure(data=[go.Table(header=dict(values=['Student enrollment',state_name+' '+str(dashboard_filters['survey_taken_year']) + " %",'National '+ str(dashboard_filters['survey_taken_year'])+ " %"]),
-                    cells=dict(values=[['< 500','501-1000','501-1000','501-1000'], 
-                                        [student_enroll_state.get('1.00',{}).get('percent_val',0), student_enroll_state.get('2.00',{}).get('percent_val',0), student_enroll_state.get('3.00',{}).get('percent_val',0), student_enroll_state.get('4.00',{}).get('percent_val',0)],
-                                        [student_enroll_nation.get('1.00',{}).get('percent_val',0), student_enroll_nation.get('2.00',{}).get('percent_val',0), student_enroll_nation.get('3.00',{}).get('percent_val',0), student_enroll_nation.get('4.00',{}).get('percent_val',0)],]))])
+    if student_enroll_nation is None:
+        print("DEBUG: student_enroll_nation is None")
+    else:
+        print("DEBUG: student_enroll_nation", student_enroll_nation)
+    
+    student_enroll_state = percentage_values(student_enroll_state) if student_enroll_state else {}
+    student_enroll_nation = percentage_values(student_enroll_nation) if student_enroll_nation else {}
 
-    fig3.update_layout(width=900, height=350,font_size=15,title='Percentage of schools at each student enrollment level <br> in {year}, for the State Program {state_abv}'.format(state_abv=dashboard_filters['state_abv'],year=dashboard_filters['survey_taken_year']))
+    state_name = dashboard_filters['state_abv']
+    categories = ['< 500', '500-1000', '1001-1500', '1501-2000', '> 2000']
+    category_keys = ['1.00', '2.00', '3.00', '4.00', '5.00']
+
+    fig3 = go.Figure(data=[go.Table(
+        header=dict(values=['Student enrollment', f'{state_name} {dashboard_filters["survey_taken_year"]} %', f'National {dashboard_filters["survey_taken_year"]} %']),
+        cells=dict(values=[
+            categories,
+            [student_enroll_state.get(key, {}).get('percent_val', 0) for key in category_keys],
+            [student_enroll_nation.get(key, {}).get('percent_val', 0) for key in category_keys]
+        ])
+    )])
+
+    fig3.update_layout(width=900, height=350, font_size=15, title=f'Percentage of schools at each student enrollment level <br> in {dashboard_filters["survey_taken_year"]}, for the State Program {dashboard_filters["state_abv"]}')
     plot_div = plot(fig3, output_type='div', include_plotlyjs=False)
     return plot_div
+
 
 def school_free_reduce_lunch(dashboard_filters):
     student_lunch_state = school_lunch_data(dashboard_filters,dashboard_filters['state_abv'])
@@ -184,7 +232,7 @@ def school_free_reduce_lunch(dashboard_filters):
     student_lunch_nation = school_lunch_data(filters)
     student_lunch_state=percentage_values(student_lunch_state)
     student_lunch_nation=percentage_values(student_lunch_nation)
-    print('school_free_reduce_lunch:',student_lunch_state,student_lunch_nation)
+    # print('school_free_reduce_lunch:',student_lunch_state,student_lunch_nation)
     state_name=dashboard_filters['state_abv']
     '''
     1.00==0-25
@@ -214,7 +262,7 @@ def school_minority(dashboard_filters):
     minority_nation = school_minority_data(filters)
     minority_state=percentage_values(minority_state)
     minority_nation=percentage_values(minority_nation)
-    print('student_minority:',minority_state,minority_nation)
+    # print('student_minority:',minority_state,minority_nation)
     state_name=dashboard_filters['state_abv']
     '''
     1.00==< 10
@@ -333,6 +381,7 @@ def load_dashboard(dashboard_filters,dropdown):
 def tables(request):
     state = CustomUser.objects.values('state').filter(username=request.user)[0]
     state=state.get('state','None')
+    print("NEW STATE", state)
     if request.method=='GET':
         filter_state = state
         if state=='all':

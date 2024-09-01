@@ -17,10 +17,13 @@ SchoolDetails.objects.values_list('school_state','state_abv').distinct())
 STATE_CHOICES = []
 
 for val in STATE_CHOICES_RAW:
-    if val[0]!='-99':
+    if val[0] != '-99' and None not in val:
         STATE_CHOICES.append(val)
-    STATE_CHOICES.sort()
-STATE_CHOICES.insert(0,('all','Admin'))
+
+STATE_CHOICES.sort(key=lambda x: x[0] if x[0] is not None else '')
+
+# Insert the ('all', 'Admin') tuple at the beginning
+STATE_CHOICES.insert(0, ('all', 'Admin'))
 
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(label="", widget=forms.TextInput(attrs={'class':'form-control', 'placeholder':'Email Address'}), )

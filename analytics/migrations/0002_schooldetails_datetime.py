@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='schooldetails',
             name='datetime',
-            field=models.DateTimeField(default=None),
+            field=models.DateTimeField(null=True, blank=True),  # Allow null and blank values
             preserve_default=False,
         ),
     ]

@@ -9,17 +9,25 @@ STATE_CHOICES_RAW= list(
 SchoolDetails.objects.values_list('state_abv','school_state').distinct())
 STATE_CHOICES = []
 
-for val  in STATE_CHOICES_RAW:
-    if val[0]!='-99':
+for val in STATE_CHOICES_RAW:
+    if val[0] != '-99' and None not in val:
         STATE_CHOICES.append(val)
-STATE_CHOICES.append(('all','all'))
+
+STATE_CHOICES.sort(key=lambda x: x[0] if x[0] is not None else '')
+
+# Insert the ('all', 'Admin') tuple at the beginning
+STATE_CHOICES.insert(0, ('all', 'Admin'))
 
 
 
-implementationlevel = {'all':'All',
-                '1':'Emerging',
-                '2':'Developing',
-                '3':'Full implementation',
+implementationlevel = {'all':'Unified Sports + Inclusive Youth Leadership + Whole School Engagement',
+                '1':'Unified Sports',
+                '2':'Inlcusive Youth Leadership',
+                '3':'Whole School Engagement',
+                '4': 'Unified Sports + Inclusive Youth Leadership',
+                '5': 'Unified Sports + Whole School Engagement',
+                '6': 'Inclusive Youth Leadership + Whole School Engagement',
+                # '7': 'Unified Sports + Inclusive Youth Leadership + Whole School Engagement'
                 }
 
 locale = {'all':'All','City':'City','Suburb':'Suburb','Rural':'Rural', 'Town':'Town'}
@@ -27,7 +35,7 @@ locale = {'all':'All','City':'City','Suburb':'Suburb','Rural':'Rural', 'Town':'T
 years = SchoolDetails.objects.values_list('survey_taken_year',flat=True).distinct()
 counties = SchoolDetails.objects.values_list('school_county', flat=True)
 county_dict = {'all': 'All'}  
-county_dict.update({county: county for county in counties if county != '-99'})
+county_dict.update({county: county for county in counties  if county is not None and county != '-99' and county != '' and county != '#N/A' and not county.isupper() and '†' not in county})
 
 
 
@@ -36,7 +44,7 @@ county_dict.update({county: county for county in counties if county != '-99'})
 in company terms 2022 is equal to 14 and the data they started collecting is from 2008
 similarly 2021 is equal to 13
 logic below is to convert actual year to smaller number (14,13,12...)
-so any (year - 2008) gives that years smaller value
+so any (- 2008) gives that years smaller value
 ex: 2022-2008 =14 
 '''
 first_year = min(years) if years else None
@@ -51,7 +59,7 @@ year_dict = OrderedDict(sorted(year_dict.items(), reverse=True))
 schoollevels = {'all':'All','4.00':'Preschool', '1.00':'Elementary', '3.00':'Middle', '2.00':'High',}
 class Filters(forms.Form):
     implementation_level = forms.ChoiceField(
-        label='Implementation level', 
+        label='Components', 
         widget=forms.Select(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'implementation_drop'}),
         choices=implementationlevel.items()
     )
@@ -162,14 +170,16 @@ class Filters(forms.Form):
         #     widget=forms.Select(attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'state_drop'}),
         #     choices=state
         # )
+        # if state and state[0]:
         counties = SchoolDetails.objects.filter(state_abv=state[0][0]).values_list('school_county', flat=True)
+        # else:
+            # counties = SchoolDetails.objects.filter(state_abv='MA').values_list('school_county', flat=True)
         county_dict = {'all': 'All'}  
-        county_dict.update({county: county for county in counties if county != '-99' and county != '' and county != '#N/A' and not county.isupper() and '†' not in county})
-        
+        county_dict.update({county: county for county in counties if county is not None and county != '-99' and county != '' and county != '#N/A' and not county.isupper() and '†' not in county})
+        print("NEW COUNTIES", counties)
         self.fields['school_county'] = forms.CharField(
                     label='County', 
                     widget=forms.Select(choices=county_dict.items(), attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control', 'id': 'county_drop', 'name':"county_drop"}),
-                    
                 )
     # state_abv= forms.CharField(label='State', widget=forms.Select(choices=state,attrs={'placeholder': 'Name', 'style': 'width: 300px;', 'class': 'form-control'}))
 

@@ -48,8 +48,6 @@
       <button id="generateReportButton" class="btn btn-primary" style="font-size: 0.8rem;"><i class="fas fa-download fa-sm text-white-50"></i>    Generate Report</button> <!-- decrease the font size -->
   </div>
 </div>
-  <!-- <a href="{% url 'pdf_view' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-              <i class="fas fa-download fa-sm text-white-50"></i> Generate Report</a> -->
 <form action="{% url 'index_graph' %}" method="post">
   {% csrf_token %}
   <div class="container">
@@ -105,7 +103,7 @@ $(document).ready(function() {
     background-color: #f0f0f0;
     display: block;
     justify-content: space-between;
-    align-items: center;
+    align-items: left;
   }
   /* Styling for the + and - icons */
   summary::after {
@@ -155,6 +153,11 @@ $(document).ready(function() {
 
 }
 
+.plot-title {
+    text-align: left;
+    padding-left: 10px; /* Optional: Add padding if needed for better alignment */
+}
+
 
 #info-button-1 {
     position: absolute;
@@ -162,7 +165,7 @@ $(document).ready(function() {
 }
 
 #info-button-2 {
-  float: right;
+  float: top;
 }
 
 #info-button-3 {
@@ -170,7 +173,7 @@ $(document).ready(function() {
 }
 
 #info-button-4 {
-  float: right;
+  float: top;
 }
 
 #info-button-5 {
@@ -192,10 +195,84 @@ $(document).ready(function() {
 #info-button-9 {
   float: right;
 }
+
+ul.side-by-side {
+    list-style-type: none;  /* Remove bullet points */
+    padding: 0;
+    margin: 0;
+    display: flex;          /* Display list items in a row */
+    flex-wrap: wrap;        /* Allow wrapping to the next line if needed */
+}
+
+ul.side-by-side li {
+    margin: 0 0px 0px 0;  /* Add spacing between the items */
+    display: inline-block;   /* Ensure items are treated as inline-blocks */
+    vertical-align: top;     /* Align the top of the elements */
+    width: 100%;              /* Adjust width to fit two elements per row */
+}
+
+ul.side-by-side li:first-child {
+    width: 40%;              /* Width of the left graph */
+}
+
+ul.side-by-side li:last-child {
+    width: 60%;              /* Width of the right graph */
+}
+
+.sticky-header {
+    position: fixed;
+    top: 0;
+    width: 95%;
+    background-color: #ffffff;
+    color: rgb(0, 0, 0);
+    text-align: left;
+    padding: 10px 10;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease-in-out;
+}
+
+
+
+.sticky-header.visible {
+    transform: translateY(0);
+}
+
+/* .container-head {
+ margin-left: "-5px";
+ margin-right: "-5px";
+
+} */
   
   
 </style>
 </head>
+
+<div class="sticky-header" id="stickyHeader">
+  <form action="{% url 'index_graph' %}" method="post">
+    {% csrf_token %}
+    <div class="container-head">
+        <div class="form-row">
+            {% for field in form %}
+            <div class="form-group col-lg-3">
+                <label for="{{ field.auto_id }}" class="d-block text-left">{{ field.label }}</label>
+                {{ field|add_class:"form-control" }}
+            </div>
+            {% endfor %}
+        </div>
+        <!-- <div class="form-group row">
+          <div class="col-sm-8">
+            <button id="loadingButton" class="btn btn-primary" type="button" style="display: none;">
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span class="sr-only">Loading...</span>
+            </button>
+            <input id="submitButton" type="submit" class="btn btn-primary mt-2" value="Submit">
+        </div>
+        </div> -->
+    </div>
+  </form>
+</div>
 <body>
   <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -279,28 +356,53 @@ $(document).ready(function() {
     
 
     </li>
-    <li>
-      <details open>
-        <summary>{{plot_titles.plot2}}</summary>
-        <button id="info-button-2" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
-            <i class="fas fa-question-circle"></i>
-        </button>
-        <div class="content">
-            <!-- This div is always present to serve as a container for plot2 -->
-            <div class="resizable-plot" id="resizable-plot-2">
-                {% if plot2 %}
-                    {{plot2|safe}}
-                {% else %}
-                    <!-- Initially show a placeholder or loader -->
-                    <p style="color: grey; text-align: center;">Loading graph...</p>
-                {% endif %}
-            </div>
-        </div>
-    </details>
-    
-    </li>
-    <li>
-      <details open>
+    <ul class="side-by-side">
+      <li>
+          <details open>
+              <summary>{{plot_titles.plot2}}</summary>
+              <button id="info-button-2" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+                  <i class="fas fa-question-circle"></i>
+              </button>
+              <div class="content">
+                  <!-- This div is always present to serve as a container for plot2 -->
+                  <div class="resizable-plot" id="resizable-plot-2">
+                      {% if plot2 %}
+                          {{plot2|safe}}
+                      {% else %}
+                          <!-- Initially show a placeholder or loader -->
+                          <p style="color: grey; text-align: center;">Loading graph...</p>
+                      {% endif %}
+                  </div>
+              </div>
+          </details>
+      </li>
+      <li>
+        <details open>
+          <summary>{{plot_titles.plot4}}</summary>
+          <button id="info-button-4" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+              <i class="fas fa-question-circle"></i>
+          </button>
+          <div class="content">
+              <!-- This div is always present to serve as a container for plot4 -->
+              <div class="resizable-plot" id="resizable-plot-4">
+                  {% if plot4 %}
+                      {{plot4|safe}}
+                  {% else %}
+                      <!-- Initially show a placeholder or loader -->
+                      <p style="color: grey; text-align: center;">Loading graph...</p>
+                  {% endif %}
+              </div>
+          </div>
+      </details>
+      
+  
+  
+      </li>
+     
+  </ul>
+
+  <li>
+    <details open>
         <summary>{{plot_titles.plot3}}</summary>
         <button id="info-button-3" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
             <i class="fas fa-question-circle"></i>
@@ -317,31 +419,54 @@ $(document).ready(function() {
             </div>
         </div>
     </details>
-    
+</li>
 
-    </li>
     <li>
       <details open>
-        <summary>{{plot_titles.plot4}}</summary>
-        <button id="info-button-4" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+        <summary class="plot-title">{{plot_titles.plot10}}</summary>
+        <div class="dropdown-container" id="dropdown-container-10">
+          <select class="compare-by" id="compare-by-10">
+              <option value="">Choose Year</option>
+              <option value="2017">Year 9 (2016-17)</option>
+              <option value="2018">Year 10 (2017-18)</option>
+              <option value="2019">Year 11 (2018-19)</option>
+              <option value="2020">Year 12 (2019-20)</option>
+              <option value="2021">Year 13 (2020-21)</option>
+              <option value="2022">Year 14 (2021-22)</option>
+              <option value="2023">Year 15 (2022-23)</option>
+
+
+              <!-- Add more options as needed -->
+          </select>
+          <button id="info-button-5" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
+              <i class="fas fa-question-circle"></i>
+          </button>
+          <!-- <button id="reset-button-2" class="btn btn-secondary">Reset</button> -->
+          <!-- Add a spinner element for the loader (hidden by default) -->
+          <div id="loader-5" style="display: none;">
+              <img src="{% static 'images/loader.gif' %}" alt="Loading...">
+          </div>
+      </div>
+        <!-- <button id="info-button-8" class="btn btn-info" data-toggle="modal" data-target="#infoModal">
             <i class="fas fa-question-circle"></i>
-        </button>
+        </button> -->
         <div class="content">
-            <!-- This div is always present to serve as a container for plot4 -->
-            <div class="resizable-plot" id="resizable-plot-4">
-                {% if plot4 %}
-                    {{plot4|safe}}
-                {% else %}
+            <!-- This div is always present to serve as a container for plot8 -->
+            <div class="resizable-plot" id="resizable-plot-10">
+                {% if plot10 %}
+                    {{plot10|safe}}
+                {% else %} 
                     <!-- Initially show a placeholder or loader -->
-                    <p style="color: grey; text-align: center;">Loading graph...</p>
+                     <p style="color: grey; text-align: center;">Loading graph...</p>
                 {% endif %}
             </div>
         </div>
     </details>
+    </li>
     
 
-
     </li>
+    
     <li>
       <details open>
         <summary>{{plot_titles.plot5}}</summary>
@@ -475,15 +600,33 @@ $(document).ready(function() {
 
 
   <script>
-//     $(document).ready(function() {
-//     $('#state_drop').select2();
-//     $('#county_drop').select2();
-// });
+
 var graphDataStore = {};
+
+window.addEventListener("scroll", onScrollCallback);
+
+function onScrollCallback() {
+    console.log("User is scrolling...");
+
+    // Example: Get the scroll position
+    var scrollPosition = window.scrollY || document.documentElement.scrollTop;
+    console.log("Scroll Position:", scrollPosition);
+    if (scrollPosition > 430 ){
+// show filters
+    } else {
+// dont show
+    }
+    // You can add more logic here, such as showing or hiding elements
+  }
 
 document.addEventListener('DOMContentLoaded', function() {
     // Function to load a graph
-
+    // var stickyHeader = document.getElementById("stickyHeader");
+    // if (window.scrollY > 150) {
+    //     stickyHeader.classList.add("visible");
+    // } else {
+    //     stickyHeader.classList.remove("visible");
+    // }
     $('#loader').show();
   var state_abv = $('#state_drop').val();
   var survey_taken_year = $('#survey_drop').val();
@@ -497,30 +640,66 @@ document.addEventListener('DOMContentLoaded', function() {
   loadGraph(7, 'resizable-plot-7');
   loadGraph(8, 'resizable-plot-8');
   loadGraph(9, 'resizable-plot-9');
+  loadGraph(10, 'resizable-plot-10');
+
+  
 });
 
 function loadGraph(graphNo, containerId) {
+  console.log("GRAPH NUMBER", graphNo, containerId)
   var state_abv = $('#state_drop').val();
   var survey_taken_year = $('#survey_drop').val();
-  var implementation_level =  $('#implementation_drop').val();
+  console.log("NUM COMPONENTS", survey_taken_year)
+
+  var num_components =  $('#implementation_drop').val();
+  console.log("NUM COMPONENTS", num_components)
+
   var locale = $('#locale_drop').val();
   var school_level = $('#gradeLevel_drop').val();
   var county = $('#county_drop').val();
   console.log(county)
   console.log(state_abv)
+
   // Make the AJAX request
   $.ajax({
     url: "{% url 'get_graph' %}",
-    data: {
+    data: (function() {
+    let data = {
       'state_abv': state_abv,
       'survey_taken_year': survey_taken_year,
-      'implementation_level': implementation_level,
       'gradeLevel_WithPreschool': school_level,
       'locale__startswith': locale,
       'school_county': county,
       'type': 'reset',
       'graph_no': graphNo
-    },
+    };
+
+    // Additional keys
+    if (num_components == '1') {
+      data['unified_sports_component'] = 1;
+    } else if (num_components == '2') {
+      data['youth_leadership_component'] = 1;
+
+    } else if (num_components == '3') {
+      data['whole_school_component'] = 1;
+
+    } else if (num_components == '4') {
+      data['unified_sports_component'] = 1;
+      data['youth_leadership_component'] = 1;
+
+    } else if (num_components == '5') {
+      data['whole_school_component'] = 1;
+      data['youth_leadership_component'] = 1;
+
+    } else if (num_components == '6') {
+      data['whole_school_component'] = 1;
+      data['unified_sports_component'] = 1;
+
+    } 
+   
+
+    return data;
+  })(),
     traditional: true,
     success: function(data) {
       // Hide the loader if you have one
@@ -528,9 +707,7 @@ function loadGraph(graphNo, containerId) {
       // if (containerId == "resizable-plot-5") {
       graphDataStore[containerId] = data.plot_div;
       console.log(containerId)
-      if( containerId == "resizable-plot-4") {
-        console.log(data.plot_div)
-      }
+   
         
       //  }
       //  if (containerId == "resizable-plot-6") {
@@ -545,7 +722,21 @@ function loadGraph(graphNo, containerId) {
       $('#loader').hide();
      
     
-      $(`#${containerId}`).html(data.plot_div);    }
+      $(`#${containerId}`).html(data.plot_div);    
+
+      if( containerId == "resizable-plot-2") {
+        console.log(data.plot_div)
+        var plot = document.getElementById('resizable-plot-2');
+
+plot.on('plotly_legendclick', function () {
+    return false;
+});
+
+plot.on('plotly_legenddoubleclick', function () {
+    return false;
+});
+      }
+    }
   });
 }
 
@@ -795,6 +986,53 @@ $(document).ready(function() {
       }
   });
 
+  $('#compare-by-10').change(function() {
+      var selectedOption = $(this).val();
+      var state_abv = $('#state_drop').val();
+
+     console.log(selectedOption)
+      var survey_taken_year = $('#survey_drop').val();
+
+      var num_components =  $('#implementation_drop').val();
+
+      if (num_components === '1' || num_components === '1.00') {
+        num_components = 1;
+      } else if (num_components === '2' || num_components === '2.00') {
+        num_components = 2;
+      } else if (num_components === '3' || num_components === '3.00') {
+        num_components = 3;
+      }
+
+      console.log("NUM COMPONENTS", num_components)
+
+      var locale = $('#locale_drop').val();
+      var school_level = $('#gradeLevel_drop').val();
+      var county = $('#county_drop').val();
+
+      if (selectedOption) {  // If an option is selected (not the placeholder)
+      $.ajax({
+      url: "{% url 'get_graph' %}",  // Replace with your URL pattern name
+      data: {
+      'state_abv': state_abv,
+      'survey_taken_year': selectedOption,
+      'num_components': num_components,
+      'gradeLevel_WithPreschool': school_level,
+      'locale__startswith': locale,
+      'school_county': county,
+      'type': 'reset',
+      'graph_no': 10
+    },
+              traditional: true,
+              success: function(data) {
+                // print("YOO NEW DATA", data)
+                  // Replace the content of the plot with the received data
+                  // You might need to adjust this part to match your actual data and plot element
+                  $('#resizable-plot-10').html(data.plot_div);
+              }
+          });
+      }
+  });
+
  
 
   // Handle the click event for the reset button
@@ -987,16 +1225,6 @@ $(document).ready(function() {
     toastr.info('Generating report. This might take a couple of minutes...');
 
     $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
-
-    // window.print()
-    // var graph = document.getElementById('resizable-plot-8');
-    // var divs = graph.querySelectorAll('div');
-
-    // console.log(divs[1].id)
-    // console.log(graphDataStore["resizable-plot-8"])
-    // var graphDiv = document.getElementById(divs[1].id);
-    // var graphs = {{ plot1|safe}};
-    // console.log(graphDiv)
 
 
     let promises = [];

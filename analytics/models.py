@@ -81,6 +81,7 @@ class SchoolDetails(models.Model):
     reducing_disciplinary_referrals_for_students_with_idd=models.CharField(max_length=32,null=True,default=None)
     increasing_attendance_of_students_without_idd=models.CharField(max_length=32,null=True,default=None)
     reducing_disciplinary_referrals_for_students_without_idd=models.CharField(max_length=32,null=True,default=None)
+    num_components = models.FloatField(null=True,default=None)
 
 class Person(models.Model):
     first_name = models.CharField(max_length=30)
