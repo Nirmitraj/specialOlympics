@@ -58,6 +58,23 @@
         }
 
     </style>
+
+    <!-- Toastr CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<!-- jQuery (Ensure this is loaded before Toastr) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Bootstrap CSS -->
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+
+<!-- Bootstrap JS and Popper.js for modals -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+
 </head>
 
 <body id="page-top">
@@ -196,6 +213,50 @@
             </div>
         </div>
     </div>
+
+        <!-- Modal for Upload Document -->
+        <!-- Modal for Upload Document -->
+        <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="uploadModalLabel">Import Data</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form  method="post" enctype="multipart/form-data" action="{% url 'upload' %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="csvFile">Upload CSV File</label>
+                                <input type="file" class="form-control-file" id="csvFile" name="document" accept=".csv" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="yearSelect">Select Year</label>
+                                <select class="form-control" id="yearSelect" name="year" required>
+                                    <option value="2024">2024</option>
+                                    <option value="2023">2023</option>
+                                    <option value="2022">2022</option>
+                                    <option value="2021">2021</option>
+                                    <option value="2020">2020</option>
+                                    <option value="2019">2019</option>
+                                    <option value="2018">2018</option>
+                                    <!-- Other year options -->
+                                </select>
+                            </div>
+                            <button type="submit" id="submitUploadButton" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Success Message -->
+        <div id="successMessage" class="alert alert-success" style="display:none;">
+            File uploaded successfully!
+        </div>
+        
 </body>
 
 </html>
@@ -245,4 +306,60 @@
         form[0].reset();
     });
 });
+
+
+//submit Upload Button
+   // Submit Upload Button with Loader
+// Submit Upload Button with Loader
+$('#submitUploadButton').click(function(e) {
+    e.preventDefault();  // Prevent the default form submission
+    
+    var form = $('#uploadModal form'); // Form in the modal
+    var submitButton = $(this);  // The submit button
+    var originalButtonHtml = submitButton.html();  // Save the original button content
+    
+    // Display an informational message to the user
+    toastr.info('Uploading document. This might take a couple of minutes...');
+    
+    // Show a loader inside the button
+    submitButton.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...');
+
+    // Create a FormData object from the form
+    var formData = new FormData(form[0]);
+    
+    $.ajax({
+        url: form.attr('action'),  // The URL to submit the form data to
+        type: form.attr('method'),  // The HTTP method to use
+        data: formData,
+        contentType: false,  // Necessary for file uploads
+        processData: false,  // Necessary for file uploads
+        success: function(response) {
+            // On success, display the message from the server
+            if (response.message) {
+                toastr.success(response.message);
+            } else {
+                toastr.success('File uploaded successfully! Please refresh the page');
+            }
+            $('#uploadModal').modal('hide');  // Hide the modal
+            // Reset the form fields
+            form[0].reset();
+
+            // Remove the backdrop manually (optional, Bootstrap should do this automatically)
+            $('.modal-backdrop').remove();
+        },
+        error: function(xhr, status, error) {
+            // On error, display the message from the server
+            var errorMessage = 'Failed to upload file. Please try again.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            toastr.error(errorMessage);
+        },
+        complete: function() {
+            // Restore the original button content after the request completes
+            submitButton.html(originalButtonHtml);
+        }
+    });
+});
+
     </script>

@@ -8,7 +8,7 @@ from .forms import Filters
 from analytics.models import SchoolDetails
 from authenticate.models import CustomUser
 from django.contrib.auth.decorators import login_required
-from analytics.views import state_choices
+from analytics.index_graph import state_choices
 
 '''gives filters for queries after removing values which will not be there in table'''
 def filter_set(dashboard_filters):

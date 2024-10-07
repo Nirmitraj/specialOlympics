@@ -184,3 +184,7 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 EMAIL_HOST_USER = 'specialolympics760@gmail.com'
 EMAIL_HOST_PASSWORD = 'vquksowxgxmsjfin'
+
+# nirmit edits
+MEDIA_ROOT = os.path.join(BASE_DIR, 'excel_data')
+MEDIA_URL = '/excel_data/'

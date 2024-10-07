@@ -2027,7 +2027,7 @@ def receive_graph_images(request):
              "Whole School Engagement provides opportunities for all students to engage in UCS activities, facilitating a culture of social inclusion. Because Whole School Engagement events and activities include the largest number of students in a school, they can raise awareness of the capabilities and contributions of students with IDD while promoting an inclusive school culture. In the 2022-23 school year, schools on average implemented between two to three Whole School Engagement activities. Overall, the percentage of schools implementing each Whole School Engagement activity is consistent with the findings from last year’s annual evaluation. There was an increase in the percentage of schools that held a Fans in the Stands/Unified Sports Pep Rally (e.g., 50% of schools implemented this event in 2022-2023 compared to 41% of schools in 2021-2022). The consistency of Whole School Engagement activities over the last two school years supports the continued recovery from COVID-19 that was observed in last year’s annual evaluation. Looking at activity implementation by locale, urban schools showed similar rates of implementation for each activity compared to town, rural, and suburban locales, except for Fans in the Stands/Unified Sports Pep Rally and fundraising. Only 32% of urban schools had at least one fundraising event or activity, compared to 43% to 50% of suburban, town, or rural schools. Similarly, only 44% of urban schools had a Fans in the Stands/Unified Sports Pep Rally, compared to 49% to 52% of suburban, town, or rural schools. These differences are small, but they may reflect differences in how urban schools implement Whole School Engagement activities.", 
              ""]
 
-    placeholders = [f"<<Figure{i}>>" for i in range(1, 10)]  # Adjust the range if more placeholders
+    placeholders = [f"<<Figure{i}>>" for i in range(1, 11)]  # Adjust the range if more placeholders
     # print(placeholders)
     for index, (graph, placeholder) in enumerate(zip(graphs, placeholders)):
             
@@ -2075,6 +2075,11 @@ def receive_graph_images(request):
                                 
                                 found_image_placeholder = True
                     
+    # After processing, remove any remaining placeholders
+    for placeholder in placeholders:
+        for paragraph in doc.paragraphs:
+            if placeholder in paragraph.text:
+                paragraph.text = paragraph.text.replace(placeholder, '')
 
     if found_image_placeholder:
         output_path = os.path.join(settings.BASE_DIR, 'static', 'test.docx')

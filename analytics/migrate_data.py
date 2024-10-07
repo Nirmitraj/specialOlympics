@@ -166,25 +166,37 @@ class Command():
             records_to_delete = records[1:]  # Keep the first record and delete the rest
             for record in records_to_delete:
                 record.delete()
-    if __name__ == "__main__":
-        clean_up_duplicates()
+    # if __name__ == "__main__":
+    #     clean_up_duplicates()
 
-    def handle(self, *args, **kwargs):
-        datafile = os.path.join(settings.BASE_DIR,'excel_data/Copy_Y15_Dataset_for_Dashboard_Team_Master.csv') 
+    # def handle(self, *args, **kwargs):
+    def handle(self, file_path, year):
+        # datafile = os.path.join(settings.BASE_DIR,'excel_data/Copy_Y15_Dataset_for_Dashboard_Team_Master.csv') 
         # self.clean_up_duplicates()
-
-        with open(datafile, newline='', encoding='utf-8-sig') as csvfile:
+        print(f"Processing file: {file_path} for year: {year}")
+        with open(file_path, newline='', encoding='utf-8-sig') as csvfile:
             reader = csv.DictReader(csvfile) #islice(csvfile, None, 51))
             for row in reader:
-                # print(row)
+                print(row)
                 # print(row['auto_increment_id'])
+                # try:
+                #     auto_increment_id = row['auto_increment_id']  # Ensure the field exists
+                #     print(f"Processing row with auto_increment_id: {auto_increment_id}")
+                # except KeyError:
+                #     print(f"Skipping row due to missing 'auto_increment_id'.")
+                #     continue
+                # state_abv = row.get('state_abv')
+                # if not state_abv:
+                #     print(f"Skipping row with NCESID {row.get('NCESID', 'Unknown')} because 'state_abv' is missing.")
+                #     continue
 
                 # row['NCESID']
-                # free_lunch = self.clean_str_null(row['UD_FreeLunch'])
-                # reduced_lunch = self.clean_str_null(row['UD_ReducedLunch'])
-                # student_free_reduced_lunch = self.calculate_free_reduced_lunch(free_lunch, reduced_lunch)
+                free_lunch = self.clean_str_null(row['UD_FreeLunch'])
+                reduced_lunch = self.clean_str_null(row['UD_ReducedLunch'])
+                student_free_reduced_lunch = self.calculate_free_reduced_lunch(free_lunch, reduced_lunch)
                 # Convert to float and add, if both are not None
-                # state_abv = row.get('state_abv')  # Ensure you have this key in your data
+                # state_abv = row.get('state_abv')  
+                # Ensure you have this key in your data
                 # print(row['Y9_NumComponents'])
                 # if not state_abv:
                 #     print(f"Skipping row with NCESID because state_abv is null.")
@@ -192,7 +204,7 @@ class Command():
                 SchoolDetails.objects.update_or_create(
                 school_ID=row['NCESID'],#all
 
-                # survey_taken_year=2023,
+                survey_taken_year= year,
                 # The above code snippet is defining a dictionary named `defaults` with key-value
                 # pairs representing fields to update. The commented-out lines suggest that there are
                 # additional fields that can be updated. The keys in the dictionary represent the
@@ -200,112 +212,113 @@ class Command():
                 # specific columns in a row. The `clean_str_null` and `clean_str_zip_null` functions
                 # are likely used to handle null values and clean up string data before updating the
                 # fields.
-                defaults={  # the fields to update
+
+#                 defaults={  # the fields to update
                     
-                # #     'unified_sports_component':self.number_bool(row['Y11_InclusiveSportsComponent']),#1235
-                # #     'youth_leadership_component':self.number_bool(row['Y11_YouthLeadershipComponent']),#1235
-                # #     'whole_school_component':self.number_bool(row['Y11_WholeSchoolComponent']),#1235
-                         'num_components': self.clean_str_null(row['Y15_NumComponents']),
-                        #   'school_state': row['UD_StateProgram'],#all
-                        'school_county': self.clean_str_null(row['UD_CountyName']),#all
-                        'state_abv': row['UD_StateABV'],#all  
-                        'zipcode': self.clean_str_zip_null(row['UD_ZIP']),
+#                 # #     'unified_sports_component':self.number_bool(row['Y11_InclusiveSportsComponent']),#1235
+#                 # #     'youth_leadership_component':self.number_bool(row['Y11_YouthLeadershipComponent']),#1235
+#                 # #     'whole_school_component':self.number_bool(row['Y11_WholeSchoolComponent']),#1235
+#                          'num_components': self.clean_str_null(row['Y15_NumComponents']),
+#                         #   'school_state': row['UD_StateProgram'],#all
+#                         'school_county': self.clean_str_null(row['UD_CountyName']),#all
+#                         'state_abv': row['UD_StateABV'],#all  
+#                         'zipcode': self.clean_str_zip_null(row['UD_ZIP']),
 
 
-# UD_StateABV
-                # #     # add more fields here...
-                },
+# # UD_StateABV
+#                 # #     # add more fields here...
+#                 },
                 school_name=self.clean_school_name(row['UD_SchoolName']),#all
-                # school_state=row['UD_StateProgram'],#all
+                 school_state=row['UD_StateProgram'],#all
                 locale_number=self.clean_str_null(row['UD_LocaleNum']),#all
-                # gradeLevel_WithPreschool=self.clean_str_grade_level_null(row['UD_GradeLevel']),#12
-                implementation_level= self.clean_str_implementation_level_null(row['Y9_ImplementationLevel']),#12345
-                #locale=self.clean_school_name(row['UD_Locale']),#all
-                #school_county=row['UD_CountyName'],#all
-                #state_abv=row['UD_StateABV'],#all  
-                # student_enrollment_range=self.clean_str_null(row['UD_Students']),#1
+                 gradeLevel_WithPreschool=self.clean_str_grade_level_null(row['Y15_GradeLevel']),#12
+                # implementation_level= self.clean_str_implementation_level_null(row['Y9_ImplementationLevel']),#12345
+                locale=self.clean_school_name(row['UD_Locale']),#all
+                school_county=row['UD_CountyName'],#all
+                state_abv=row['UD_StateABV'],#all  
+                 student_enrollment_range=self.clean_str_null(row['UD_Students']),#1
                 
-                # student_free_reduced_lunch = student_free_reduced_lunch,
-                # student_nonwhite_population = self.calculate_student_nonwhite_population(
-                #             self.clean_str_null(row['UD_AmericanIndianAlaskaNativeStudentsPublicSchool201819']),
-                #             self.clean_str_null(row['UD_AsianorAsianPacificIslanderStudentsPublicSchool201819']),
-                #             self.clean_str_null(row['UD_HispanicStudentsPublicSchool201819']),
-                #             self.clean_str_null(row['UD_BlackStudentsPublicSchool201819']),
-                #             self.clean_str_null(row['UD_HawaiianNat.PacificIsl.StudentsPublicSchool201819']),
-                #             self.clean_str_null(row['UD_TwoorMoreRacesStudentsPublicSchool201819'])
-                #         ),#12
+                 student_free_reduced_lunch = student_free_reduced_lunch,
+                 student_nonwhite_population = self.calculate_student_nonwhite_population(
+                             self.clean_str_null(row['UD_AmericanIndianAlaskaNativeStudentsPublicSchool201819']),
+                             self.clean_str_null(row['UD_AsianorAsianPacificIslanderStudentsPublicSchool201819']),
+                             self.clean_str_null(row['UD_HispanicStudentsPublicSchool201819']),
+                             self.clean_str_null(row['UD_BlackStudentsPublicSchool201819']),
+                             self.clean_str_null(row['UD_HawaiianNat.PacificIsl.StudentsPublicSchool201819']),
+                             self.clean_str_null(row['UD_TwoorMoreRacesStudentsPublicSchool201819'])
+                         ),#12
 
-                # survey_taken=self.number_bool(row['Y15_data']),#all
-                # unified_sports_component= self.number_bool(row['Y15_InclusiveSportsComponent']),#1235
-                # youth_leadership_component= self.number_bool(row['Y15_YouthLeadershipComponent']),#1235
-                # whole_school_component= self.number_bool(row['Y15_WholeSchoolComponent']),#1235
-                # zipcode=self.clean_str_zip_null(row['UD_ZIP']),#all
-                survey_taken_year=2023,
-
+                 survey_taken=self.number_bool(row['Y15_data']),#all
+                #  unified_sports_component= self.number_bool(row['Y15_InclusiveSportsComponent']),#1235
+                 youth_leadership_component= self.number_bool(row['Y15_YouthLeadershipComponent']),#1235
+                whole_school_component= self.number_bool(row['Y15_WholeSchoolComponent']),#1235
+                zipcode=self.clean_str_zip_null(row['UD_ZIP']),#all
+                # survey_taken_year=2023,
                 # sports_sports_teams =self.clean_str_null(row['Y15_b1.a_dichot']),#13
-                # sports_unified_PE=self.clean_str_null(row['Y15_b1.b_dichot']),#13
-                # sports_unified_fitness= None, #self.clean_str_null(row['Y15_C1_3_dichot']),#13
-                # sports_unified_esports= None,#self.clean_str_null(row['Y15_C1_4_dichot']),#1
-                # sports_young_athletes=self.clean_str_null(row['Y9_b1.m_dichot']),#13
-                # sports_unified_developmental_sports= None, #self.clean_str_null(row['Y15_C1_6_dichot']),#13
+                #  sports_unified_PE=self.clean_str_null(row['Y15_b1.b_dichot']),#13
+                 sports_unified_fitness= self.clean_str_null(row['Y15_C1_3_dichot']),#13
+                 sports_unified_esports= self.clean_str_null(row['Y15_C1_4_dichot']),#1
+                #  sports_young_athletes=self.clean_str_null(row['Y9_b1.m_dichot']),#13
+                 sports_unified_developmental_sports= self.clean_str_null(row['Y15_C1_6_dichot']),#13
 
 
-                # leadership_unified_inclusive_club=self.clean_str_null(row['Y9_b1.c_dichot']),#13
-                # leadership_youth_training=None, #self.clean_str_null(row['Y15_D1_2_dichot']),#13
-                # leadership_athletes_volunteer=self.clean_str_null(row['Y9_b1.l_dichot']),#13
-                # leadership_youth_summit=self.clean_str_null(row['Y9_b1.e_dichot']),#13
-                # leadership_activation_committe=self.clean_str_null(row['Y9_b1.e_dichot']),#13
+                #  leadership_unified_inclusive_club=self.clean_str_null(row['Y9_b1.c_dichot']),#13
+                 leadership_youth_training=self.clean_str_null(row['Y15_D1_2_dichot']),#13
+                #  leadership_athletes_volunteer=self.clean_str_null(row['Y9_b1.l_dichot']),#13
+                #  leadership_youth_summit=self.clean_str_null(row['Y9_b1.e_dichot']),#13
+                #  leadership_activation_committe=self.clean_str_null(row['Y9_b1.e_dichot']),#13
 
-                # engagement_spread_word_campaign=self.clean_str_null(row['Y9_b1.f_dichot']),#123
-                # engagement_fansinstands=self.clean_str_null(row['Y9_b1.g_dichot']),#123
-                # engagement_sports_day=self.clean_str_null(row['Y9_b1.h_dichot']),#123
-                # engagement_fundraisingevent=self.clean_str_null(row['Y9_b1.i_dichot']),#123
-                # engagement_SO_play=self.clean_str_null(row['Y9_b1.k_dichot']),#123
-                # engagement_fitness_challenge=None, #self.clean_str_null(row['Y15_E_6_dichot']),#123
+                #  engagement_spread_word_campaign=self.clean_str_null(row['Y9_b1.f_dichot']),#123
+                #  engagement_fansinstands=self.clean_str_null(row['Y9_b1.g_dichot']),#123
+                #  engagement_sports_day=self.clean_str_null(row['Y9_b1.h_dichot']),#123
+                #  engagement_fundraisingevent=self.clean_str_null(row['Y9_b1.i_dichot']),#123
+                #  engagement_SO_play=self.clean_str_null(row['Y9_b1.k_dichot']),#123
+                 engagement_fitness_challenge=self.clean_str_null(row['Y15_E_6_dichot']),#123
 
-                # special_education_teachers=self.clean_SONA_playbook_null(row['Y9_f3_1']),#123
-                # general_education_teachers=self.clean_SONA_playbook_null(row['Y9_f3_2']),#123
-                # physical_education_teachers=self.clean_SONA_playbook_null(row['Y9_f3_3']),#123
-                # adapted_pe_teachers=self.clean_SONA_playbook_null(row['Y9_f3_4']),#123
-                # athletic_director=None, #self.clean_SONA_playbook_null(row['Y15_F3_5']),#123
-                # students_with_idd=self.clean_SONA_playbook_null(row['Y9_f3_5']),#123
-                # students_without_idd=self.clean_SONA_playbook_null(row['Y9_f3_6']),#123
-                # school_administrators=self.clean_SONA_playbook_null(row['Y9_f3_7']),#123
-                # parents_of_students_with_idd=self.clean_SONA_playbook_null(row['Y9_f3_8']),#1
-                # parents_of_students_without_idd= None, #self.clean_SONA_playbook_null(row['Y15_F3_10']),#1
-                # school_psychologist= None, #self.clean_SONA_playbook_null(row['Y15_F3_11']),#123
-                # special_olympics_state_program_staff=self.clean_SONA_playbook_null(row['Y9_f3_9']),#123
+                #  special_education_teachers=self.clean_SONA_playbook_null(row['Y9_f3_1']),#123
+                #  general_education_teachers=self.clean_SONA_playbook_null(row['Y9_f3_2']),#123
+                #  physical_education_teachers=self.clean_SONA_playbook_null(row['Y9_f3_3']),#123
+                #  adapted_pe_teachers=self.clean_SONA_playbook_null(row['Y9_f3_4']),#123
+                 athletic_director=self.clean_SONA_playbook_null(row['Y15_F3_5']),#123
+                #  students_with_idd=self.clean_SONA_playbook_null(row['Y9_f3_5']),#123
+                #  students_without_idd=self.clean_SONA_playbook_null(row['Y9_f3_6']),#123
+                #  school_administrators=self.clean_SONA_playbook_null(row['Y9_f3_7']),#123
+                #  parents_of_students_with_idd=self.clean_SONA_playbook_null(row['Y9_f3_8']),#1
+                 parents_of_students_without_idd= self.clean_SONA_playbook_null(row['Y15_F3_10']),#1
+                 school_psychologist= self.clean_SONA_playbook_null(row['Y15_F3_11']),#123
+                #  special_olympics_state_program_staff=self.clean_SONA_playbook_null(row['Y9_f3_9']),#123
 
-                # elementary_school_playbook= None, #self.clean_SONA_playbook_null(row['G13_1']),#13
-                # middle_level_playbook= None, #self.clean_SONA_playbook_null(row['G13_4']),#13
-                # high_school_playbook=self.clean_SONA_playbook_null(row['Y9_f10.a']),#13
-                # special_olympics_state_playbook= None, #self.clean_SONA_playbook_null(row['G13_4']),#13
-                # special_olympics_fitness_guide_for_schools= None, #self.clean_SONA_playbook_null(row['G13_2']),#13
-                # unified_physical_education_resource= None, #self.clean_SONA_playbook_null(row['G13_7']),#13
-                # special_olympics_young_athletes_activity_guide= None, #self.clean_SONA_playbook_null(row['G13_8']),#13
-                # inclusive_youth_leadership_training_faciliatator_guide= None, #self.clean_SONA_playbook_null(row['G13_10']),#13
-                # planning_and_hosting_a_youth_leadership_experience=None,#self.clean_str_null(row['Y12_E9_10_1']),#13
-                # unified_classoom_lessons_and_activities= None, #self.clean_str_null(row['G13_11']),#13
-                # generation_unified_youtube_channel_or_videos= None, #self.clean_str_null(row['G13_12']),#13
-                # inclusion_tiles_game_or_facilitator_guide= None, #self.clean_str_null(row['G13_13']),#13
+                 elementary_school_playbook= self.clean_SONA_playbook_null(row['G13_1']),#13
+                 middle_level_playbook= self.clean_SONA_playbook_null(row['G13_4']),#13
+                #  high_school_playbook=self.clean_SONA_playbook_null(row['Y9_f10.a']),#13
+                 special_olympics_state_playbook= self.clean_SONA_playbook_null(row['G13_4']),#13
+                 special_olympics_fitness_guide_for_schools= self.clean_SONA_playbook_null(row['G13_2']),#13
+                 unified_physical_education_resource= self.clean_SONA_playbook_null(row['G13_7']),#13
+                 special_olympics_young_athletes_activity_guide= self.clean_SONA_playbook_null(row['G13_8']),#13
+                 inclusive_youth_leadership_training_faciliatator_guide= self.clean_SONA_playbook_null(row['G13_10']),#13
+                # planning_and_hosting_a_youth_leadership_experience=self.clean_str_null(row['Y12_E9_10_1']),#13
+                unified_classoom_lessons_and_activities= self.clean_str_null(row['G13_11']),#13
+                generation_unified_youtube_channel_or_videos= self.clean_str_null(row['G13_12']),#13
+                inclusion_tiles_game_or_facilitator_guide= self.clean_str_null(row['G13_13']),#13
 
-                # students_with_intellectual_disability=  None, #self.clean_str_null(row['Y15_L18_1_Recode']),#1
-                # students_without_intellectual_disability= None, #self.clean_str_null(row['Y15_L18_2_Recode']),#1
-                # the_school_as_a_whole= None, #self.clean_str_null(row['Y15_L19_Recode']),#13
+                students_with_intellectual_disability= self.clean_str_null(row['Y15_L18_1_Recode']),#1
+                students_without_intellectual_disability= self.clean_str_null(row['Y15_L18_2_Recode']),#1
+                the_school_as_a_whole= self.clean_str_null(row['Y15_L19_Recode']),#13
 
-                # increase_in_understanding_language_of_disability=None, #self.clean_str_null(row['Y15_L5_1_Recode']),#1
+                increase_in_understanding_language_of_disability=self.clean_str_null(row['Y15_L5_1_Recode']),#1
                 # increasing_confidence_of_students_with_idd=self.clean_str_null(row['Y9_h1.d']),#1
                 # opportunities_for_students_idd_to_work_together=self.clean_str_null(row['Y9_h1.c_recode']),#1
                 # creating_a_more_socially_inclusive_school_environment=self.clean_str_null(row['Y9_h2.a_recode']),#1
                 # raising_awareness_about_students_with_idd=self.clean_str_null(row['Y9_h1.e_recode']),#1
                 # increasing_participation_of_students_with_idd=self.clean_str_null(row['Y9_h1.a_recode']),#1
                 # reducing_bullying_teasing=self.clean_str_null(row['Y9_h2.b_recode']),#1
-                # increasing_confidence_of_students_without_idd= None, #self.clean_str_null(row['Y15_L8_1_Recode']),#1
+                increasing_confidence_of_students_without_idd= self.clean_str_null(row['Y15_L8_1_Recode']),#1
                 # increasing_participation_of_students_without_idd=self.clean_str_null(row['Y9_h1.b']),#1
                 # increasing_attendance_of_students_with_idd=self.clean_str_null(row['Y9_h2.c_recode']),#1
-                # reducing_disciplinary_referrals_for_students_with_idd= None, #self.clean_str_null(row['Y15_L12_1_Recode']),#1
-                # increasing_attendance_of_students_without_idd=None, #self.clean_str_null(row['Y15_L11_1_Recode']),#1
-                # reducing_disciplinary_referrals_for_students_without_idd= None #self.clean_str_null(row['Y15_L13_1_Recode'])#1
+                reducing_disciplinary_referrals_for_students_with_idd=self.clean_str_null(row['Y15_L12_1_Recode']),#1
+                increasing_attendance_of_students_without_idd=self.clean_str_null(row['Y15_L11_1_Recode']),#1
+                reducing_disciplinary_referrals_for_students_without_idd= self.clean_str_null(row['Y15_L13_1_Recode']),#1
+                num_components = self.clean_str_null(row['Y15_NumComponents'])
                 )
 
     def test_values(self):
@@ -329,8 +342,22 @@ class Command():
         for i in range(reader.shape[0]):
             print(reader['NCESID'][i])
         #print(row['NCESID'])
-                
-call =  Command()
-call.handle()
-#call.test_values()
+# if __name__ == "__main__":
+#     print("Function called")
+#     print(sys.argv)
+#     if len(sys.argv) < 2:
+#             print("Usage: migrate_data.py <datafile>")
+#             sys.exit(1)
+
+#     # Get the file path from the command line argument
+#     datafile = sys.argv[1]
+
+#     # Create an instance of Command and call the handle method
+#     command = Command()
+#     command.handle(datafile)           
+# call =  Command()
+# call.handle()
+# #call.test_values()
+
+
 

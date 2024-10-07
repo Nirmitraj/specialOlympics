@@ -22,6 +22,14 @@
 <script src="https://html2canvas.hertzen.com/dist/html2canvas.js"></script>
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<!-- Popper.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+
 </head>
 <body>
 <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
@@ -44,9 +52,141 @@
 <!-- </form> -->
 <div class="container-fluid">
   <div class="d-flex justify-content-end mt-0"> 
-      <button id="generateReportButton" class="btn btn-primary" style="font-size: 0.8rem;"><i class="fas fa-download fa-sm text-white-50"></i>    Generate Report</button> <!-- decrease the font size -->
+      <button id="generateReportNew" class="btn btn-primary" style="font-size: 0.8rem;" data-toggle="modal" data-target="#generateReportModal">
+        <i class=""></i> Generate Report
+      </button>
   </div>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="generateReportModal" tabindex="-1" aria-labelledby="generateReportModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="generateReportModalLabel">Generate Report</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="reportForm">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="reportType" id="summaryReport" value="summary" checked>
+            <label class="form-check-label" for="summaryReport">Full Report</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="reportType" id="detailedReport" value="detailed">
+            <label class="form-check-label" for="detailedReport">Selected Graphs</label>
+          </div>
+          <!-- Checkbox options (initially hidden) -->
+          <div id="checkboxOptions" style="display: none; margin-top: 10px;">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reportOptions" value="resizable-plot-9-checkbox" id="resizable-plot-9-checkbox" checked>
+              <label class="form-check-label" for="unifiedSports"  >Survey response rate over time</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reportOptions" value="resizable-plot-1-checkbox" id="resizable-plot-1-checkbox" checked>
+              <label class="form-check-label" for="inclusiveYouthLeadership">State Program response rate</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reportOptions" value="resizable-plot-2-checkbox" id="resizable-plot-2-checkbox" checked>
+              <label class="form-check-label" for="wholeSchoolEngagement">Core Experience implementation</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reportOptions" value="resizable-plot-4-checkbox" id="resizable-plot-4-checkbox" checked>
+              <label class="form-check-label" for="unifiedSportsInclusiveYouth">Percentage of Core experience implementation over time</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reportOptions" value="resizable-plot-3-checkbox" id="resizable-plot-3-checkbox" checked>
+              <label class="form-check-label" for="unifiedSportsWholeSchool">Components over time</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reportOptions" value="resizable-plot-10-checkbox" id="resizable-plot-10-checkbox" checked>
+              <label class="form-check-label" for="inclusiveYouthWholeSchool">Components detail implementation</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reportOptions" value="resizable-plot-5-checkbox" id="resizable-plot-5-checkbox" checked>
+              <label class="form-check-label" for="inclusiveYouthWholeSchool">Percentage of schools implementing each Unified Sports activity</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reportOptions" value="resizable-plot-6-checkbox" id="resizable-plot-6-checkbox" checked>
+              <label class="form-check-label" for="inclusiveYouthWholeSchool">Percentage of schools implementing each Inclusive Youth Leadership activity</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reportOptions" value="resizable-plot-7-checkbox" id="resizable-plot-7-checkbox" checked>
+              <label class="form-check-label" for="inclusiveYouthWholeSchool">Percentage of schools implementing each Whole School Engagement activity</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="reportOptions" value="resizable-plot-8-checkbox" id="resizable-plot-8-checkbox" checked>
+              <label class="form-check-label" for="inclusiveYouthWholeSchool">Percentage of liaisons who found SONA resources useful</label>
+            </div>
+            
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <div id="generateButtonContainer">
+          <button type="button" id="generateReportButton" class="btn btn-primary">Generate</button>
+        </div>
+        <div id="submitButtonContainer" style="display: none;">
+          <button type="button" id="submitReportButton" class="btn btn-primary">Submit</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- giving checkboxes some left margin -->
+<style>
+  #checkboxOptions .form-check {
+    margin-left: 20px; /* Adjust the value as needed */
+}
+</style>
+
+<!-- <div class="container-fluid">
+  <div class="d-flex justify-content-end mt-0"> 
+    <button id="generateReportButton" class="btn btn-primary" style="font-size: 0.8rem;"><i class="fas fa-download fa-sm text-white-50"></i>  Generate Report</button>  -->
+
+  </div> 
+</div>
+
+
+<script>
+  // Show checkboxes when "Selected Report" is selected and display "Submit" button
+  document.getElementById('detailedReport').addEventListener('click', function() {
+    document.getElementById('checkboxOptions').style.display = 'block';
+    document.getElementById('generateButtonContainer').style.display = 'none'; // Hide "Generate" button
+    document.getElementById('submitButtonContainer').style.display = 'block';  // Show "Submit" button
+  });
+
+  // Hide checkboxes when "Detailed Report" is selected and revert to "Generate" button
+  document.getElementById('summaryReport').addEventListener('click', function() {
+    document.getElementById('checkboxOptions').style.display = 'none';
+    document.getElementById('submitButtonContainer').style.display = 'none'; // Hide "Submit" button
+    document.getElementById('generateButtonContainer').style.display = 'block';  // Show "Generate" button
+  });
+
+  // Check if at least one checkbox is selected before allowing form submission for the "Submit" button
+  // document.getElementById('submitReportButton').addEventListener('click', function() {
+  //   const checkboxes = document.querySelectorAll('input[name="reportOptions"]:checked');
+  //   if (checkboxes.length === 0) {
+  //     alert('Please select at least one option from the list.');
+    // } else {
+    //   alert('Report Submitted');  // Replace this with actual form submission logic
+    // }
+  // }});
+
+  // Event listener for the "Generate" button
+  // document.getElementById('generateReportButton').addEventListener('click', function() {
+  //   alert('Report Generated');  // Replace this with actual form submission logic
+  // });
+</script>
+
+
+
+
+  
+
 <form action="{% url 'index_graph' %}" method="post">
   {% csrf_token %}
   <div class="container">
@@ -1377,6 +1517,11 @@ $(document).ready(function() {
         console.log("Documents generated successfully:", response);
         $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
 
+        $('#generateReportModal').modal('hide');
+        // $('#checkboxOptions').hide();
+        $('.modal-backdrop').remove();
+        $('#reportForm')[0].reset(); // Reset the form
+
          },
             error: function(xhr, status, error) {
                 console.error("Failed to send graphs data:", status, error);
@@ -1387,6 +1532,202 @@ $(document).ready(function() {
     });
 });
 });
+
+
+//submitReportButton
+$('#submitReportButton').click(function(e) {
+    e.preventDefault();  // Prevent the form from being submitted
+    var originalButtonHtml = $(this).html();  // Save the original button content
+    toastr.info('Generating report. This might take a couple of minutes...');
+
+    $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...');
+
+
+    let promises = [];
+    let imageData = [];
+    //myedit
+    let checkedGraph = {};
+    if ($('#resizable-plot-9-checkbox').is(':checked')){
+      checkedGraph['resizable-plot-9'] = graphDataStore["resizable-plot-9"]
+    }
+    if ($('#resizable-plot-1-checkbox').is(':checked')){
+        checkedGraph['resizable-plot-1'] = graphDataStore["resizable-plot-1"]
+    }
+    if ($('#resizable-plot-2-checkbox').is(':checked')){
+      checkedGraph['resizable-plot-2'] = graphDataStore["resizable-plot-2"]
+    }
+    if ($('#resizable-plot-4-checkbox').is(':checked')){
+      checkedGraph['resizable-plot-4'] = graphDataStore["resizable-plot-4"]
+    }
+    if ($('#resizable-plot-3-checkbox').is(':checked')){
+      checkedGraph['resizable-plot-3'] = graphDataStore["resizable-plot-3"]
+    }
+    if ($('#resizable-plot-10-checkbox').is(':checked')){
+      checkedGraph['resizable-plot-10'] = graphDataStore["resizable-plot-10"]
+    }
+    if ($('#resizable-plot-5-checkbox').is(':checked')){
+      checkedGraph['resizable-plot-5'] = graphDataStore["resizable-plot-5"]
+    }
+    if ($('#resizable-plot-6-checkbox').is(':checked')){
+      checkedGraph['resizable-plot-6'] = graphDataStore["resizable-plot-6"]
+    }
+    if ($('#resizable-plot-7-checkbox').is(':checked')){
+      checkedGraph['resizable-plot-7'] = graphDataStore["resizable-plot-7"]
+    }
+    if ($('#resizable-plot-8-checkbox').is(':checked')){
+      checkedGraph['resizable-plot-8'] = graphDataStore["resizable-plot-8"]
+    }
+    console.log(checkedGraph)
+
+    // Loop over each key in graphDataStore to find and process each graph
+    Object.keys(checkedGraph).forEach(key => {
+        let graph = document.getElementById(key); 
+        var divs = graph.querySelectorAll('div');
+
+        // console.log(divs[1].id)
+        // console.log(graphDataStore["resizable-plot-5"])
+        var graphDiv = document.getElementById(divs[1].id);
+
+        if (graphDiv) { // Check if the element exists
+            let promise = Plotly.toImage(graphDiv, { format: 'png', scale: 2 })
+                .then(function(dataUrl) {
+                    // Collect data for each graph
+                    const legendTraces = graphDiv.querySelectorAll('.legend .traces');
+        const disabledLegends = [];
+
+        // Iterate over each trace group to check its opacity
+        legendTraces.forEach(trace => {
+            // Get the opacity style of the trace group
+            const opacity = trace.style.opacity;
+
+            // If opacity is less than 1 (e.g., 0.5), consider it as disabled
+            if (opacity < 1) {
+                // Find the legend text element within the trace group
+                const legendText = trace.querySelector('.legendtext');
+                if (legendText) {
+                    // Extract and store the text content of the disabled legend
+                    disabledLegends.push(legendText.textContent);
+                }
+            }
+        });
+
+        const content = checkedGraph[key]
+
+        const arrayRegex = /\[(\{.*?\})\s*(,\s*\{.*?\})*\]/s;
+        const match = content.match(arrayRegex);
+        extractedData = {};
+
+        const titleRegex = /"title"\s*:\s*\{\s*"text"\s*:\s*"([^"]+)"/;
+    const titleMatch = content.match(titleRegex);
+    var titleGraph = ""
+    if (titleMatch && titleMatch[1]) {
+      titleGraph = titleMatch[1];
+    }
+
+        if (match) {
+            const jsonArray = match[0];
+            console.log(jsonArray) 
+            console.log(JSON.parse(jsonArray));
+            extractedData = JSON.parse(jsonArray).map(item => ({
+            name: item.name,
+            x: item.x,
+            y: item.y,
+            type: item.type,
+            hovertemplate: item.hovertemplate,
+            titleGraph: titleGraph,
+            numericalData: item.customdata || item.values
+    }));
+    console.log(extractedData)
+
+    }
+                    imageData.push({
+                        id: key,
+                        image_data_img: dataUrl,
+                        disabled_legends: disabledLegends,
+                        image_data: extractedData  // Additional data from the store
+                    });
+                })
+                .catch(function(error) {
+                    console.error('Error extracting image from graph', key, ':', error);
+                    $('#generateReportButton').html(originalButtonHtml);  // Restore the original button content
+
+                });
+            promises.push(promise);
+        } else {
+            console.warn("Graph element not found for key:", key);
+        }
+    });
+    var csrftoken = $('input[name=csrfmiddlewaretoken]').val(); // If the token is in a hidden input field
+
+    Promise.all(promises).then(() => {
+        // All images have been processed, send them to the server
+        // console.log("IMAGE DATA:", imageData)
+
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'receive_graph_images' %}",
+            // data: {
+              contentType: 'application/json', // Set the content type to JSON
+              data: JSON.stringify({
+               'graphs': imageData,
+              }),
+              // dataType: 'json', // Expect JSON response from the server
+              headers: {
+               'X-CSRFToken': csrftoken  // Set the CSRF token in the header
+              },
+              xhrFields: {
+                responseType: 'blob' // Set the response type to blob
+            },
+            // },
+           
+            success: function(response) {
+ // Create a link element
+ var link = document.createElement('a');
+ var blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        
+        // Create a link element
+        var link = document.createElement('a');
+        
+        // Create a blob URL representing the object URL
+        var url = window.URL.createObjectURL(blob);
+        
+        // Set the link's href to the blob URL
+        link.href = url;
+        
+        // Set the download attribute with a filename
+        link.download = 'graph_analysis_report.docx';
+        
+        // Append the link to the body
+        document.body.appendChild(link);
+        
+        // Programmatically trigger a click on the link
+        link.click();
+        
+        // Remove the link from the document
+        document.body.removeChild(link);
+        
+        // Revoke the object URL to free up memory
+        window.URL.revokeObjectURL(url);
+
+        console.log("Documents generated successfully:", response);
+        $('#submitReportButton').html(originalButtonHtml);  // Restore the original button content
+        $('#generateReportModal').modal('hide');
+        $('#checkboxOptions').hide();
+        $('#submitButtonContainer').hide();  // Hide Submit button
+        $('#generateButtonContainer').show();
+        $('.modal-backdrop').remove();
+        $('#reportForm')[0].reset(); // Reset the form
+         },
+            error: function(xhr, status, error) {
+                console.error("Failed to send graphs data:", status, error);
+                $('#ReportButton').html(originalButtonHtml);  // Restore the original button content
+
+            }
+        });
+    });
+});
+    
+
   </script>
 </body>
 
